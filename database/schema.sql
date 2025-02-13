@@ -91,27 +91,23 @@ INSERT INTO categories (name, description) VALUES
 ('Uniforms', 'School uniform requests'),
 ('Books and Modules', 'Academic materials and learning resources');
 
--- Insert sample request types
+-- Insert sample request types (requirements will be updated later)
 INSERT INTO request_types (category_id, name, description, requirements, processing_time) VALUES
-(1, 'Transcript of Records', 'Official academic transcript', 'Clearance form, Request letter', '5-7 working days'),
-(1, 'Enrollment Certificate', 'Proof of enrollment document', 'Valid student ID', '2-3 working days'),
-(2, 'New Student ID', 'First time ID request', '1x1 ID Picture (white background, formal attire), Registration Form', '5-7 working days'),
-(2, 'ID Replacement', 'Lost or damaged ID replacement', 'Affidavit of Loss, 1x1 ID Picture (white background, formal attire)', '5-7 working days'),
-(3, 'PE Uniform Request', 'Physical Education uniform set', 'Valid student ID', '3-5 working days'),
-(3, 'School Uniform Request', 'Regular school uniform set', 'Valid student ID', '3-5 working days'),
-(4, 'Course Module Request', 'Subject-specific learning materials', 'Valid student ID, Professor approval', '1-2 working days');
+(1, 'Transcript of Records', 'Official academic transcript', NULL, '5-7 working days'),
+(1, 'Enrollment Certificate', 'Proof of enrollment document', NULL, '2-3 working days'),
+(2, 'New Student ID', 'First time ID request', NULL, '5-7 working days'),
+(2, 'ID Replacement', 'Lost or damaged ID replacement', NULL, '5-7 working days'),
+(3, 'PE Uniform Request', 'Physical Education uniform set', NULL, '3-5 working days'),
+(3, 'School Uniform Request', 'Regular school uniform set', NULL, '3-5 working days'),
+(4, 'Course Module Request', 'Subject-specific learning materials', NULL, '1-2 working days');
 
 -- Insert default admin user
 INSERT INTO users (student_number, password, first_name, last_name, role) VALUES
 ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin');
 
--- Insert sample student accounts with proper student ID format
+-- Insert sample student account
 INSERT INTO users (student_number, password, first_name, last_name, role, course, year_level, block, admission_year) VALUES
 ('0001-2021-00123', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Matthew Cymon', 'Estrada', 'student', 'BSIT', 3, 'BN', '2021');
-
--- Add requirements column to request_types if not exists
-ALTER TABLE request_types 
-MODIFY COLUMN requirements JSON;
 
 -- Create table for requirement templates
 CREATE TABLE requirement_templates (
@@ -136,86 +132,87 @@ CREATE TABLE request_requirement_notes (
     FOREIGN KEY (admin_id) REFERENCES users(user_id)
 );
 
--- Update request types with both required and optional fields
-UPDATE request_types 
-SET requirements = JSON_OBJECT(
-    'fields', JSON_ARRAY(
-        -- For Transcript of Records
-        CASE WHEN name = 'Transcript of Records' THEN 
-            JSON_ARRAY(
-                JSON_OBJECT(
-                    'name', 'clearance_form',
-                    'label', 'Clearance Form',
-                    'type', 'file',
-                    'required', true,
-                    'allowed_types', 'pdf,jpg,png',
-                    'description', 'Fully accomplished clearance form'
-                ),
-                JSON_OBJECT(
-                    'name', 'request_letter',
-                    'label', 'Request Letter',
-                    'type', 'file',
-                    'required', true,
-                    'allowed_types', 'pdf,doc,docx',
-                    'description', 'Formal letter stating the purpose of requesting TOR'
-                ),
-                JSON_OBJECT(
-                    'name', 'purpose',
-                    'label', 'Purpose',
-                    'type', 'text',
-                    'required', true,
-                    'description', 'State the purpose of requesting TOR'
-                ),
-                JSON_OBJECT(
-                    'name', 'additional_docs',
-                    'label', 'Additional Supporting Documents',
-                    'type', 'file',
-                    'required', false,
-                    'allowed_types', 'pdf,jpg,png,doc,docx',
-                    'description', 'Any additional documents to support your request (optional)'
-                )
-            )
-        -- For ID Replacement
-        WHEN name = 'ID Replacement' THEN
-            JSON_ARRAY(
-                JSON_OBJECT(
-                    'name', 'affidavit_loss',
-                    'label', 'Affidavit of Loss',
-                    'type', 'file',
-                    'required', true,
-                    'allowed_types', 'pdf',
-                    'description', 'Notarized affidavit of loss'
-                ),
-                JSON_OBJECT(
-                    'name', 'id_picture',
-                    'label', '1x1 ID Picture',
-                    'type', 'file',
-                    'required', true,
-                    'allowed_types', 'jpg,png',
-                    'description', 'Recent 1x1 ID picture with white background'
-                ),
-                JSON_OBJECT(
-                    'name', 'payment_receipt',
-                    'label', 'Payment Receipt',
-                    'type', 'file',
-                    'required', false,
-                    'allowed_types', 'pdf,jpg,png',
-                    'description', 'Receipt of payment for ID replacement (can be submitted later)'
-                ),
-                JSON_OBJECT(
-                    'name', 'remarks',
-                    'label', 'Additional Remarks',
-                    'type', 'text',
-                    'required', false,
-                    'description', 'Any additional information about your ID replacement request'
-                )
-            )
-        END
-    ),
-    'instructions', CASE 
-        WHEN name = 'Transcript of Records' THEN 'Please ensure all required documents are complete. Additional supporting documents are optional but may help process your request faster.'
-        WHEN name = 'ID Replacement' THEN 'Submit the required documents. Payment receipt can be submitted later but must be provided before ID release.'
-        ELSE 'Please submit all required documents.'
-    END
-)
-WHERE name IN ('Transcript of Records', 'ID Replacement'); 
+-- Ensure the requirements column is of type JSON (if not already)
+ALTER TABLE request_types MODIFY COLUMN requirements JSON;
+
+-- Update request_types requirements for Transcript of Records and ID Replacement
+UPDATE request_types
+SET requirements = 
+  CASE 
+    WHEN name = 'Transcript of Records' THEN 
+      JSON_OBJECT(
+        'fields', JSON_ARRAY(
+          JSON_OBJECT(
+            'name', 'clearance_form',
+            'label', 'Clearance Form',
+            'type', 'file',
+            'required', true,
+            'allowed_types', 'pdf,jpg,png',
+            'description', 'Fully accomplished clearance form'
+          ),
+          JSON_OBJECT(
+            'name', 'request_letter',
+            'label', 'Request Letter',
+            'type', 'file',
+            'required', true,
+            'allowed_types', 'pdf,doc,docx',
+            'description', 'Formal letter stating the purpose of requesting TOR'
+          ),
+          JSON_OBJECT(
+            'name', 'purpose',
+            'label', 'Purpose',
+            'type', 'text',
+            'required', true,
+            'description', 'State the purpose of requesting TOR'
+          ),
+          JSON_OBJECT(
+            'name', 'additional_docs',
+            'label', 'Additional Supporting Documents',
+            'type', 'file',
+            'required', false,
+            'allowed_types', 'pdf,jpg,png,doc,docx',
+            'description', 'Any additional documents to support your request (optional)'
+          )
+        ),
+        'instructions', 'Please ensure all required documents are complete. Additional supporting documents are optional but may help process your request faster.'
+      )
+    WHEN name = 'ID Replacement' THEN 
+      JSON_OBJECT(
+        'fields', JSON_ARRAY(
+          JSON_OBJECT(
+            'name', 'affidavit_loss',
+            'label', 'Affidavit of Loss',
+            'type', 'file',
+            'required', true,
+            'allowed_types', 'pdf',
+            'description', 'Notarized affidavit of loss'
+          ),
+          JSON_OBJECT(
+            'name', 'id_picture',
+            'label', '1x1 ID Picture',
+            'type', 'file',
+            'required', true,
+            'allowed_types', 'jpg,png',
+            'description', 'Recent 1x1 ID picture with white background'
+          ),
+          JSON_OBJECT(
+            'name', 'payment_receipt',
+            'label', 'Payment Receipt',
+            'type', 'file',
+            'required', false,
+            'allowed_types', 'pdf,jpg,png',
+            'description', 'Receipt of payment for ID replacement (can be submitted later)'
+          ),
+          JSON_OBJECT(
+            'name', 'remarks',
+            'label', 'Additional Remarks',
+            'type', 'text',
+            'required', false,
+            'description', 'Any additional information about your ID replacement request'
+          )
+        ),
+        'instructions', 'Submit the required documents. Payment receipt can be submitted later but must be provided before ID release.'
+      )
+    ELSE requirements
+  END
+WHERE name IN ('Transcript of Records', 'ID Replacement');
