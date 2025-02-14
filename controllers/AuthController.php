@@ -19,6 +19,9 @@ class AuthController {
                         case 'register':
                             $this->register();
                             break;
+                        case 'logout':
+                            $this->logout();
+                            break;
                         default:
                             $this->sendError('Invalid endpoint');
                     }
@@ -62,14 +65,31 @@ class AuthController {
                 // Remove password from response
                 unset($user['password']);
                 
+                // Invalidate any existing tokens for this user
+                $stmt = $this->db->prepare("DELETE FROM auth_tokens WHERE user_id = ?");
+                $stmt->execute([$user['user_id']]);
+                
+                // Generate a new token for API access
+                $token = $this->generateToken();
+                $expiresAt = date('Y-m-d H:i:s', time() + 86400); // 24 hours from now
+
+                // Save the token in the auth_tokens table
+                $stmt = $this->db->prepare("INSERT INTO auth_tokens (token, user_id, login_time, expires_at) VALUES (?, ?, NOW(), ?)");
+                if(!$stmt->execute([$token, $user['user_id'], $expiresAt])) {
+                    $this->sendError('Could not generate token', 500);
+                    return;
+                }
+                
                 http_response_code(200);
                 echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Login successful',
-                    'data' => $user
+                    'status'     => 'success',
+                    'message'    => 'Login successful',
+                    'data'       => $user,
+                    'token'      => $token,
+                    'expires_at' => $expiresAt
                 ]);
             } else {
-                $this->sendError('Invalid credentials');
+                $this->sendError('Invalid credentials', 401);
             }
         } else {
             $this->sendError('Incomplete data');
@@ -186,6 +206,69 @@ class AuthController {
         }
     }
 
+    private function logout() {
+        // Expect token in Authorization header as "Bearer <token>"
+        $headers = apache_request_headers();
+        $authHeader = null;
+        if(isset($headers['Authorization'])) {
+            $authHeader = $headers['Authorization'];
+        } elseif(isset($headers['authorization'])) {
+            $authHeader = $headers['authorization'];
+        } else {
+            $this->sendError('Authorization token not provided', 401);
+            return;
+        }
+        if(preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        } else {
+            $this->sendError('Invalid Authorization header format', 400);
+            return;
+        }
+
+        // Delete the token from the auth_tokens table
+        $stmt = $this->db->prepare("DELETE FROM auth_tokens WHERE token = ?");
+        if($stmt->execute([$token])) {
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Logout successful'
+            ]);
+        } else {
+            $this->sendError('Unable to logout');
+        }
+    }
+
+    // Validate token with sliding expiration
+    // This function checks if the token is valid and, if so, extends its expiration by 24 hours.
+    public function validateToken($token) {
+        $stmt = $this->db->prepare("SELECT user_id, expires_at FROM auth_tokens WHERE token = ?");
+        $stmt->execute([$token]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if(!$row) {
+            return false; // Token not found
+        }
+        
+        $currentTime = new DateTime();
+        $expiresAt = new DateTime($row['expires_at']);
+        if($currentTime > $expiresAt) {
+            // Token expired: delete it from the database
+            $del = $this->db->prepare("DELETE FROM auth_tokens WHERE token = ?");
+            $del->execute([$token]);
+            return false;
+        }
+        
+        // Sliding expiration: update expires_at to 24 hours from now
+        $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
+        $updateStmt = $this->db->prepare("UPDATE auth_tokens SET expires_at = ? WHERE token = ?");
+        $updateStmt->execute([$newExpiresAt, $token]);
+        
+        return $row['user_id'];
+    }
+
+    private function generateToken($length = 16) {
+        return bin2hex(random_bytes($length));
+    }
+
     private function sendError($message, $code = 400) {
         http_response_code($code);
         echo json_encode([
@@ -193,4 +276,5 @@ class AuthController {
             'message' => $message
         ]);
     }
-} 
+}
+?>
