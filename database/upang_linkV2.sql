@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 14, 2025 at 03:09 PM
+-- Generation Time: Feb 14, 2025 at 04:24 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,40 @@ SET time_zone = "+00:00";
 --
 -- Database: `upang_link`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admins`
+--
+
+CREATE TABLE `admins` (
+  `admin_id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admins`
+--
+
+INSERT INTO `admins` (`admin_id`, `username`, `password`, `created_at`, `updated_at`) VALUES
+(1, 'admin', '$2y$10$v7wvcsr4iFtv3GT440.4CekR0Npi83XvCLr0MaV1IJjQznTV3lS8e', '2025-02-14 14:42:55', '2025-02-14 14:42:55');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_tokens`
+--
+
+CREATE TABLE `admin_tokens` (
+  `token` char(64) NOT NULL,
+  `admin_id` int(11) NOT NULL,
+  `login_time` datetime NOT NULL,
+  `expires_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -254,6 +288,20 @@ INSERT INTO `user_logins` (`login_id`, `user_id`, `token`, `login_time`, `ip_add
 --
 
 --
+-- Indexes for table `admins`
+--
+ALTER TABLE `admins`
+  ADD PRIMARY KEY (`admin_id`),
+  ADD UNIQUE KEY `username` (`username`);
+
+--
+-- Indexes for table `admin_tokens`
+--
+ALTER TABLE `admin_tokens`
+  ADD PRIMARY KEY (`token`),
+  ADD KEY `admin_id` (`admin_id`);
+
+--
 -- Indexes for table `auth_tokens`
 --
 ALTER TABLE `auth_tokens`
@@ -336,6 +384,12 @@ ALTER TABLE `user_logins`
 --
 
 --
+-- AUTO_INCREMENT for table `admins`
+--
+ALTER TABLE `admins`
+  MODIFY `admin_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
@@ -398,6 +452,12 @@ ALTER TABLE `user_logins`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `admin_tokens`
+--
+ALTER TABLE `admin_tokens`
+  ADD CONSTRAINT `admin_tokens_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `admins` (`admin_id`);
 
 --
 -- Constraints for table `notifications`

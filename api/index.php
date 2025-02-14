@@ -10,6 +10,7 @@ include_once '../models/User.php';
 include_once '../models/Request.php';
 include_once '../models/RequestType.php';
 include_once '../models/Notification.php';
+include_once '../controllers/AdminController.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -20,7 +21,7 @@ $uri_parts = parse_url($request_uri);
 $path = $uri_parts['path'];
 
 // Remove the base path if it exists
-$base_path = '/UPANG LINK/api/';  // Changed from URL-encoded version
+$base_path = '/UPANG LINK/api/';  // Adjust this if necessary
 $endpoint = str_replace($base_path, '', $path);
 $uri = explode('/', trim($endpoint, '/'));
 
@@ -50,8 +51,14 @@ $requestMethod = $_SERVER["REQUEST_METHOD"];
 // Basic routing
 switch($uri[0]) {
     case 'auth':
-        include_once '../controllers/AuthController.php';
-        $controller = new AuthController($db);
+        // If the second segment is "admin", load the admin auth controller
+        if (isset($uri[1]) && strtolower($uri[1]) === 'admin') {
+            include_once '../controllers/AdminAuthController.php';
+            $controller = new AdminAuthController($db);
+        } else {
+            include_once '../controllers/AuthController.php';
+            $controller = new AuthController($db);
+        }
         break;
     case 'requests':
         include_once '../controllers/RequestController.php';
@@ -77,4 +84,5 @@ switch($uri[0]) {
 }
 
 // Handle the request
-$controller->handleRequest($requestMethod, $uri); 
+$controller->handleRequest($requestMethod, $uri);
+?>
