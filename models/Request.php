@@ -62,7 +62,6 @@ class Request {
 
             // Process each uploaded file
             foreach ($files as $key => $file) {
-                // Change the target directory to one level up from the current API folder
                 $target_dir = "../uploads/documents/";
                 if (!is_dir($target_dir)) {
                     mkdir($target_dir, 0755, true);

@@ -1,5 +1,4 @@
 <?php
-// Use __DIR__ to build the correct relative path
 require_once __DIR__ . '/../models/Admin.php';
 
 class AdminAuthController {
@@ -11,10 +10,7 @@ class AdminAuthController {
         $this->adminModel = new Admin($db);
     }
 
-    /**
-     * Handles incoming requests for admin login, registration, or logout.
-     * Expected URL segments: [0] => "auth", [1] => "admin", [2] => "login", "register", or "logout"
-     */
+  
     public function handleRequest($method, $uri) {
         try {
             if ($method === 'POST' && isset($uri[2])) {
@@ -44,6 +40,7 @@ class AdminAuthController {
      * Provides specific error messages if the admin is not found or if the password is incorrect.
      * On success, generates a token (stored in the admin_tokens table) and returns the admin's info.
      */
+    
     private function login() {
         $data = json_decode(file_get_contents("php://input"));
         if (empty($data->username) || empty($data->password)) {
