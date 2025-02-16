@@ -1,16 +1,26 @@
 <?php
+// Set CORS and content-type headers
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, GET, PUT, DELETE");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Platform");
 
-include_once '../config/Database.php';
-include_once '../models/User.php';
-include_once '../models/Request.php';
-include_once '../models/RequestType.php';
-include_once '../models/Notification.php';
-include_once '../controllers/AdminController.php';
+// Handle preflight OPTIONS requests early
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+    exit(0);
+}
+
+include_once __DIR__ . '/../config/Database.php';
+include_once __DIR__ . '/../models/User.php';
+include_once __DIR__ . '/../models/Request.php';
+include_once __DIR__ . '/../models/RequestType.php';
+include_once __DIR__ . '/../models/Notification.php';
+include_once __DIR__ . '/../controllers/AdminController.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -20,12 +30,12 @@ $request_uri = urldecode($_SERVER['REQUEST_URI']);
 $uri_parts = parse_url($request_uri);
 $path = $uri_parts['path'];
 
-// Remove the base path if it exists
-$base_path = '/UPANG LINK/api/';  // Adjust this if necessary
+// Define your base path exactly as deployed (ensure no trailing slash issues)
+$base_path = '/UPANG LINK/api/';  // Adjust if necessary
 $endpoint = str_replace($base_path, '', $path);
 $uri = explode('/', trim($endpoint, '/'));
 
-// Debug information
+// Debug information (check your error log to verify these values)
 error_log("Request URI: " . $request_uri);
 error_log("Path: " . $path);
 error_log("Endpoint: " . $endpoint);
@@ -45,27 +55,25 @@ if (empty($uri[0])) {
     exit();
 }
 
-// Route the request to the appropriate handler
+// Route the request to the appropriate controller
 $requestMethod = $_SERVER["REQUEST_METHOD"];
 
-// Basic routing
 switch($uri[0]) {
     case 'auth':
-        // If the second segment is "admin", load the admin auth controller
+        // For admin endpoints, the URL should be: /UPANG LINK/api/auth/admin/login
         if (isset($uri[1]) && strtolower($uri[1]) === 'admin') {
-            include_once '../controllers/AdminAuthController.php';
             $controller = new AdminAuthController($db);
         } else {
-            include_once '../controllers/AuthController.php';
+            include_once __DIR__ . '/../controllers/AuthController.php';
             $controller = new AuthController($db);
         }
         break;
     case 'requests':
-        include_once '../controllers/RequestController.php';
+        include_once __DIR__ . '/../controllers/RequestController.php';
         $controller = new RequestController($db);
         break;
     case 'users':
-        include_once '../controllers/UserController.php';
+        include_once __DIR__ . '/../controllers/UserController.php';
         $controller = new UserController($db);
         break;
     default:
@@ -83,6 +91,6 @@ switch($uri[0]) {
         exit();
 }
 
-// Handle the request
+// Let the controller handle the request
 $controller->handleRequest($requestMethod, $uri);
 ?>
