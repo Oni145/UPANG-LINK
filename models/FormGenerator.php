@@ -14,15 +14,29 @@ class FormGenerator {
         
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         if($result) {
+            // Decode the requirements JSON
             $requirements = json_decode($result['requirements'], true);
+            if (!$requirements) {
+                // If decoding fails, default to an empty array
+                $requirements = [];
+            }
+            // Get the 'fields' element; if not set, use an empty array
+            $fields = isset($requirements['fields']) ? $requirements['fields'] : [];
+            // If $fields is not an array, attempt to decode it
+            if (!is_array($fields)) {
+                $fields = json_decode($fields, true);
+            }
+            // If still not an array, default to an empty array
+            if (!is_array($fields)) {
+                $fields = [];
+            }
             
             // Separate required and optional fields
-            $fields = $requirements['fields'];
             $required_fields = array_filter($fields, function($field) {
-                return $field['required'] === true;
+                return is_array($field) && isset($field['required']) && $field['required'] === true;
             });
             $optional_fields = array_filter($fields, function($field) {
-                return $field['required'] === false;
+                return is_array($field) && isset($field['required']) && $field['required'] === false;
             });
             
             return [
@@ -31,7 +45,7 @@ class FormGenerator {
                 'form_data' => [
                     'required_fields' => array_values($required_fields),
                     'optional_fields' => array_values($optional_fields),
-                    'instructions' => $requirements['instructions']
+                    'instructions' => isset($requirements['instructions']) ? $requirements['instructions'] : ""
                 ]
             ];
         }
@@ -83,4 +97,5 @@ class FormGenerator {
             'warnings' => $warnings
         ];
     }
-} 
+}
+?>
