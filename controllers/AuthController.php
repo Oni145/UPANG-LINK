@@ -1,5 +1,7 @@
 <?php
 class AuthController {
+    
+
     private $db;
     private $user;
 
@@ -11,7 +13,7 @@ class AuthController {
     public function handleRequest($method, $uri) {
         switch ($method) {
             case 'POST':
-                // login, register, logout do not require token (logout validates token internally)
+                // Login, register, and logout do not require a token (logout validates token internally)
                 if (isset($uri[0])) {
                     switch ($uri[0]) {
                         case 'login':
@@ -31,6 +33,7 @@ class AuthController {
                 }
                 break;
             case 'GET':
+                // Require token for GET endpoints
                 $this->requireToken();
                 if (isset($uri[0]) && $uri[0] === 'users') {
                     if (isset($uri[1]) && !empty(trim($uri[1]))) {
@@ -43,6 +46,7 @@ class AuthController {
                 }
                 break;
             case 'PUT':
+                // Require token for PUT endpoints
                 $this->requireToken();
                 if (isset($uri[0]) && $uri[0] === 'users') {
                     if (isset($uri[1]) && !empty(trim($uri[1]))) {
@@ -55,6 +59,7 @@ class AuthController {
                 }
                 break;
             case 'DELETE':
+                // Require token for DELETE endpoints
                 $this->requireToken();
                 if (isset($uri[0]) && $uri[0] === 'users') {
                     if (isset($uri[1]) && !empty(trim($uri[1]))) {
@@ -149,7 +154,7 @@ class AuthController {
             return;
         }
         
-        // Set all fields (all are required)
+        // Set all required fields
         $this->user->student_number   = $data->student_number;
         $this->user->password         = password_hash($data->password, PASSWORD_DEFAULT);
         $this->user->first_name       = $data->first_name;
@@ -233,14 +238,14 @@ class AuthController {
             $this->sendError("Missing fields for update: " . implode(', ', $missing), 400);
             return;
         }
-        $this->user->user_id     = $id;
-        $this->user->first_name  = $data->first_name;
-        $this->user->last_name   = $data->last_name;
-        $this->user->course      = $data->course;
-        $this->user->year_level  = $data->year_level;
-        $this->user->block       = $data->block;
-        $this->user->admission_year = $data->admission_year;
-        
+        $this->user->user_id         = $id;
+        $this->user->first_name      = $data->first_name;
+        $this->user->last_name       = $data->last_name;
+        $this->user->course          = $data->course;
+        $this->user->year_level      = $data->year_level;
+        $this->user->block           = $data->block;
+        $this->user->admission_year  = $data->admission_year;
+    
         if ($this->user->update()) {
             http_response_code(200);
             echo json_encode([
@@ -298,23 +303,41 @@ class AuthController {
 
     // ----- TOKEN VALIDATION & SLIDING EXPIRATION -----
     public function validateToken($token) {
+        // Check auth_tokens first (for normal users)
         $stmt = $this->db->prepare("SELECT user_id, expires_at FROM auth_tokens WHERE token = ?");
         $stmt->execute([$token]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$row) {
-            return false;
+        if ($row) {
+            $currentTime = new DateTime();
+            $expiresAt = new DateTime($row['expires_at']);
+            if ($currentTime > $expiresAt) {
+                $del = $this->db->prepare("DELETE FROM auth_tokens WHERE token = ?");
+                $del->execute([$token]);
+                return false;
+            }
+            $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
+            $updateStmt = $this->db->prepare("UPDATE auth_tokens SET expires_at = ? WHERE token = ?");
+            $updateStmt->execute([$newExpiresAt, $token]);
+            return ['id' => $row['user_id'], 'type' => 'user'];
         }
-        $currentTime = new DateTime();
-        $expiresAt = new DateTime($row['expires_at']);
-        if ($currentTime > $expiresAt) {
-            $del = $this->db->prepare("DELETE FROM auth_tokens WHERE token = ?");
-            $del->execute([$token]);
-            return false;
+        // If not found, check admin_tokens (for admin users)
+        $stmt = $this->db->prepare("SELECT admin_id AS id, expires_at FROM admin_tokens WHERE token = ?");
+        $stmt->execute([$token]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $currentTime = new DateTime();
+            $expiresAt = new DateTime($row['expires_at']);
+            if ($currentTime > $expiresAt) {
+                $del = $this->db->prepare("DELETE FROM admin_tokens WHERE token = ?");
+                $del->execute([$token]);
+                return false;
+            }
+            $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
+            $updateStmt = $this->db->prepare("UPDATE admin_tokens SET expires_at = ? WHERE token = ?");
+            $updateStmt->execute([$newExpiresAt, $token]);
+            return ['id' => $row['id'], 'type' => 'admin'];
         }
-        $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
-        $updateStmt = $this->db->prepare("UPDATE auth_tokens SET expires_at = ? WHERE token = ?");
-        $updateStmt->execute([$newExpiresAt, $token]);
-        return $row['user_id'];
+        return false;
     }
 
     // ----- TOKEN GENERATION -----
@@ -323,6 +346,8 @@ class AuthController {
     }
 
     // ----- REQUIRE TOKEN -----
+    // This method checks for the token in the Authorization header, validates it (from either table),
+    // and exits with an error if it's missing or invalid.
     private function requireToken() {
         $headers = apache_request_headers();
         $authHeader = null;
@@ -339,12 +364,12 @@ class AuthController {
             exit;
         }
         $token = $matches[1];
-        $userId = $this->validateToken($token);
-        if (!$userId) {
-            $this->sendError('User not found', 401);
+        $tokenData = $this->validateToken($token);
+        if (!$tokenData) {
+            $this->sendError('Token invalid', 401);
             exit;
         }
-        return $userId;
+        return $tokenData;
     }
 
     // ----- ERROR HANDLING -----
