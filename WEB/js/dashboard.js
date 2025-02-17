@@ -1,82 +1,218 @@
 // dashboard.js
 
-// A lookup for request type names based on type_id.
+// Base URL for the API without a trailing slash
+const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/api';
+
+// Mapping for request type IDs to names
 const requestTypeNames = {
     1: 'TOR',
-    2: 'ID',          // Add more mappings as needed.
+    2: 'ID',
     3: 'Certificate',
     4: 'Others'
 };
 
+/**
+ * Returns common headers for authenticated requests.
+ * @param {string} token - The user token.
+ * @returns {Object} The headers object.
+ */
+function getAuthHeaders(token) {
+    return {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+}
+
 class Dashboard {
     constructor() {
-        this.loadStats();
-        this.initCharts();
-        this.loadRecentRequests();
-        this.displayUserName();  // Fetch the current admin's username on initialization
+        console.log("Dashboard initialized.");
+        this.token = localStorage.getItem('token');
+        if (!this.token) {
+            console.error("No token found in localStorage.");
+            return;
+        }
+        // Show loading indicator while data is being fetched.
+        this.showLoading();
+        // Fetch initial data and display the logged-in admin name.
+        this.initializeData();
+        this.displayUserName();
     }
 
-    // Retrieve requests and update count-based stats.
-    async loadStats() {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.error("No token found in localStorage. Cannot load stats.");
-                return;
-            }
-            const response = await fetch(`${API_BASE_URL}/requests/`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (!response.ok) {
-                console.error("HTTP error while loading stats:", response.status);
-                return;
-            }
-            const data = await response.json();
-            if (data.status === 'success') {
-                // data.data is an array of request objects.
-                const requests = data.data;
-                const totalRequests = requests.length;
-                // Count distinct users by their user_id.
-                const totalUsers = [...new Set(requests.map(r => r.user_id))].length;
-                // Filter requests by status.
-                const pendingRequests = requests.filter(r => r.status === 'pending').length;
-                // Here, we assume a request is considered "completed" when its status is "approved".
-                const completedRequests = requests.filter(r => r.status === 'approved').length;
-                
-                console.log("Total Requests:", totalRequests);
-                console.log("Total Users:", totalUsers);
-                console.log("Pending Requests:", pendingRequests);
-                console.log("Completed Requests:", completedRequests);
-                console.log("Stats loaded successfully:", data);
-                
-                // Update the DOM elements with the counts.
-                document.getElementById('totalUsers').textContent = totalUsers;
-                document.getElementById('totalRequests').textContent = totalRequests;
-                document.getElementById('pendingRequests').textContent = pendingRequests;
-                document.getElementById('completedRequests').textContent = completedRequests;
-            } else {
-                console.error("Error loading stats:", data.message);
-            }
-        } catch (error) {
-            console.error("Error loading stats:", error);
+    /**
+     * Displays a loading message on the screen.
+     */
+    showLoading() {
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) {
+            loadingEl.style.display = 'block';
+            loadingEl.textContent = 'Loading...';
         }
     }
 
-    // Initialize sample charts.
-    initCharts() {
-        // Requests Chart
-        const requestsCtx = document.getElementById('requestsChart').getContext('2d');
+    /**
+     * Hides the loading message from the screen.
+     */
+    hideLoading() {
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+        }
+    }
+
+    /**
+     * Fetches requests and users data concurrently from the API.
+     * Computes monthly counts and triggers various UI update functions.
+     */
+    async initializeData() {
+        console.log("Fetching requests and users data...");
+        try {
+            const [requestsResponse, usersResponse] = await Promise.all([
+                fetch(`${API_BASE_URL}/requests/`, { headers: getAuthHeaders(this.token) }),
+                fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(this.token) })
+            ]);
+
+            if (!requestsResponse.ok) {
+                console.error("HTTP error fetching requests:", requestsResponse.status);
+                return;
+            }
+            if (!usersResponse.ok) {
+                console.error("HTTP error fetching users:", usersResponse.status);
+                return;
+            }
+
+            const requestsData = await requestsResponse.json();
+            const usersData = await usersResponse.json();
+            if (requestsData.status !== 'success') {
+                console.error("Error in requests data:", requestsData.message);
+                return;
+            }
+            if (usersData.status !== 'success') {
+                console.error("Error in users data:", usersData.message);
+                return;
+            }
+            this.requestsData = requestsData.data;
+            this.usersData = usersData.data;
+            console.log("Requests data fetched:", this.requestsData);
+            console.log("Users data fetched:", this.usersData);
+
+            // Compute month counts once for use in multiple charts
+            this.monthCounts = this.requestsData.reduce((acc, request) => {
+                const date = new Date(request.submitted_at);
+                if (!isNaN(date)) {
+                    acc[date.getMonth()]++;
+                } else {
+                    console.warn("Invalid date in request:", request);
+                }
+                return acc;
+            }, Array(12).fill(0));
+
+            // Update various parts of the dashboard UI
+            this.loadStatsUsingData();
+            this.loadMonthlyChartUsingData();
+            this.loadRequestsChartUsingData();
+            this.loadRequestTypesChartUsingData();
+            this.loadRecentRequestsUsingData();
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            // Hide loading indicator regardless of success or failure
+            this.hideLoading();
+        }
+    }
+
+    /**
+     * Updates the dashboard statistics (total requests, users, pending, and approved requests).
+     * It uses the pre-fetched requests and users data.
+     */
+    loadStatsUsingData() {
+        console.log("Updating stats using pre-fetched data...");
+        if (!this.requestsData || !this.usersData) {
+            console.error("Missing requests or users data for stats.");
+            return;
+        }
+        // Calculate stats with a single pass over requestsData
+        const stats = this.requestsData.reduce((acc, request) => {
+            if (request.status === 'pending') acc.pending++;
+            if (request.status === 'approved') acc.completed++;
+            return acc;
+        }, { pending: 0, completed: 0 });
+        const totalRequests = this.requestsData.length;
+        const totalUsers = Array.isArray(this.usersData) ? this.usersData.length : 0;
+        console.log("Stats calculated:", { totalRequests, totalUsers, pendingRequests: stats.pending, completedRequests: stats.completed });
+        
+        // Update DOM elements with the calculated stats
+        const totalUsersEl = document.getElementById('totalUsers');
+        const totalRequestsEl = document.getElementById('totalRequests');
+        const pendingRequestsEl = document.getElementById('pendingRequests');
+        const completedRequestsEl = document.getElementById('completedRequests');
+        if (totalUsersEl) totalUsersEl.textContent = totalUsers;
+        if (totalRequestsEl) totalRequestsEl.textContent = totalRequests;
+        if (pendingRequestsEl) pendingRequestsEl.textContent = stats.pending;
+        if (completedRequestsEl) completedRequestsEl.textContent = stats.completed;
+    }
+
+    /**
+     * Renders the monthly requests chart using pre-computed month counts.
+     */
+    loadMonthlyChartUsingData() {
+        console.log("Rendering monthly chart using pre-fetched data...");
+        if (!this.monthCounts) {
+            console.error("No month counts available for monthly chart.");
+            return;
+        }
+        const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthlyChartEl = document.getElementById('monthlyChart');
+        if (!monthlyChartEl) {
+            console.error("monthlyChart element not found in the DOM.");
+            return;
+        }
+        const monthlyCtx = monthlyChartEl.getContext('2d');
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Monthly Requests',
+                    data: this.monthCounts,
+                    borderColor: '#ff6384',
+                    backgroundColor: 'rgba(255,99,132,0.2)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        console.log("Monthly chart rendered.");
+    }
+
+    /**
+     * Renders a dynamic requests chart using the same monthly counts data.
+     */
+    loadRequestsChartUsingData() {
+        console.log("Rendering dynamic requests chart using pre-fetched data...");
+        if (!this.monthCounts) {
+            console.error("No month counts available for dynamic requests chart.");
+            return;
+        }
+        const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const requestsChartEl = document.getElementById('requestsChart');
+        if (!requestsChartEl) {
+            console.error("requestsChart element not found in the DOM.");
+            return;
+        }
+        const requestsCtx = requestsChartEl.getContext('2d');
         new Chart(requestsCtx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: monthLabels,
                 datasets: [{
                     label: 'Requests',
-                    data: [12, 19, 3, 5, 2, 3],
+                    data: this.monthCounts,
                     borderColor: '#3699ff',
                     tension: 0.4
                 }]
@@ -86,16 +222,60 @@ class Dashboard {
                 maintainAspectRatio: false
             }
         });
+        console.log("Dynamic requests chart rendered.");
+    }
 
-        // Request Types Chart
-        const typesCtx = document.getElementById('requestTypesChart').getContext('2d');
-        new Chart(typesCtx, {
+    /**
+     * Renders a donut chart that shows the count of requests per type.
+     */
+    loadRequestTypesChartUsingData() {
+        console.log("Rendering donut (doughnut) chart using pre-fetched data...");
+        if (!this.requestsData) {
+            console.error("No requests data for donut chart.");
+            return;
+        }
+        // Initialize counts for each type based on the requestTypeNames mapping
+        const typeCounts = {};
+        Object.keys(requestTypeNames).forEach(key => {
+            typeCounts[key] = 0;
+        });
+        this.requestsData.forEach(request => {
+            const type = request.type_id;
+            if (typeCounts.hasOwnProperty(type)) {
+                typeCounts[type]++;
+            } else {
+                // Count any unexpected type as 'Others'
+                typeCounts[4] = (typeCounts[4] || 0) + 1;
+            }
+        });
+        console.log("Request type counts:", typeCounts);
+        const labels = [];
+        const data = [];
+        const backgroundColors = [];
+        const colorsMapping = {
+            1: '#3699ff',
+            2: '#1bc5bd',
+            3: '#8950fc',
+            4: '#ffa800'
+        };
+        for (const [key, count] of Object.entries(typeCounts)) {
+            labels.push(requestTypeNames[key] || 'Unknown');
+            data.push(count);
+            backgroundColors.push(colorsMapping[key] || '#cccccc');
+        }
+        const donutChartEl = document.getElementById('requestTypesChart');
+        if (!donutChartEl) {
+            console.error("requestTypesChart element not found in the DOM.");
+            return;
+        }
+        const ctx = donutChartEl.getContext('2d');
+        new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['TOR', 'ID', 'Certificate', 'Others'],
+                labels: labels,
                 datasets: [{
-                    data: [12, 19, 3, 5],
-                    backgroundColor: ['#3699ff', '#1bc5bd', '#8950fc', '#ffa800']
+                    data: data,
+                    backgroundColor: backgroundColors
                 }]
             },
             options: {
@@ -103,81 +283,80 @@ class Dashboard {
                 maintainAspectRatio: false
             }
         });
+        console.log("Donut chart rendered successfully.");
     }
 
-    // Retrieve recent requests, sort them by submitted_at (newest first), and update the table.
-    async loadRecentRequests() {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.error("No token found in localStorage. Cannot load recent requests.");
-                return;
-            }
-            console.log("Fetching recent requests from:", `${API_BASE_URL}/requests/`);
-            const response = await fetch(`${API_BASE_URL}/requests/`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (!response.ok) {
-                console.error("HTTP error while fetching recent requests:", response.status);
-                return;
-            }
-            const data = await response.json();
-            console.log("Raw API response for requests:", data);
-            if (data.status === 'success') {
-                // Assume data.data is an array of request objects.
-                let requests = data.data;
-                console.log("Requests array before sorting:", requests);
-                // Sort the requests by submitted_at in descending order (newest first)
-                requests.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
-                console.log("Requests array after sorting (newest first):", requests);
-                // Limit to the 5 most recent requests.
-                const limitedRequests = requests.slice(0, 5);
-                console.log("Limited requests (top 5):", limitedRequests);
-                this.displayRequests(limitedRequests);
-            } else {
-                console.error("Error loading recent requests:", data.message);
-            }
-        } catch (error) {
-            console.error("Error loading recent requests:", error);
-        }
-    }
-
-    // Populate the requests table with the correct columns.
-    displayRequests(requests) {
-        const tbody = document.getElementById('requestsTableBody');
-        if (!requests || requests.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">No recent requests</td>
-                </tr>
-            `;
+    /**
+     * Sorts the requests by submission date and displays the five most recent in a table.
+     */
+    loadRecentRequestsUsingData() {
+        console.log("Rendering recent requests table using pre-fetched data...");
+        if (!this.requestsData) {
+            console.error("No requests data for recent requests.");
             return;
         }
-        tbody.innerHTML = requests.map(request => `
-            <tr>
-                <td>${request.user_id}</td>
-                <td>User ${request.user_id}</td>
-                <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
-                <td>
-                    <span class="badge bg-${this.getStatusColor(request.status)}">
-                        ${request.status}
-                    </span>
-                </td>
-                <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="viewRequest(${request.request_id})">
-                        View
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        // Sort requests descending by submission date and take the top 5
+        const sortedRequests = [...this.requestsData].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+        const limitedRequests = sortedRequests.slice(0, 5);
+        console.log("Recent requests:", limitedRequests);
+        this.displayRequests(limitedRequests);
     }
 
-    // Helper for setting badge colors.
+    /**
+     * Renders the given list of requests into the requests table.
+     * Maps each request to its corresponding user data for display.
+     * @param {Array} requests - List of request objects to display.
+     */
+    displayRequests(requests) {
+        console.log("Displaying requests in table...");
+        if (!this.usersData) {
+            console.error("No users data available.");
+            return;
+        }
+        // Create a lookup map for users based on user_id for fast access
+        const userMap = {};
+        this.usersData.forEach(user => {
+            userMap[user.user_id] = user;
+        });
+        const tbody = document.getElementById('requestsTableBody');
+        if (!tbody) {
+            console.error("requestsTableBody element not found in the DOM.");
+            return;
+        }
+        if (!requests || requests.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center">No recent requests</td></tr>`;
+            console.log("No recent requests to display.");
+            return;
+        }
+        tbody.innerHTML = requests.map(request => {
+            const user = userMap[request.user_id] || { student_number: "N/A", first_name: "Unknown", last_name: "" };
+            return `
+                <tr>
+                    <td>${user.student_number}</td>
+                    <td>${user.first_name} ${user.last_name}</td>
+                    <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
+                    <td>
+                        <span class="badge bg-${this.getStatusColor(request.status)}">
+                            ${request.status}
+                        </span>
+                    </td>
+                    <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewRequest(${request.request_id})">
+                            View
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        console.log("Requests table updated.");
+    }
+
+    /**
+     * Returns a Bootstrap color class based on the request status.
+     * @param {string} status - The status of the request.
+     * @returns {string} The Bootstrap color class.
+     */
     getStatusColor(status) {
         const colors = {
             'pending': 'warning',
@@ -188,28 +367,25 @@ class Dashboard {
         };
         return colors[status] || 'secondary';
     }
-    
-    // Update a request's status and then refresh stats.
+
+    /**
+     * Updates the status of a specific request by sending a PUT request to the API.
+     * After a successful update, it refreshes the dashboard data.
+     * @param {number} requestId - The ID of the request to update.
+     * @param {string} newStatus - The new status to set.
+     */
     async updateRequestStatus(requestId, newStatus) {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error("No token found in localStorage. Cannot update request status.");
-            return;
-        }
+        console.log(`Updating status for request ${requestId} to ${newStatus}`);
         try {
             const response = await fetch(`${API_BASE_URL}/requests/${requestId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: getAuthHeaders(this.token),
                 body: JSON.stringify({ status: newStatus })
             });
             const result = await response.json();
             if (result.status === 'success') {
                 console.log("Request status updated successfully:", result.message);
-                // Refresh stats so that the count for completed requests goes up.
-                this.loadStats();
+                this.initializeData(); // Refresh all data
             } else {
                 console.error("Failed to update request status:", result.message);
             }
@@ -217,84 +393,61 @@ class Dashboard {
             console.error("Error updating request status:", error);
         }
     }
-    
-    // Fetch the current admin's profile using only the token, then use the admin_id to build the URL.
+
+    /**
+     * Fetches and displays the username of the logged-in admin.
+     */
     async displayUserName() {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error("No token found in localStorage.");
-            return;
-        }
-        // First, fetch the current admin's profile to get the admin_id.
-        const profileUrl = `${API_BASE_URL}/auth/admin/users`;
-        console.log("Fetching admin profile from:", profileUrl);
+        console.log("Displaying logged-in admin username...");
         try {
-            const profileResponse = await fetch(profileUrl, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (!profileResponse.ok) {
-                console.error("HTTP error while fetching admin profile:", profileResponse.status);
+            const url = `${API_BASE_URL}/admin/users`;
+            const response = await fetch(url, { method: 'GET', headers: getAuthHeaders(this.token) });
+            if (!response.ok) {
+                console.error("HTTP error while fetching admin details:", response.status);
                 return;
             }
-            const profileResult = await profileResponse.json();
-            console.log("Admin profile result:", profileResult);
-            if (profileResult.status === 'success' && profileResult.data && profileResult.data.admin_id) {
-                const adminId = profileResult.data.admin_id;
-                // Now, build the URL dynamically using the adminId.
-                const url = `${API_BASE_URL}/auth/admin/users/${adminId}`;
-                console.log("Fetching admin details from:", url);
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'Authorization': `Bearer ${token}`
+            const result = await response.json();
+            if (result.status === 'success' && Array.isArray(result.data)) {
+                // Use the stored loggedAdminId if available; otherwise, use the first admin record
+                const loggedAdminId = localStorage.getItem('loggedAdminId');
+                let currentAdmin = loggedAdminId ? result.data.find(admin => admin.admin_id == loggedAdminId) : result.data[0];
+                if (currentAdmin && currentAdmin.username) {
+                    const userFullNameEl = document.getElementById('userFullName');
+                    if (userFullNameEl) {
+                        userFullNameEl.textContent = currentAdmin.username;
                     }
-                });
-                if (!response.ok) {
-                    console.error("HTTP error while fetching admin details:", response.status);
-                    return;
-                }
-                const result = await response.json();
-                console.log("Admin details result:", result);
-                if (result.status === 'success') {
-                    document.getElementById('userFullName').textContent = result.data.username;
+                    console.log("Logged in admin username:", currentAdmin.username);
                 } else {
-                    console.error("Error fetching admin details:", result.message);
+                    console.error("No matching admin record found.");
                 }
             } else {
-                console.error("Error fetching admin profile:", profileResult.message);
+                console.error("Error fetching admin details:", result.message);
             }
         } catch (error) {
-            console.error("Error fetching admin profile:", error);
+            console.error("Error fetching admin details:", error);
         }
     }
 }
 
-// Initialize dashboard when DOM is loaded
+// Initialize the Dashboard once the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    const dashboard = new Dashboard();
+    console.log("DOM fully loaded, initializing Dashboard.");
+    new Dashboard();
 });
 
-// ----- LOGOUT FUNCTIONALITY -----
-// Global auth object with a logout method that calls the logout API endpoint.
-// The endpoint should delete the token from your admin_tokens table on the server side.
+// Authentication object containing logout functionality
 const auth = {
+    /**
+     * Logs out the current admin by calling the logout API,
+     * removes stored tokens, and redirects to the login page.
+     */
     logout: async function() {
-        const token = localStorage.getItem('token');
-        if (token) {
+        console.log("Attempting logout...");
+        if (localStorage.getItem('token')) {
             try {
                 const response = await fetch(`${API_BASE_URL}/admin/logout`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: getAuthHeaders(localStorage.getItem('token'))
                 });
                 const result = await response.json();
                 if (result.status === 'success') {
@@ -303,13 +456,11 @@ const auth = {
                     console.error('Logout failed:', result.message);
                 }
             } catch (error) {
-                console.error('Error calling logout API:', error);
+                console.error('Error during logout:', error);
             }
         }
-        // Clear stored token and user data on the client side
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        // Redirect to the login page
         window.location.href = 'login.html';
     }
 };

@@ -1,218 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPANG LINK Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="../WEB/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPANG LINK Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../WEB/css/style.css">
 </head>
 <body>
-    <div class="wrapper">
-        <!-- Sidebar -->
-        <nav id="sidebar">
-            <div class="sidebar-header">
-                <img src="assets/upang-logo.png" alt="UPANG LINK" class="logo">
-                <h3>UPANG LINK</h3>
-                <p class="text-muted small">PHINMA Education Network</p>
+  <!-- Loading Indicator: Always centered using fixed positioning and transform -->
+  <div id="loadingIndicator" style="
+       position: fixed !important;
+       top: 50% !important;
+       left: 50% !important;
+       transform: translate(-50%, -50%) !important;
+       z-index: 9999 !important;
+       font-size: 3rem !important;
+       background: rgba(255,255,255,0.9) !important;
+       padding: 20px !important;
+       border-radius: 5px !important;">
+    Loading...
+  </div>
+
+  <div class="wrapper">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <img src="assets/upang-logo.png" alt="UPANG LINK" class="logo">
+        <h3>UPANG LINK</h3>
+        <p class="text-muted small">PHINMA Education Network</p>
+      </div>
+
+      <ul class="list-unstyled components">
+        <li class="active">
+          <a href="index.html">
+            <i class="bi bi-grid"></i>
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="requests.html">
+            <i class="bi bi-file-text"></i>
+            Requests
+          </a>
+        </li>
+        <li>
+          <a href="users.html">
+            <i class="bi bi-people"></i>
+            Users
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Page Content -->
+    <div id="content">
+      <!-- Top Navigation -->
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <!-- Left side empty -->
+          <div></div>
+          
+          <!-- Right side icons -->
+          <div class="ms-auto d-flex align-items-center">
+            <!-- User's name -->
+            <div class="me-4">
+              <span class="fw-semibold" id="userFullName">Admin User</span>
             </div>
-
-            <ul class="list-unstyled components">
-                <li class="active">
-                    <a href="index.html">
-                        <i class="bi bi-grid"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="requests.html">
-                        <i class="bi bi-file-text"></i>
-                        Requests
-                    </a>
-                </li>
-                <li>
-                    <a href="users.html">
-                        <i class="bi bi-people"></i>
-                        Users
-                    </a>
-                </li>
-                <li>
-                    <a href="reports.html">
-                        <i class="bi bi-bar-chart"></i>
-                        Reports
-                    </a>
-                </li>
-                <li>
-                    <a href="settings.html">
-                        <i class="bi bi-gear"></i>
-                        Settings
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Page Content -->
-        <div id="content">
-            <!-- Top Navigation -->
-            <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                <div class="container-fluid">
-                    <!-- Left side empty -->
-                    <div></div>
-                    
-                    <!-- Right side icons -->
-                    <div class="ms-auto d-flex align-items-center">
-                        <!-- User's name -->
-                        <div class="me-4">
-                            <span class="fw-semibold" id="userFullName">Admin User</span>
-                        </div>
-                        
-                        <!-- Notifications -->
-                        <div class="dropdown">
-                            <button class="btn position-relative" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-bell"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    3
-                                </span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#">New Request</a></li>
-                                <li><a class="dropdown-item" href="#">Request Updated</a></li>
-                                <li><a class="dropdown-item" href="#">System Update</a></li>
-                            </ul>
-                        </div>
-                        
-                        <!-- Profile -->
-                        <div class="dropdown ms-3">
-                            <button class="btn" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#">Profile</a></li>
-                                <li><a class="dropdown-item" href="#">Settings</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" onclick="auth.logout()">Logout</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- Dashboard Content -->
-            <div class="container-fluid">
-                <!-- Stats Cards -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <div class="card bg-primary text-white">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="card-title">Total Users</h6>
-                                        <h2 class="card-text" id="totalUsers">0</h2>
-                                    </div>
-                                    <i class="bi bi-people fs-1"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-success text-white">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="card-title">Total Requests</h6>
-                                        <h2 class="card-text" id="totalRequests">0</h2>
-                                    </div>
-                                    <i class="bi bi-file-text fs-1"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-warning text-white">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="card-title">Pending</h6>
-                                        <h2 class="card-text" id="pendingRequests">0</h2>
-                                    </div>
-                                    <i class="bi bi-clock-history fs-1"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-info text-white">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="card-title">Completed</h6>
-                                        <h2 class="card-text" id="completedRequests">0</h2>
-                                    </div>
-                                    <i class="bi bi-check-circle fs-1"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Charts Row -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-8">
-                        <div class="card">
-                            <div class="card-header">
-                                Request Statistics
-                            </div>
-                            <div class="card-body">
-                                <canvas id="requestsChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-header">
-                                Request Types
-                            </div>
-                            <div class="card-body">
-                                <canvas id="requestTypesChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Requests Table -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>Recent Requests</span>
-                        <a href="requests.html" class="btn btn-primary btn-sm">View All</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Student No.</th>
-                                        <th>Name</th>
-                                        <th>Request Type</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="requestsTableBody">
-                                    <!-- Requests will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+            
+            <!-- Profile -->
+            <div class="dropdown ms-3">
+              <button class="btn" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" onclick="auth.logout()">Logout</a></li>
+              </ul>
             </div>
+          </div>
         </div>
-    </div>
+      </nav>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/dashboard.js"></script>
+      <!-- Dashboard Content -->
+      <div class="container-fluid">
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="card bg-primary text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="card-title">Total Users</h6>
+                    <h2 class="card-text" id="totalUsers">0</h2>
+                  </div>
+                  <i class="bi bi-people fs-1"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-success text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="card-title">Total Requests</h6>
+                    <h2 class="card-text" id="totalRequests">0</h2>
+                  </div>
+                  <i class="bi bi-file-text fs-1"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-warning text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="card-title">Pending</h6>
+                    <h2 class="card-text" id="pendingRequests">0</h2>
+                  </div>
+                  <i class="bi bi-clock-history fs-1"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-info text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="card-title">Completed</h6>
+                    <h2 class="card-text" id="completedRequests">0</h2>
+                  </div>
+                  <i class="bi bi-check-circle fs-1"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header">
+                Request Statistics
+              </div>
+              <div class="card-body">
+                <canvas id="requestsChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header">
+                Request Types
+              </div>
+              <div class="card-body">
+                <canvas id="requestTypesChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Requests Table -->
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Recent Requests</span>
+            <a href="requests.html" class="btn btn-primary btn-sm">View All</a>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Student No.</th>
+                    <th>Name</th>
+                    <th>Request Type</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="requestsTableBody">
+                  <!-- Requests will be loaded here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/dashboard.js"></script>
 </body>
-</html> 
+</html>

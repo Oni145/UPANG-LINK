@@ -22,6 +22,7 @@ body {
     align-items: stretch;
 }
 
+
 #sidebar {
     min-width: var(--sidebar-width);
     max-width: var(--sidebar-width);
