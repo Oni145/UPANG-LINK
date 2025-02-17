@@ -1,5 +1,13 @@
 // dashboard.js
 
+// A lookup for request type names based on type_id.
+const requestTypeNames = {
+    1: 'TOR',
+    2: 'ID',          // Add more mappings as needed.
+    3: 'Certificate',
+    4: 'Others'
+};
+
 class Dashboard {
     constructor() {
         this.loadStats();
@@ -12,6 +20,10 @@ class Dashboard {
     async loadStats() {
         try {
             const token = localStorage.getItem('token');
+            if (!token) {
+                console.error("No token found in localStorage. Cannot load stats.");
+                return;
+            }
             const response = await fetch(`${API_BASE_URL}/requests/`, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -19,16 +31,20 @@ class Dashboard {
                     'Authorization': `Bearer ${token}`
                 }
             });
+            if (!response.ok) {
+                console.error("HTTP error while loading stats:", response.status);
+                return;
+            }
             const data = await response.json();
             if (data.status === 'success') {
-                // Assuming data.data is an array of request objects.
+                // data.data is an array of request objects.
                 const requests = data.data;
                 const totalRequests = requests.length;
                 // Count distinct users by their user_id.
                 const totalUsers = [...new Set(requests.map(r => r.user_id))].length;
                 // Filter requests by status.
                 const pendingRequests = requests.filter(r => r.status === 'pending').length;
-                // For your case, we assume a completed request is marked "approved"
+                // Here, we assume a request is considered "completed" when its status is "approved".
                 const completedRequests = requests.filter(r => r.status === 'approved').length;
                 
                 console.log("Total Requests:", totalRequests);
@@ -89,26 +105,48 @@ class Dashboard {
         });
     }
 
-    // Retrieve recent requests and update the table.
+    // Retrieve recent requests, sort them by submitted_at (newest first), and update the table.
     async loadRecentRequests() {
         try {
-            const response = await fetch(`${API_BASE_URL}/web/requests/recent`, {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error("No token found in localStorage. Cannot load recent requests.");
+                return;
+            }
+            console.log("Fetching recent requests from:", `${API_BASE_URL}/requests/`);
+            const response = await fetch(`${API_BASE_URL}/requests/`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-Platform': 'web'
+                    'Authorization': `Bearer ${token}`
                 }
             });
+            if (!response.ok) {
+                console.error("HTTP error while fetching recent requests:", response.status);
+                return;
+            }
             const data = await response.json();
+            console.log("Raw API response for requests:", data);
             if (data.status === 'success') {
-                this.displayRequests(data.data);
+                // Assume data.data is an array of request objects.
+                let requests = data.data;
+                console.log("Requests array before sorting:", requests);
+                // Sort the requests by submitted_at in descending order (newest first)
+                requests.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+                console.log("Requests array after sorting (newest first):", requests);
+                // Limit to the 5 most recent requests.
+                const limitedRequests = requests.slice(0, 5);
+                console.log("Limited requests (top 5):", limitedRequests);
+                this.displayRequests(limitedRequests);
+            } else {
+                console.error("Error loading recent requests:", data.message);
             }
         } catch (error) {
             console.error("Error loading recent requests:", error);
         }
     }
 
-    // Populate the requests table.
+    // Populate the requests table with the correct columns.
     displayRequests(requests) {
         const tbody = document.getElementById('requestsTableBody');
         if (!requests || requests.length === 0) {
@@ -121,9 +159,9 @@ class Dashboard {
         }
         tbody.innerHTML = requests.map(request => `
             <tr>
-                <td>${request.student.student_number}</td>
-                <td>${request.student.name}</td>
-                <td>${request.type.name}</td>
+                <td>${request.user_id}</td>
+                <td>User ${request.user_id}</td>
+                <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
                 <td>
                     <span class="badge bg-${this.getStatusColor(request.status)}">
                         ${request.status}
@@ -131,7 +169,7 @@ class Dashboard {
                 </td>
                 <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="viewRequest(${request.id})">
+                    <button class="btn btn-sm btn-primary" onclick="viewRequest(${request.request_id})">
                         View
                     </button>
                 </td>
@@ -154,6 +192,10 @@ class Dashboard {
     // Update a request's status and then refresh stats.
     async updateRequestStatus(requestId, newStatus) {
         const token = localStorage.getItem('token');
+        if (!token) {
+            console.error("No token found in localStorage. Cannot update request status.");
+            return;
+        }
         try {
             const response = await fetch(`${API_BASE_URL}/requests/${requestId}`, {
                 method: 'PUT',
@@ -176,15 +218,15 @@ class Dashboard {
         }
     }
     
-    // Fetch the current admin's profile using the token to dynamically build the URL with the admin's id.
+    // Fetch the current admin's profile using only the token, then use the admin_id to build the URL.
     async displayUserName() {
         const token = localStorage.getItem('token');
         if (!token) {
             console.error("No token found in localStorage.");
             return;
         }
-        // First, fetch the current admin's profile details (which include the admin_id)
-        const profileUrl = `${API_BASE_URL}/auth/admin/users/`;
+        // First, fetch the current admin's profile to get the admin_id.
+        const profileUrl = `${API_BASE_URL}/auth/admin/users`;
         console.log("Fetching admin profile from:", profileUrl);
         try {
             const profileResponse = await fetch(profileUrl, {
@@ -199,13 +241,12 @@ class Dashboard {
                 console.error("HTTP error while fetching admin profile:", profileResponse.status);
                 return;
             }
-            
             const profileResult = await profileResponse.json();
             console.log("Admin profile result:", profileResult);
             if (profileResult.status === 'success' && profileResult.data && profileResult.data.admin_id) {
                 const adminId = profileResult.data.admin_id;
                 // Now, build the URL dynamically using the adminId.
-                const url = `${API_BASE_URL}/auth/admin/users/${admin_id}`;
+                const url = `${API_BASE_URL}/auth/admin/users/${adminId}`;
                 console.log("Fetching admin details from:", url);
                 const response = await fetch(url, {
                     method: 'GET',
@@ -222,7 +263,6 @@ class Dashboard {
                 const result = await response.json();
                 console.log("Admin details result:", result);
                 if (result.status === 'success') {
-                    // Update the username element with the returned username.
                     document.getElementById('userFullName').textContent = result.data.username;
                 } else {
                     console.error("Error fetching admin details:", result.message);
@@ -249,7 +289,7 @@ const auth = {
         const token = localStorage.getItem('token');
         if (token) {
             try {
-                const response = await fetch(`${API_BASE_URL}/auth/admin/logout`, {
+                const response = await fetch(`${API_BASE_URL}/admin/logout`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

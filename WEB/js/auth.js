@@ -8,7 +8,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
     // IMPORTANT: Ensure the URL exactly matches your API's expected URL.
     // In this case, the API expects: /UPANG LINK/api/auth/admin/login
-    const apiUrl = 'http://localhost:8000/UPANG%20LINK/api/auth/admin/login';
+    const apiUrl = 'http://localhost:8000/UPANG%20LINK/api/admin/login';
 
     try {
         const response = await fetch(apiUrl, {

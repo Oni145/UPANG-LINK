@@ -39,7 +39,7 @@ $uri = explode('/', trim($endpoint, '/'));
 error_log("Request URI: " . $request_uri);
 error_log("Path: " . $path);
 error_log("Endpoint: " . $endpoint);
-error_log("URI[0]: " . (isset($uri[0]) ? $uri[0] : 'empty'));
+error_log("URI: " . print_r($uri, true));
 
 // If no specific endpoint is requested, return API info
 if (empty($uri[0])) {
@@ -47,9 +47,10 @@ if (empty($uri[0])) {
         'status' => 'success',
         'message' => 'Welcome to UPANG LINK API',
         'endpoints' => [
-            'auth' => '/auth',
-            'requests' => '/requests',
-            'users' => '/users'
+            'auth'    => '/auth',
+            'admin'   => '/admin',
+            'requests'=> '/requests',
+            'users'   => '/users'
         ]
     ]);
     exit();
@@ -57,24 +58,21 @@ if (empty($uri[0])) {
 
 // Route the request to the appropriate controller
 $requestMethod = $_SERVER["REQUEST_METHOD"];
+$controller = null;
 
 switch($uri[0]) {
+    case 'admin':
+        $controller = new AdminAuthController($db);
+        array_unshift($uri, 'auth');
+        break;
     case 'auth':
-        // For admin endpoints, the URL should be: /UPANG LINK/api/auth/admin/login
-        if (isset($uri[1]) && strtolower($uri[1]) === 'admin') {
-            $controller = new AdminAuthController($db);
-        } else {
-            include_once __DIR__ . '/../controllers/AuthController.php';
-            $controller = new AuthController($db);
-        }
+        include_once __DIR__ . '/../controllers/AuthController.php';
+        $controller = new AuthController($db);
+        array_shift($uri);
         break;
     case 'requests':
         include_once __DIR__ . '/../controllers/RequestController.php';
         $controller = new RequestController($db);
-        break;
-    case 'users':
-        include_once __DIR__ . '/../controllers/UserController.php';
-        $controller = new UserController($db);
         break;
     default:
         header("HTTP/1.1 404 Not Found");
@@ -83,14 +81,14 @@ switch($uri[0]) {
             'message' => 'Endpoint not found',
             'debug' => [
                 'request_uri' => $request_uri,
-                'path' => $path,
-                'endpoint' => $endpoint,
-                'uri' => $uri
+                'path'        => $path,
+                'endpoint'    => $endpoint,
+                'uri'         => $uri
             ]
         ]);
         exit();
 }
 
-// Let the controller handle the request
+// Let the controller handle the request with the (possibly modified) URI
 $controller->handleRequest($requestMethod, $uri);
 ?>
