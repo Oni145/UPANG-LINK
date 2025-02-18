@@ -438,38 +438,38 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Authentication object containing logout functionality
-const auth = {
-    /**
-     * Logs out the current admin by calling the logout API,
-     * removes stored tokens, and redirects to the login page.
-     */
-    logout: async function() {
-        console.log("Attempting logout...");
-        // Show the loading screen before proceeding with the logout
-        const dashboard = new Dashboard(); // Create a new Dashboard instance to access the showLoading method
-        dashboard.showLoading();
+    const auth = {
+        /**
+         * Logs out the current admin by calling the logout API,
+         * removes stored tokens, and redirects to the login page.
+         */
+        logout: async function() {
+            console.log("Attempting logout...");
+            // Show the loading screen before proceeding with the logout
+            const dashboard = new Dashboard(); // Create a new Dashboard instance to access the showLoading method
+            dashboard.showLoading();
 
-        if (localStorage.getItem('token')) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/admin/logout`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(localStorage.getItem('token'))
-                });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    console.log('Logout successful:', result.message);
-                } else {
-                    console.error('Logout failed:', result.message);
+            if (localStorage.getItem('token')) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/logout`, {
+                        method: 'POST',
+                        headers: getAuthHeaders(localStorage.getItem('token'))
+                    });
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        console.log('Logout successful:', result.message);
+                    } else {
+                        console.error('Logout failed:', result.message);
+                    }
+                } catch (error) {
+                    console.error('Error during logout:', error);
                 }
-            } catch (error) {
-                console.error('Error during logout:', error);
             }
-        }
-        // Remove the stored token and user data
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+            // Remove the stored token and user data
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
 
-        // After the logout is processed, redirect to the login page
-        window.location.href = 'login.html';
-    }
-};
+            // After the logout is processed, redirect to the login page
+            window.location.href = 'login.html';
+        }
+    };

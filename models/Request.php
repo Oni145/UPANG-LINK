@@ -1,4 +1,7 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 class Request {
     public $conn;
     public $request_id;
@@ -92,11 +95,23 @@ class Request {
         }
     }
 
-    // Update a request (e.g., update status)
+    // Update a request (allowing any valid status from the table's ENUM)
     public function update() {
+        // Normalize the status value by trimming whitespace and converting to lowercase
+        $status = strtolower(trim($this->status));
+        
+        // Allowed statuses as defined in your ENUM
+        $allowedStatuses = ['pending', 'approved', 'rejected', 'in_progress', 'completed'];
+
+        // Validate the status value
+        if (!in_array($status, $allowedStatuses)) {
+            error_log("Invalid status value: {$this->status}. Allowed values: " . implode(', ', $allowedStatuses));
+            return false;
+        }
+    
         $query = "UPDATE requests SET status = :status WHERE request_id = :request_id";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':status', $this->status);
+        $stmt->bindParam(':status', $status);
         $stmt->bindParam(':request_id', $this->request_id);
         if ($stmt->execute()) {
             return true;

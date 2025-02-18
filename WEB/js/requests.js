@@ -1,214 +1,466 @@
-class RequestManager {
-    constructor() {
-        this.requestsTableBody = document.getElementById('requestsTableBody');
-        this.requests = [];
-        this.currentRequest = null;
+// requests.js
+
+// Base URL for the API without a trailing slash
+const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/api';
+
+// Mapping for request type IDs to names
+const requestTypeNames = {
+    1: 'TOR',
+    2: 'ID',
+    3: 'Certificate',
+    4: 'Others'
+};
+
+/**
+ * Returns common headers for authenticated requests.
+ * Uses the provided token.
+ * @param {string} token - The user token.
+ * @returns {Object} The headers object.
+ */
+function getAuthHeaders(token) {
+    return {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+}
+
+/**
+ * Displays a loading indicator with a centered logo.
+ */
+function showLoading() {
+    const loadingEl = document.getElementById('loadingIndicator');
+    const loadingLogo = document.getElementById('loadingLogo');
+    if (loadingEl && loadingLogo) {
+        loadingEl.style.display = 'flex';
+        loadingEl.style.justifyContent = 'center';
+        loadingEl.style.alignItems = 'center';
+        loadingLogo.style.display = 'block';
     }
+}
 
-    async fetchRequests() {
-        try {
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.requests}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Platform': 'web'
-                }
-            });
+/**
+ * Hides the loading indicator.
+ */
+function hideLoading() {
+    const loadingEl = document.getElementById('loadingIndicator');
+    if (loadingEl) {
+        loadingEl.style.display = 'none';
+    }
+}
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                this.displayRequests(data.data);
-            } else {
-                console.error('Error fetching requests:', data.message);
-            }
-        } catch (error) {
-            console.error('Error fetching requests:', error);
-            // Show user-friendly error message
-            this.requestsTableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">
-                        Failed to load requests. Please try again later.
-                    </td>
-                </tr>
-            `;
+/**
+ * Fetches and displays the logged-in admin's username.
+ */
+async function displayUserName() {
+    console.log("Displaying logged-in admin username...");
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error("No token found in localStorage.");
+        return;
+    }
+    try {
+        const url = `${API_BASE_URL}/admin/users`;
+        const response = await fetch(url, { method: 'GET', headers: getAuthHeaders(token) });
+        if (!response.ok) {
+            console.error("HTTP error while fetching admin details:", response.status);
+            return;
         }
+        const result = await response.json();
+        if (result.status === 'success' && Array.isArray(result.data)) {
+            const loggedAdminId = localStorage.getItem('loggedAdminId');
+            const currentAdmin = loggedAdminId 
+                ? result.data.find(admin => admin.admin_id == loggedAdminId) 
+                : result.data[0];
+            if (currentAdmin && currentAdmin.username) {
+                const userFullNameEl = document.getElementById('userFullName');
+                if (userFullNameEl) {
+                    userFullNameEl.textContent = currentAdmin.username;
+                }
+                console.log("Logged in admin username:", currentAdmin.username);
+            } else {
+                console.error("No matching admin record found.");
+            }
+        } else {
+            console.error("Error fetching admin details:", result.message);
+        }
+    } catch (error) {
+        console.error("Error fetching admin details:", error);
     }
+}
 
-    displayRequests(requests) {
-        if (!requests || requests.length === 0) {
-            this.requestsTableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">No requests found</td>
-                </tr>
-            `;
+/**
+ * Global variables to hold all requests and pagination state.
+ */
+let allRequests = [];
+let allUsersData = [];
+// Global variable for the data currently displayed (allRequests or filtered)
+let displayData = [];
+// Default currentPage is 1; this value will be preserved on updates.
+let currentPage = 1;
+const itemsPerPage = 10;
+let totalPages = 1;
+
+/**
+ * Fetches requests and users data, sorts the requests by submission date,
+ * and initializes (or refreshes) pagination without resetting the current page.
+ */
+async function loadRequestsUsingPagination() {
+    console.log("Fetching all requests for pagination...");
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error("No token found in localStorage.");
+        return;
+    }
+    try {
+        showLoading();
+        const [requestsResponse, usersResponse] = await Promise.all([
+            fetch(`${API_BASE_URL}/requests/`, { headers: getAuthHeaders(token) }),
+            fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(token) })
+        ]);
+
+        if (!requestsResponse.ok) {
+            console.error("HTTP error fetching requests:", requestsResponse.status);
+            return;
+        }
+        if (!usersResponse.ok) {
+            console.error("HTTP error fetching users:", usersResponse.status);
             return;
         }
 
-        this.requestsTableBody.innerHTML = requests.map(request => `
+        const requestsData = await requestsResponse.json();
+        const usersData = await usersResponse.json();
+
+        if (requestsData.status !== 'success') {
+            console.error("Error in requests data:", requestsData.message);
+            return;
+        }
+        if (usersData.status !== 'success') {
+            console.error("Error in users data:", usersData.message);
+            return;
+        }
+
+        // Sort requests descending by submission date
+        allRequests = [...requestsData.data].sort(
+            (a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)
+        );
+        allUsersData = usersData.data;
+        // Initially, displayData is the full list
+        displayData = allRequests;
+        totalPages = Math.ceil(displayData.length / itemsPerPage);
+        // Ensure currentPage remains within valid bounds after refresh
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+        if (currentPage < 1) {
+            currentPage = 1;
+        }
+        displayRequestsPage(currentPage);
+        updatePaginationControls(currentPage);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    } finally {
+        hideLoading();
+    }
+}
+
+/**
+ * Returns the array of requests to display (filtered by search if applicable).
+ */
+function getDisplayData() {
+    return displayData;
+}
+
+/**
+ * Displays the requests for the given page from the current display data.
+ * @param {number} page - The page number to display.
+ */
+function displayRequestsPage(page) {
+    const dataToDisplay = getDisplayData();
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = page * itemsPerPage;
+    const pageRequests = dataToDisplay.slice(startIndex, endIndex);
+    displayRequests(pageRequests, allUsersData);
+}
+
+/**
+ * Renders the provided list of requests into the requests table.
+ * @param {Array} requests - List of request objects.
+ * @param {Array} usersData - List of user objects.
+ */
+function displayRequests(requests, usersData) {
+    console.log("Displaying requests in table...");
+    // Create a lookup map for users based on user_id
+    const userMap = {};
+    usersData.forEach(user => {
+        userMap[user.user_id] = user;
+    });
+    const tbody = document.getElementById('requestsTableBody');
+    if (!tbody) {
+        console.error("requestsTableBody element not found in the DOM.");
+        return;
+    }
+    if (!requests || requests.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center">No requests to display</td></tr>`;
+        console.log("No requests to display.");
+        return;
+    }
+    tbody.innerHTML = requests.map(request => {
+        const user = userMap[request.user_id] || { student_number: "N/A", first_name: "Unknown", last_name: "" };
+        return `
             <tr>
-                <td>${request.student.student_number}</td>
-                <td>${request.student.name}</td>
-                <td>${request.type.name}</td>
+                <td>${user.student_number}</td>
+                <td>${user.first_name} ${user.last_name}</td>
+                <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
                 <td>
-                    <span class="badge bg-${this.getStatusColor(request.status)}">
+                    <span class="badge bg-${getStatusColor(request.status)}">
                         ${request.status}
                     </span>
                 </td>
                 <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="viewRequest(${request.id})">
+                    <button class="btn btn-sm btn-primary" onclick="viewRequest(${request.request_id})">
                         View
                     </button>
                 </td>
             </tr>
-        `).join('');
+        `;
+    }).join('');
+    console.log("Requests table updated.");
+}
+
+/**
+ * Returns a Bootstrap color class based on the request status.
+ * @param {string} status - The status of the request.
+ * @returns {string} The Bootstrap color class.
+ */
+function getStatusColor(status) {
+    const colors = {
+        'pending': 'warning',
+        'approved': 'success',
+        'rejected': 'danger',
+        'in_progress': 'info',
+        'completed': 'primary'
+    };
+    return colors[status] || 'secondary';
+}
+
+/**
+ * Updates the pagination controls, including Previous/Next buttons and a dedicated page counter.
+ * @param {number} currentPage - The current page number.
+ */
+function updatePaginationControls(currentPage) {
+    const dataToDisplay = getDisplayData();
+    totalPages = Math.ceil(dataToDisplay.length / itemsPerPage);
+    const paginationContainer = document.getElementById('paginationContainer');
+    if (!paginationContainer) {
+        console.error("paginationContainer element not found in the DOM.");
+        return;
     }
-
-    getStatusColor(status) {
-        const colors = {
-            'pending': 'warning',
-            'approved': 'success',
-            'rejected': 'danger',
-            'in_progress': 'info',
-            'completed': 'primary'
-        };
-        return colors[status] || 'secondary';
+    
+    // Build the pagination controls HTML
+    let controlsHtml = '';
+    if (currentPage > 1) {
+        controlsHtml += `<button id="prevPage" class="btn btn-secondary btn-sm me-2">Previous</button>`;
     }
-
-    async updateRequestStatus(requestId, status) {
-        try {
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.requests}/${requestId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${auth.getToken()}`
-                },
-                body: JSON.stringify({ status })
-            });
-
-            const data = await response.json();
-            if (data.status === 'success') {
-                await this.fetchRequests();
-                return true;
+    
+    // Dedicated page counter span
+    controlsHtml += `<span id="pageCounter">Page ${currentPage} of ${totalPages}</span>`;
+    
+    if (currentPage < totalPages) {
+        controlsHtml += `<button id="nextPage" class="btn btn-secondary btn-sm ms-2">Next</button>`;
+    }
+    
+    paginationContainer.innerHTML = controlsHtml;
+    
+    // Attach event listeners for pagination buttons
+    const prevPageButton = document.getElementById('prevPage');
+    if (prevPageButton) {
+        prevPageButton.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                displayRequestsPage(currentPage);
+                updatePaginationControls(currentPage);
             }
-            return false;
-        } catch (error) {
-            console.error('Error updating request:', error);
-            return false;
-        }
-    }
-
-    async addNote(requestId, note) {
-        try {
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.requests}/${requestId}/notes`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${auth.getToken()}`
-                },
-                body: JSON.stringify({ note })
-            });
-
-            const data = await response.json();
-            if (data.status === 'success') {
-                this.fetchRequestDetails(requestId);
-                return true;
-            }
-            return false;
-        } catch (error) {
-            console.error('Error adding note:', error);
-            return false;
-        }
-    }
-
-    renderRequestsTable() {
-        const tbody = document.getElementById('requestsTableBody');
-        tbody.innerHTML = '';
-
-        this.requests.forEach(request => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${request.request_id}</td>
-                <td>${request.student_name}</td>
-                <td>${request.request_type}</td>
-                <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
-                <td><span class="status-badge status-${request.status.toLowerCase()}">${request.status}</span></td>
-                <td>
-                    <button onclick="requestManager.showRequestDetails('${request.request_id}')" class="view-btn">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(tr);
         });
     }
-
-    async showRequestDetails(requestId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.requests}/${requestId}`, {
-                headers: {
-                    'Authorization': `Bearer ${auth.getToken()}`
-                }
-            });
-
-            const data = await response.json();
-            if (data.status === 'success') {
-                this.currentRequest = data.data;
-                this.renderRequestDetails();
-                document.getElementById('requestModal').style.display = 'block';
+    const nextPageButton = document.getElementById('nextPage');
+    if (nextPageButton) {
+        nextPageButton.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayRequestsPage(currentPage);
+                updatePaginationControls(currentPage);
             }
-        } catch (error) {
-            console.error('Error fetching request details:', error);
-        }
-    }
-
-    renderRequestDetails() {
-        const request = this.currentRequest;
-        
-        // Update modal fields
-        document.getElementById('studentName').textContent = request.student_name;
-        document.getElementById('studentNumber').textContent = request.student_number;
-        document.getElementById('studentCourse').textContent = request.course;
-        document.getElementById('requestType').textContent = request.request_type;
-        document.getElementById('requestStatus').textContent = request.status;
-        document.getElementById('requestDate').textContent = new Date(request.submitted_at).toLocaleString();
-
-        // Render requirements
-        const requirementsList = document.getElementById('requirementsList');
-        requirementsList.innerHTML = '';
-        request.requirements.forEach(req => {
-            const div = document.createElement('div');
-            div.className = 'requirement-item';
-            div.innerHTML = `
-                <span class="requirement-name">${req.name}</span>
-                <span class="requirement-status ${req.status}">${req.status}</span>
-            `;
-            requirementsList.appendChild(div);
-        });
-
-        // Render notes
-        const notesList = document.getElementById('notesList');
-        notesList.innerHTML = '';
-        request.notes.forEach(note => {
-            const div = document.createElement('div');
-            div.className = 'note-item';
-            div.innerHTML = `
-                <p class="note-text">${note.note}</p>
-                <small class="note-meta">By ${note.admin_name} on ${new Date(note.created_at).toLocaleString()}</small>
-            `;
-            notesList.appendChild(div);
         });
     }
 }
 
-const requestManager = new RequestManager();
-// Load requests when the page loads
+/**
+ * Opens a Bootstrap modal to display the full view of a ticket.
+ * Replaces the separate update buttons with a dropdown selection and an Update button.
+ * @param {number} requestId - The ID of the ticket/request to view.
+ */
+function viewRequest(requestId) {
+    // Find the selected request
+    const request = allRequests.find(r => r.request_id == requestId);
+    if (!request) {
+        console.error("Request not found!");
+        return;
+    }
+    // Find the associated user details
+    const user = allUsersData.find(u => u.user_id == request.user_id);
+
+    // Build the modal title and body content
+    const modalTitle = `Ticket Details - Request #${request.request_id}`;
+    const modalBodyContent = `
+      <p><strong>Student Number:</strong> ${user ? user.student_number : 'N/A'}</p>
+      <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+      <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+      <p><strong>Status:</strong> <span class="badge bg-${getStatusColor(request.status)}">${request.status}</span></p>
+      <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+      <p><strong>Additional Information:</strong> ${request.details || 'No additional details available.'}</p>
+    `;
+    
+    // Populate modal elements (ensure these IDs match your HTML modal)
+    const modalTitleEl = document.getElementById('ticketModalLabel');
+    const modalBodyEl = document.getElementById('ticketModalBody');
+    if (modalTitleEl && modalBodyEl) {
+         modalTitleEl.innerHTML = modalTitle;
+         modalBodyEl.innerHTML = modalBodyContent;
+    } else {
+         console.error("Modal elements not found in the DOM.");
+         return;
+    }
+    
+    // Set up the dropdown selection and update button in the modal footer.
+    // Remove previous listeners by cloning the update button.
+    const updateStatusBtn = document.getElementById('updateStatusBtn');
+    if (updateStatusBtn) {
+         const newUpdateStatusBtn = updateStatusBtn.cloneNode(true);
+         newUpdateStatusBtn.addEventListener('click', () => {
+             const statusSelect = document.getElementById('statusSelect');
+             const newStatus = statusSelect.value;
+             updateTicketStatus(request.request_id, newStatus);
+         });
+         updateStatusBtn.parentNode.replaceChild(newUpdateStatusBtn, updateStatusBtn);
+    }
+    
+    // Show the modal using Bootstrap's modal plugin
+    const ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
+    ticketModal.show();
+}
+
+/**
+ * Updates the status of a ticket by sending a PUT request to the API.
+ * Endpoint: http://localhost:8000/requests/{request_id}
+ * Method: PUT, with headers including the token and JSON content.
+ * 
+ * Body example: { "status": "approved" }
+ * 
+ * Expected response:
+ * {
+ *    "status": "success",
+ *    "message": "Request status updated successfully"
+ * }
+ * 
+ * @param {number} requestId - The ID of the ticket/request.
+ * @param {string} newStatus - The new status (e.g., 'approved', 'in_progress', 'completed', 'rejected').
+ */
+async function updateTicketStatus(requestId, newStatus) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error("No token found in localStorage.");
+        return;
+    }
+    try {
+        const response = await fetch(`${API_BASE_URL}/requests/${requestId}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(token),
+            body: JSON.stringify({ status: newStatus })
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            console.log(`Ticket ${requestId} updated to ${newStatus} successfully.`);
+            // Hide the modal after updating
+            const ticketModal = bootstrap.Modal.getInstance(document.getElementById('ticketModal'));
+            if (ticketModal) {
+                ticketModal.hide();
+            }
+            // Refresh the list of requests while preserving the current page and search filter
+            loadRequestsUsingPagination();
+        } else {
+            console.error("Failed to update ticket status:", result.message);
+        }
+    } catch (error) {
+        console.error("Error updating ticket status:", error);
+    }
+}
+
+// Authentication object containing logout functionality
+const auth = {
+    /**
+     * Logs out the current admin by calling the logout API,
+     * removes stored tokens, and redirects to the login page.
+     */
+    logout: async function() {
+        console.log("Attempting logout...");
+        showLoading();
+
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/logout`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(token)
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    console.log('Logout successful:', result.message);
+                } else {
+                    console.error('Logout failed:', result.message);
+                }
+            } catch (error) {
+                console.error('Error during logout:', error);
+            }
+        }
+        // Remove stored token and user data, then redirect to login page
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+    }
+};
+
+// Attach search functionality and initialize everything without deleting existing code.
 document.addEventListener('DOMContentLoaded', () => {
-    requestManager.fetchRequests();
-}); 
+    displayUserName();
+    loadRequestsUsingPagination();
+    
+    // Attach search event listener on the search input field.
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+        searchInput.addEventListener("input", function() {
+            const query = this.value.trim().toLowerCase();
+            if (query === "") {
+                displayData = allRequests;
+            } else {
+                displayData = allRequests.filter(request => {
+                    // Fields for filtering.
+                    const status = (request.status || "").toLowerCase();
+                    const date = new Date(request.submitted_at).toLocaleDateString().toLowerCase();
+                    const type = (requestTypeNames[request.type_id] || "").toLowerCase();
+                    const user = allUsersData.find(u => u.user_id === request.user_id);
+                    const studentNumber = user && user.student_number ? user.student_number.toLowerCase() : "";
+                    const name = user ? (user.first_name + " " + user.last_name).toLowerCase() : "";
+                    // Return true if any field includes the query.
+                    return status.includes(query) || date.includes(query) || type.includes(query) || studentNumber.includes(query) || name.includes(query);
+                });
+            }
+            // Reset to first page after filtering.
+            currentPage = 1;
+            totalPages = Math.ceil(displayData.length / itemsPerPage);
+            displayRequestsPage(currentPage);
+            updatePaginationControls(currentPage);
+        });
+    }
+});
