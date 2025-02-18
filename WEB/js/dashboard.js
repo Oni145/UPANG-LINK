@@ -1,5 +1,3 @@
-// dashboard.js
-
 // Base URL for the API without a trailing slash
 const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/api';
 
@@ -40,13 +38,17 @@ class Dashboard {
     }
 
     /**
-     * Displays a loading message on the screen.
+     * Displays a loading message on the screen with the logo centered.
      */
     showLoading() {
         const loadingEl = document.getElementById('loadingIndicator');
-        if (loadingEl) {
-            loadingEl.style.display = 'block';
-            loadingEl.textContent = 'Loading...';
+        const loadingLogo = document.getElementById('loadingLogo');
+        
+        if (loadingEl && loadingLogo) {
+            loadingEl.style.display = 'flex'; // Use 'flex' to center the logo
+            loadingEl.style.justifyContent = 'center';
+            loadingEl.style.alignItems = 'center';
+            loadingLogo.style.display = 'block'; // Ensure the logo is visible
         }
     }
 
@@ -443,6 +445,10 @@ const auth = {
      */
     logout: async function() {
         console.log("Attempting logout...");
+        // Show the loading screen before proceeding with the logout
+        const dashboard = new Dashboard(); // Create a new Dashboard instance to access the showLoading method
+        dashboard.showLoading();
+
         if (localStorage.getItem('token')) {
             try {
                 const response = await fetch(`${API_BASE_URL}/admin/logout`, {
@@ -459,8 +465,11 @@ const auth = {
                 console.error('Error during logout:', error);
             }
         }
+        // Remove the stored token and user data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+
+        // After the logout is processed, redirect to the login page
         window.location.href = 'login.html';
     }
 };

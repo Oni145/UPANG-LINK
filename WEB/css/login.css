@@ -6,6 +6,18 @@
     --error-color: #dc3545;
 }
 
+/* Add a keyframe for sliding down and fading in */
+@keyframes slideDownFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-50px); /* Start 50px above its final position */
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0); /* End at its normal position */
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -14,7 +26,8 @@
 }
 
 body {
-    background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+    background: url('../assets/5667001.jpg') no-repeat center center fixed;
+    background-size: cover; 
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -23,12 +36,14 @@ body {
 
 .login-container {
     width: 100%;
-    max-width: 400px;
-    padding: 20px;
+    max-width: 500px;
+    padding: 1px;
+    border-radius: 2px;
+    animation: slideDownFadeIn 1s ease-out; /* Apply slide-down and fade-in animation */
 }
 
 .login-card {
-    background: white;
+    background: #fafafa;
     border-radius: 10px;
     padding: 30px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -93,7 +108,7 @@ body {
 .login-btn {
     width: 100%;
     padding: 12px;
-    background-color: var(--primary-color);
+    background-color: green;
     color: white;
     border: none;
     border-radius: 5px;
@@ -107,7 +122,7 @@ body {
 }
 
 .login-btn:hover {
-    background-color: #1557b0;
+    background-color: darkgreen;
 }
 
 .login-btn i {
@@ -139,4 +154,4 @@ body {
     to {
         transform: rotate(360deg);
     }
-} 
+}

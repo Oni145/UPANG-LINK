@@ -6,6 +6,7 @@
   <title>UPANG LINK - Admin Login</title>
   <link rel="stylesheet" href="../WEB/css/login.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
 </head>
 <body>
   <div class="login-container">
@@ -38,7 +39,23 @@
       </form>
     </div>
   </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const loginButton = document.querySelector('.login-btn');
+      loginButton.classList.add('loading'); // Add the loading class to show the spinner and hide text
+
+      // Simulate an API call with a timeout (You can replace this with your actual login process)
+      setTimeout(() => {
+        // After the login action (e.g., API call), you can remove the loading class
+        loginButton.classList.remove('loading');
+        
+        // Handle login logic here, such as redirecting the user or showing an error
+      }, 3000); // Simulate 3 seconds delay
+    });
+  </script>
 </body>
-<script src="js/auth.js"></script>
 </html>
- 
