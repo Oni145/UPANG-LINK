@@ -13,11 +13,45 @@ class AuthController {
             case 'POST':
                 if(isset($uri[1])) {
                     switch($uri[1]) {
-                        case 'login':
-                            $this->login();
+                        case 'admin':
+                            if(isset($uri[2])) {
+                                switch($uri[2]) {
+                                    case 'login':
+                                        $this->adminLogin();
+                                        break;
+                                    case 'register':
+                                        $this->adminRegister();
+                                        break;
+                                    case 'logout':
+                                        $this->logout();
+                                        break;
+                                    default:
+                                        $this->sendError('Invalid admin endpoint');
+                                }
+                            }
                             break;
-                        case 'register':
-                            $this->register();
+                        case 'student':
+                            if(isset($uri[2])) {
+                                switch($uri[2]) {
+                                    case 'login':
+                                        $this->studentLogin();
+                                        break;
+                                    case 'register':
+                                        $this->studentRegister();
+                                        break;
+                                    case 'verify-email':
+                                        $this->verifyEmail();
+                                        break;
+                                    case 'resend-verification':
+                                        $this->resendVerification();
+                                        break;
+                                    case 'logout':
+                                        $this->logout();
+                                        break;
+                                    default:
+                                        $this->sendError('Invalid student endpoint');
+                                }
+                            }
                             break;
                         default:
                             $this->sendError('Invalid endpoint');
@@ -52,22 +86,42 @@ class AuthController {
         }
     }
 
-    private function login() {
+    private function adminLogin() {
         $data = json_decode(file_get_contents("php://input"));
         
-        if(!empty($data->student_number) && !empty($data->password)) {
-            $user = $this->user->getByStudentNumber($data->student_number);
+        if(!empty($data->email) && !empty($data->password)) {
+            $user = $this->user->getByEmail($data->email);
             
             if($user && password_verify($data->password, $user['password'])) {
-                // Remove password from response
-                unset($user['password']);
-                
-                http_response_code(200);
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Login successful',
-                    'data' => $user
-                ]);
+                if($user['role'] !== 'admin') {
+                    $this->sendError('Access denied. Admin access only.', 403);
+                    return;
+                }
+
+                // Create session
+                $device_info = $_SERVER['HTTP_USER_AGENT'] ?? null;
+                $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
+                $session = $this->user->createSession($user['user_id'], $device_info, $ip_address);
+
+                if($session) {
+                    // Remove password from response
+                    unset($user['password']);
+                    unset($user['email_verification_token']);
+                    unset($user['email_token_expiry']);
+                    
+                    http_response_code(200);
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Login successful',
+                        'data' => [
+                            'user' => $user,
+                            'token' => $session['token'],
+                            'expires_at' => $session['expires_at']
+                        ]
+                    ]);
+                } else {
+                    $this->sendError('Failed to create session');
+                }
             } else {
                 $this->sendError('Invalid credentials');
             }
@@ -76,38 +130,213 @@ class AuthController {
         }
     }
 
-    private function register() {
+    private function studentLogin() {
+        $data = json_decode(file_get_contents("php://input"));
+        
+        if(!empty($data->email) && !empty($data->password)) {
+            $user = $this->user->getByEmail($data->email);
+            
+            if($user && password_verify($data->password, $user['password'])) {
+                if($user['role'] !== 'student') {
+                    $this->sendError('Access denied. Student access only.', 403);
+                    return;
+                }
+
+                if(!$user['email_verified']) {
+                    $this->sendError('Please verify your email address first.', 403);
+                    return;
+                }
+
+                // Create session
+                $device_info = $_SERVER['HTTP_USER_AGENT'] ?? null;
+                $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
+                $session = $this->user->createSession($user['user_id'], $device_info, $ip_address);
+
+                if($session) {
+                    // Remove sensitive data from response
+                    unset($user['password']);
+                    unset($user['email_verification_token']);
+                    unset($user['email_token_expiry']);
+                    
+                    http_response_code(200);
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Login successful',
+                        'data' => [
+                            'user' => $user,
+                            'token' => $session['token'],
+                            'expires_at' => $session['expires_at']
+                        ]
+                    ]);
+                } else {
+                    $this->sendError('Failed to create session');
+                }
+            } else {
+                $this->sendError('Invalid credentials');
+            }
+        } else {
+            $this->sendError('Incomplete data');
+        }
+    }
+
+    private function adminRegister() {
+        $data = json_decode(file_get_contents("php://input"));
+        
+        if(
+            !empty($data->email) &&
+            !empty($data->password) &&
+            !empty($data->first_name) &&
+            !empty($data->last_name)
+        ) {
+            // Check if email already exists
+            if($this->user->getByEmail($data->email)) {
+                $this->sendError('Email already exists');
+                return;
+            }
+
+            $this->user->email = $data->email;
+            $this->user->password = password_hash($data->password, PASSWORD_DEFAULT);
+            $this->user->first_name = $data->first_name;
+            $this->user->last_name = $data->last_name;
+            $this->user->role = 'admin';
+            
+            if($this->user->create()) {
+                // Admin accounts are automatically verified
+                $this->user->verifyEmail($this->user->email_verification_token);
+                
+                http_response_code(201);
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Admin account created successfully'
+                ]);
+            } else {
+                $this->sendError('Unable to create admin account');
+            }
+        } else {
+            $this->sendError('Incomplete data');
+        }
+    }
+
+    private function studentRegister() {
         $data = json_decode(file_get_contents("php://input"));
         
         if(
             !empty($data->student_number) && 
+            !empty($data->email) &&
             !empty($data->password) &&
             !empty($data->first_name) &&
             !empty($data->last_name) &&
-            !empty($data->role)
+            !empty($data->course)
         ) {
+            // Check if email already exists
+            if($this->user->getByEmail($data->email)) {
+                $this->sendError('Email already exists');
+                return;
+            }
+
+            // Check if student number already exists
+            if($this->user->getByStudentNumber($data->student_number)) {
+                $this->sendError('Student number already exists');
+                return;
+            }
+
             $this->user->student_number = $data->student_number;
+            $this->user->email = $data->email;
             $this->user->password = password_hash($data->password, PASSWORD_DEFAULT);
             $this->user->first_name = $data->first_name;
             $this->user->last_name = $data->last_name;
-            $this->user->role = $data->role;
-            $this->user->course = $data->course ?? null;
+            $this->user->role = 'student';
+            $this->user->course = $data->course;
             $this->user->year_level = $data->year_level ?? null;
             $this->user->block = $data->block ?? null;
             $this->user->admission_year = $data->admission_year ?? null;
 
             if($this->user->create()) {
+                // Send verification email
+                $this->sendVerificationEmail($this->user->email, $this->user->email_verification_token);
+                
                 http_response_code(201);
                 echo json_encode([
                     'status' => 'success',
-                    'message' => 'User created successfully'
+                    'message' => 'Account created successfully. Please check your email to verify your account.'
                 ]);
             } else {
-                $this->sendError('Unable to create user');
+                $this->sendError('Unable to create account');
             }
         } else {
             $this->sendError('Incomplete data');
         }
+    }
+
+    private function verifyEmail() {
+        $data = json_decode(file_get_contents("php://input"));
+        
+        if(!empty($data->token)) {
+            $result = $this->user->verifyEmail($data->token);
+            
+            if($result['status'] === 'success') {
+                http_response_code(200);
+                echo json_encode($result);
+            } else {
+                $this->sendError($result['message']);
+            }
+        } else {
+            $this->sendError('Verification token is required');
+        }
+    }
+
+    private function resendVerification() {
+        $data = json_decode(file_get_contents("php://input"));
+        
+        if(!empty($data->email)) {
+            $user = $this->user->getByEmail($data->email);
+            
+            if($user && !$user['email_verified']) {
+                $this->user->user_id = $user['user_id'];
+                if($this->user->regenerateVerificationToken()) {
+                    // Send new verification email
+                    $this->sendVerificationEmail($user['email'], $this->user->email_verification_token);
+                    
+                    http_response_code(200);
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Verification email sent successfully'
+                    ]);
+                } else {
+                    $this->sendError('Failed to generate new verification token');
+                }
+            } else {
+                $this->sendError('Invalid email or account already verified');
+            }
+        } else {
+            $this->sendError('Email is required');
+        }
+    }
+
+    private function logout() {
+        $headers = getallheaders();
+        $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
+        
+        if($token) {
+            if($this->user->logout($token)) {
+                http_response_code(200);
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Logged out successfully'
+                ]);
+            } else {
+                $this->sendError('Failed to logout');
+            }
+        } else {
+            $this->sendError('Authorization token is required');
+        }
+    }
+
+    private function sendVerificationEmail($email, $token) {
+        // TODO: Implement email sending functionality
+        // For now, we'll just log the verification link
+        $verification_link = "http://your-frontend-url/verify-email?token=" . $token;
+        error_log("Verification link for {$email}: {$verification_link}");
     }
 
     private function getAllUsers() {
@@ -193,4 +422,5 @@ class AuthController {
             'message' => $message
         ]);
     }
+} 
 } 
