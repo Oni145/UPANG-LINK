@@ -1,7 +1,6 @@
 <?php
 class AuthController {
     
-
     private $db;
     private $user;
 
@@ -222,6 +221,9 @@ class AuthController {
         if (empty($data->last_name)) {
             $missing[] = "last_name";
         }
+        if (empty($data->role)) {
+            $missing[] = "role";
+        }
         if (empty($data->course)) {
             $missing[] = "course";
         }
@@ -241,6 +243,7 @@ class AuthController {
         $this->user->user_id         = $id;
         $this->user->first_name      = $data->first_name;
         $this->user->last_name       = $data->last_name;
+        $this->user->role            = $data->role;
         $this->user->course          = $data->course;
         $this->user->year_level      = $data->year_level;
         $this->user->block           = $data->block;

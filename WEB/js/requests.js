@@ -27,14 +27,24 @@ function getAuthHeaders(token) {
 
 /**
  * Displays a loading indicator with a centered logo.
+ * Modified to display in front as an overlay while preserving the original background color.
  */
 function showLoading() {
     const loadingEl = document.getElementById('loadingIndicator');
     const loadingLogo = document.getElementById('loadingLogo');
     if (loadingEl && loadingLogo) {
+        // Set styles to cover the viewport and appear in front
         loadingEl.style.display = 'flex';
         loadingEl.style.justifyContent = 'center';
         loadingEl.style.alignItems = 'center';
+        loadingEl.style.position = 'fixed';
+        loadingEl.style.top = '0';
+        loadingEl.style.left = '0';
+        loadingEl.style.width = '100%';
+        loadingEl.style.height = '100%';
+        // Removed the forced background color so that the original color is preserved
+        // loadingEl.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+        loadingEl.style.zIndex = '9999';
         loadingLogo.style.display = 'block';
     }
 }
@@ -273,14 +283,16 @@ function updatePaginationControls(currentPage) {
     
     paginationContainer.innerHTML = controlsHtml;
     
-    // Attach event listeners for pagination buttons
+    // Attach event listeners for pagination buttons with loading indicator
     const prevPageButton = document.getElementById('prevPage');
     if (prevPageButton) {
         prevPageButton.addEventListener('click', () => {
             if (currentPage > 1) {
+                showLoading();
                 currentPage--;
                 displayRequestsPage(currentPage);
                 updatePaginationControls(currentPage);
+                hideLoading();
             }
         });
     }
@@ -288,9 +300,11 @@ function updatePaginationControls(currentPage) {
     if (nextPageButton) {
         nextPageButton.addEventListener('click', () => {
             if (currentPage < totalPages) {
+                showLoading();
                 currentPage++;
                 displayRequestsPage(currentPage);
                 updatePaginationControls(currentPage);
+                hideLoading();
             }
         });
     }
@@ -373,6 +387,7 @@ async function updateTicketStatus(requestId, newStatus) {
         console.error("No token found in localStorage.");
         return;
     }
+    showLoading();
     try {
         const response = await fetch(`${API_BASE_URL}/requests/${requestId}`, {
             method: 'PUT',
@@ -394,6 +409,8 @@ async function updateTicketStatus(requestId, newStatus) {
         }
     } catch (error) {
         console.error("Error updating ticket status:", error);
+    } finally {
+        hideLoading();
     }
 }
 

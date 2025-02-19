@@ -67,23 +67,33 @@ class User {
     }
 
     public function update() {
-        $query = "UPDATE " . $this->table_name . "
-                SET first_name = :first_name,
-                    last_name = :last_name,
-                    course = :course,
-                    year_level = :year_level,
-                    block = :block
-                WHERE user_id = :user_id";
-
+        // Prepare fields that are always updated
+        $fields = [
+            'first_name'     => $this->first_name,
+            'last_name'      => $this->last_name,
+            'course'         => $this->course,
+            'year_level'     => $this->year_level,
+            'block'          => $this->block,
+            'admission_year' => $this->admission_year
+        ];
+        
+        // Build the SET clause; include role if it's provided (not empty)
+        $setClause = "first_name = :first_name, last_name = :last_name, course = :course, year_level = :year_level, block = :block, admission_year = :admission_year, updated_at = NOW()";
+        if (!empty($this->role)) {
+            $setClause = "first_name = :first_name, last_name = :last_name, role = :role, course = :course, year_level = :year_level, block = :block, admission_year = :admission_year, updated_at = NOW()";
+            $fields['role'] = $this->role;
+        }
+        
+        $query = "UPDATE " . $this->table_name . " SET " . $setClause . " WHERE user_id = :user_id";
+        $fields['user_id'] = $this->user_id;
+        
         $stmt = $this->conn->prepare($query);
-
-        $stmt->bindParam(":first_name", $this->first_name);
-        $stmt->bindParam(":last_name", $this->last_name);
-        $stmt->bindParam(":course", $this->course);
-        $stmt->bindParam(":year_level", $this->year_level);
-        $stmt->bindParam(":block", $this->block);
-        $stmt->bindParam(":user_id", $this->user_id);
-
+        
+        foreach ($fields as $key => $value) {
+            $stmt->bindValue(":" . $key, $value);
+        }
+        
         return $stmt->execute();
     }
-} 
+}
+?>

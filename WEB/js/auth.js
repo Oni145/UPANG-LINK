@@ -1,3 +1,19 @@
+// ----- COMMON CONSTANTS AND HELPER FUNCTIONS -----
+const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/api/';
+
+/**
+ * Returns common headers for authenticated requests using the provided token.
+ * @param {string} token - The user token.
+ * @returns {Object} The headers object.
+ */
+function getAuthHeaders(token) {
+    return {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+}
+
 // ----- LOGIN FUNCTIONALITY -----
 document.getElementById('loginForm').addEventListener('submit', async function(event) {
     event.preventDefault(); // Prevent default form submission
@@ -6,9 +22,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    // IMPORTANT: Ensure the URL exactly matches your API's expected URL.
-    // In this case, the API expects: /UPANG LINK/api/auth/admin/login
-    const apiUrl = 'http://localhost:8000/UPANG%20LINK/api/admin/login';
+    // Use the login endpoint with the defined API_BASE_URL
+    const apiUrl = API_BASE_URL + 'admin/login';
 
     try {
         const response = await fetch(apiUrl, {
@@ -44,41 +59,6 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         // Optionally display the error message in the UI
         document.getElementById('errorMessage').innerText = error.message;
     }
-    
 });
 
-const auth = {
-    /**
-     * Logs out the current admin by calling the logout API,
-     * removes stored tokens, and redirects to the login page.
-     */
-    logout: async function() {
-        console.log("Attempting logout...");
-        // Show the loading screen before proceeding with the logout
-        const dashboard = new Dashboard(); // Create a new Dashboard instance to access the showLoading method
-        dashboard.showLoading();
 
-        if (localStorage.getItem('token')) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/admin/logout`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(localStorage.getItem('token'))
-                });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    console.log('Logout successful:', result.message);
-                } else {
-                    console.error('Logout failed:', result.message);
-                }
-            } catch (error) {
-                console.error('Error during logout:', error);
-            }
-        }
-        // Remove the stored token and user data
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-
-        // After the logout is processed, redirect to the login page
-        window.location.href = 'login.html';
-    }
-};
