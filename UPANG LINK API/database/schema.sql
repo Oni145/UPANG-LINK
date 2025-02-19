@@ -3,26 +3,100 @@ CREATE DATABASE IF NOT EXISTS upang_link;
 USE upang_link;
 
 -- Users table
-CREATE TABLE users (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
-    student_number VARCHAR(50) UNIQUE,
+CREATE TABLE IF NOT EXISTS users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    student_number VARCHAR(20) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    role ENUM('student', 'admin', 'staff') NOT NULL,
-    course VARCHAR(100),
-    year_level INT,
-    block VARCHAR(10),
-    admission_year VARCHAR(4),
-    email_verified BOOLEAN DEFAULT FALSE,
-    email_verification_token VARCHAR(255),
-    email_token_expiry DATETIME,
-    reset_password_token VARCHAR(255),
-    reset_token_expiry DATETIME,
+    course VARCHAR(100) NOT NULL,
+    year_level INT NOT NULL,
+    block VARCHAR(10) NOT NULL,
+    admission_year VARCHAR(4) NOT NULL,
+    is_email_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Request types table
+CREATE TABLE IF NOT EXISTS request_types (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    processing_time VARCHAR(50) NOT NULL,
+    fee DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Requirements table
+CREATE TABLE IF NOT EXISTS requirements (
+    id VARCHAR(36) PRIMARY KEY,
+    type_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    is_required BOOLEAN DEFAULT TRUE,
+    allowed_file_types JSON NOT NULL,
+    max_file_size BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (type_id) REFERENCES request_types(id)
+);
+
+-- Requests table
+CREATE TABLE IF NOT EXISTS requests (
+    id VARCHAR(36) PRIMARY KEY,
+    student_id INT NOT NULL,
+    type_id INT NOT NULL,
+    purpose TEXT NOT NULL,
+    status ENUM('DRAFT', 'PENDING', 'IN_REVIEW', 'NEEDS_REVISION', 'PROCESSING', 'READY_FOR_PICKUP', 'COMPLETED', 'CANCELLED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+    remarks TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    FOREIGN KEY (type_id) REFERENCES request_types(id)
+);
+
+-- Requirement submissions table
+CREATE TABLE IF NOT EXISTS requirement_submissions (
+    request_id VARCHAR(36) NOT NULL,
+    requirement_id VARCHAR(36) NOT NULL,
+    file_url VARCHAR(255) NOT NULL,
+    status ENUM('PENDING', 'SUBMITTED', 'VERIFIED', 'REJECTED') NOT NULL DEFAULT 'SUBMITTED',
+    remarks TEXT,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    verified_at TIMESTAMP NULL,
+    PRIMARY KEY (request_id, requirement_id),
+    FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
+    FOREIGN KEY (requirement_id) REFERENCES requirements(id)
+);
+
+-- Password reset tokens table
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    token VARCHAR(100) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Email verification tokens table
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    token VARCHAR(100) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Create indexes
+CREATE INDEX idx_requests_student_id ON requests(student_id);
+CREATE INDEX idx_requests_type_id ON requests(type_id);
+CREATE INDEX idx_requests_status ON requests(status);
+CREATE INDEX idx_requirements_type_id ON requirements(type_id);
+CREATE INDEX idx_requirement_submissions_status ON requirement_submissions(status);
 
 -- User sessions table
 CREATE TABLE user_sessions (
@@ -35,7 +109,7 @@ CREATE TABLE user_sessions (
     expires_at DATETIME NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Categories table
@@ -46,30 +120,6 @@ CREATE TABLE categories (
     is_active BOOLEAN DEFAULT TRUE
 );
 
--- Request types table
-CREATE TABLE request_types (
-    type_id INT PRIMARY KEY AUTO_INCREMENT,
-    category_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    requirements JSON,
-    processing_time VARCHAR(100),
-    is_active BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (category_id) REFERENCES categories(category_id)
-);
-
--- Requests table
-CREATE TABLE requests (
-    request_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    type_id INT NOT NULL,
-    status ENUM('pending', 'approved', 'rejected', 'in_progress', 'completed') DEFAULT 'pending',
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (type_id) REFERENCES request_types(type_id)
-);
-
 -- Request notes table (for admin comments and additional information)
 CREATE TABLE request_notes (
     note_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -77,8 +127,8 @@ CREATE TABLE request_notes (
     user_id INT NOT NULL,
     note TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (request_id) REFERENCES requests(request_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (request_id) REFERENCES requests(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- Required documents table (for tracking required document submissions)
@@ -90,7 +140,7 @@ CREATE TABLE required_documents (
     file_path VARCHAR(255) NOT NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_verified BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (request_id) REFERENCES requests(request_id)
+    FOREIGN KEY (request_id) REFERENCES requests(id)
 );
 
 -- Notifications table
@@ -101,7 +151,7 @@ CREATE TABLE notifications (
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- Insert default categories
@@ -112,26 +162,22 @@ INSERT INTO categories (name, description) VALUES
 ('Books and Modules', 'Academic materials and learning resources');
 
 -- Insert sample request types
-INSERT INTO request_types (category_id, name, description, requirements, processing_time) VALUES
-(1, 'Transcript of Records', 'Official academic transcript', 'Clearance form, Request letter', '5-7 working days'),
-(1, 'Enrollment Certificate', 'Proof of enrollment document', 'Valid student ID', '2-3 working days'),
-(2, 'New Student ID', 'First time ID request', '1x1 ID Picture (white background, formal attire), Registration Form', '5-7 working days'),
-(2, 'ID Replacement', 'Lost or damaged ID replacement', 'Affidavit of Loss, 1x1 ID Picture (white background, formal attire)', '5-7 working days'),
-(3, 'PE Uniform Request', 'Physical Education uniform set', 'Valid student ID', '3-5 working days'),
-(3, 'School Uniform Request', 'Regular school uniform set', 'Valid student ID', '3-5 working days'),
-(4, 'Course Module Request', 'Subject-specific learning materials', 'Valid student ID, Professor approval', '1-2 working days');
+INSERT INTO request_types (name, description, processing_time, fee) VALUES
+('Transcript of Records', 'Official academic transcript', '5-7 working days', 0.00),
+('Enrollment Certificate', 'Proof of enrollment document', '2-3 working days', 0.00),
+('New Student ID', 'First time ID request', '5-7 working days', 0.00),
+('ID Replacement', 'Lost or damaged ID replacement', '5-7 working days', 0.00),
+('PE Uniform Request', 'Physical Education uniform set', '3-5 working days', 0.00),
+('School Uniform Request', 'Regular school uniform set', '3-5 working days', 0.00),
+('Course Module Request', 'Subject-specific learning materials', '1-2 working days', 0.00);
 
 -- Insert default admin user
-INSERT INTO users (student_number, password, first_name, last_name, role) VALUES
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin');
+INSERT INTO users (student_number, password_hash, first_name, last_name, course, year_level, block, admission_year) VALUES
+('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'BSIT', 3, 'BN', '2021');
 
 -- Insert sample student accounts with proper student ID format
-INSERT INTO users (student_number, password, first_name, last_name, role, course, year_level, block, admission_year) VALUES
-('0001-2021-00123', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Matthew Cymon', 'Estrada', 'student', 'BSIT', 3, 'BN', '2021');
-
--- Add requirements column to request_types if not exists
-ALTER TABLE request_types 
-MODIFY COLUMN requirements JSON;
+INSERT INTO users (student_number, password_hash, first_name, last_name, course, year_level, block, admission_year) VALUES
+('0001-2021-00123', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Matthew Cymon', 'Estrada', 'BSIT', 3, 'BN', '2021');
 
 -- Create table for requirement templates
 CREATE TABLE requirement_templates (
@@ -141,7 +187,7 @@ CREATE TABLE requirement_templates (
     description TEXT,
     file_types VARCHAR(255), -- Allowed file types (e.g., "pdf,jpg,png")
     is_required BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (type_id) REFERENCES request_types(type_id)
+    FOREIGN KEY (type_id) REFERENCES request_types(id)
 );
 
 -- Create table for request requirement notes
@@ -152,8 +198,8 @@ CREATE TABLE request_requirement_notes (
     requirement_name VARCHAR(100) NOT NULL,
     note TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (request_id) REFERENCES requests(request_id),
-    FOREIGN KEY (admin_id) REFERENCES users(user_id)
+    FOREIGN KEY (request_id) REFERENCES requests(id),
+    FOREIGN KEY (admin_id) REFERENCES users(id)
 );
 
 -- Update request types with both required and optional fields
