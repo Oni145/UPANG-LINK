@@ -152,22 +152,42 @@ class AuthController {
             $user = $this->user->getByEmail($data->email);
             
             if(!$user) {
-                $this->sendError('No account found with this email address', 401);
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'The email you entered is not registered. Please check your email or sign up for a new account.',
+                    'error_type' => 'email_not_found'
+                ]);
                 return;
             }
 
             if(!password_verify($data->password, $user['password'])) {
-                $this->sendError('Incorrect password', 401);
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Wrong password. Please try again.',
+                    'error_type' => 'invalid_password'
+                ]);
                 return;
             }
 
             if($user['role'] !== 'student') {
-                $this->sendError('Access denied. Student access only.', 403);
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'This account is not a student account. Please use the correct login page.',
+                    'error_type' => 'invalid_role'
+                ]);
                 return;
             }
 
             if(!$user['email_verified']) {
-                $this->sendError('Please verify your email address first.', 403);
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Please verify your email address before logging in. Check your inbox for the verification link.',
+                    'error_type' => 'email_not_verified'
+                ]);
                 return;
             }
 
@@ -193,10 +213,20 @@ class AuthController {
                     ]
                 ]);
             } else {
-                $this->sendError('Failed to create session');
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Unable to log in. Please try again.',
+                    'error_type' => 'session_error'
+                ]);
             }
         } else {
-            $this->sendError('Please enter both email and password');
+            http_response_code(200); // Changed to 200 to hide HTTP errors from users
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Please enter your email and password.',
+                'error_type' => 'missing_fields'
+            ]);
         }
     }
 
