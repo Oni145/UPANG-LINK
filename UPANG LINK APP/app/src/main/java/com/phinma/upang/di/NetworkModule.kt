@@ -46,7 +46,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8000/api/") // Android emulator localhost
+            .baseUrl("http://192.168.1.10/UPANG-LINK/UPANG%20LINK%20API/api/") // Added /api/ to the path
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
