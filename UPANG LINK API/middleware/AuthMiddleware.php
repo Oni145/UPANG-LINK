@@ -9,7 +9,9 @@ class AuthMiddleware {
             '/auth/student/login',
             '/auth/student/register',
             '/auth/student/verify-email',
-            '/auth/student/resend-verification'
+            '/auth/student/resend-verification',
+            '/auth/forgot-password',
+            '/auth/reset-password'
         ]
     ];
 

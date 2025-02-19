@@ -20,6 +20,7 @@ UPANG LINK is an application that simplifies the process of requesting essential
 
 - User Authentication (Admin & Student)
 - Email Verification System
+- Password Reset System
 - Session Management with Token Expiration
 - Request Management System
 - Real-time Notifications
@@ -184,6 +185,23 @@ Content-Type: application/json
     "email": "student@example.com",
     "password": "password"
 }
+
+# Forgot Password
+POST /auth/forgot-password
+Content-Type: application/json
+
+{
+    "email": "student@example.com"
+}
+
+# Reset Password
+POST /auth/reset-password
+Content-Type: application/json
+
+{
+    "token": "reset_token",
+    "password": "new_password"
+}
 ```
 
 ### Request Management
@@ -219,6 +237,14 @@ Content-Type: application/json
 
 ## File Handling
 
+The API includes a robust file handling system with the following features:
+- Secure file uploads with type validation
+- File size restrictions
+- Image compression
+- Unique filename generation
+- Organized directory structure
+- URL generation for file access
+
 ```php
 // Example: Upload file
 $fileHandler = new FileHandler();
@@ -232,10 +258,20 @@ if ($result['status'] === 'success') {
 
 ## Email System
 
+The API includes a comprehensive email system that supports:
+- SMTP configuration
+- HTML email templates
+- Email verification
+- Password reset emails
+- Fallback to PHP mail() function
+
 ```php
 // Example: Send verification email
 $emailHandler = new EmailHandler();
 $emailHandler->sendVerificationEmail($userEmail, $verificationToken);
+
+// Example: Send password reset email
+$emailHandler->sendResetPasswordEmail($userEmail, $resetToken);
 ```
 
 ## Rate Limiting
@@ -245,6 +281,7 @@ The API implements rate limiting to prevent abuse:
 - Rate limit headers in response:
   - X-RateLimit-Remaining
   - Retry-After (when limit exceeded)
+- Endpoint-specific limits can be configured
 
 ## Error Handling
 
@@ -276,14 +313,18 @@ All API responses follow this format:
 6. Enable error logging
 7. Use rate limiting
 8. Implement proper CORS policies
+9. Secure password reset process
+   - One-time use tokens
+   - 1-hour expiration
+   - Secure token generation
+   - Email verification
 
 ## Examples
 
-### Complete Request Flow
+### Complete Authentication Flow
 
 1. Student Registration:
 ```javascript
-// Frontend (JavaScript)
 async function registerStudent() {
     const response = await fetch('/auth/student/register', {
         method: 'POST',
@@ -305,7 +346,43 @@ async function registerStudent() {
 }
 ```
 
-2. Submit Document Request:
+2. Password Reset Flow:
+```javascript
+// Request password reset
+async function forgotPassword() {
+    const response = await fetch('/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: "student@example.com"
+        })
+    });
+    
+    const data = await response.json();
+    // User receives reset email
+}
+
+// Reset password
+async function resetPassword(token, newPassword) {
+    const response = await fetch('/auth/reset-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token: token,
+            password: newPassword
+        })
+    });
+    
+    const data = await response.json();
+    // Handle password reset response
+}
+```
+
+3. Submit Document Request:
 ```javascript
 async function submitRequest() {
     const formData = new FormData();
@@ -320,26 +397,6 @@ async function submitRequest() {
             'Authorization': `Bearer ${token}`
         },
         body: formData
-    });
-    
-    const data = await response.json();
-    // Handle response
-}
-```
-
-3. Admin Processing:
-```javascript
-async function processRequest(requestId, status) {
-    const response = await fetch(`/requests/${requestId}`, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bearer ${adminToken}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            status: status,
-            note: "Your request has been approved"
-        })
     });
     
     const data = await response.json();
@@ -391,6 +448,5 @@ USE upang_link_test;
 ## Support
 
 For support, please contact:
-- Email: support@upang-link.com
-- Documentation: https://docs.upang-link.com
-- Issue Tracker: https://github.com/your-username/upang-link-api/issues 
+- Email: jerickogarcia0@gmail.com
+- Issue Tracker: https://github.com/Oni145/UPANG-LINK/issues 

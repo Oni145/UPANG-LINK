@@ -22,6 +22,18 @@ class EmailHandler {
         return $this->send($to_email, $subject, $message);
     }
 
+    public function sendResetPasswordEmail($to_email, $token) {
+        $subject = "Reset your UPANG LINK password";
+        $reset_link = $this->config['app']['frontend_url'] . "/reset-password?token=" . $token;
+        
+        $message = $this->getEmailTemplate('reset_password', [
+            'reset_link' => $reset_link,
+            'app_name' => $this->config['app']['name']
+        ]);
+
+        return $this->send($to_email, $subject, $message);
+    }
+
     private function send($to_email, $subject, $message) {
         $headers = [
             'MIME-Version: 1.0',
@@ -155,6 +167,40 @@ class EmailHandler {
                         <p>Or copy and paste this link in your browser:</p>
                         <p>' . $variables['verification_link'] . '</p>
                         <p>If you did not create an account, please ignore this email.</p>
+                    </div>
+                </body>
+                </html>';
+            case 'reset_password':
+                return '
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .button { 
+                            display: inline-block; 
+                            padding: 10px 20px; 
+                            background-color: #007bff; 
+                            color: white; 
+                            text-decoration: none; 
+                            border-radius: 5px; 
+                        }
+                        .warning {
+                            color: #dc3545;
+                            font-weight: bold;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h2>Reset Your ' . $variables['app_name'] . ' Password</h2>
+                        <p>We received a request to reset your password. Click the button below to create a new password:</p>
+                        <p><a href="' . $variables['reset_link'] . '" class="button">Reset Password</a></p>
+                        <p>Or copy and paste this link in your browser:</p>
+                        <p>' . $variables['reset_link'] . '</p>
+                        <p class="warning">This link will expire in 1 hour.</p>
+                        <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
                     </div>
                 </body>
                 </html>';

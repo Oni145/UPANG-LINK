@@ -19,6 +19,8 @@ class User {
     public $email_token_expiry;
     public $created_at;
     public $updated_at;
+    public $reset_password_token;
+    public $reset_token_expiry;
 
     public function __construct($db) {
         $this->conn = $db;
@@ -222,6 +224,60 @@ class User {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":token", $this->email_verification_token);
         $stmt->bindParam(":expiry", $this->email_token_expiry);
+        $stmt->bindParam(":user_id", $this->user_id);
+
+        return $stmt->execute();
+    }
+
+    public function generateResetToken() {
+        $this->reset_password_token = bin2hex(random_bytes(32));
+        $this->reset_token_expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+        $query = "UPDATE " . $this->table_name . "
+                SET reset_password_token = :token,
+                    reset_token_expiry = :expiry
+                WHERE user_id = :user_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":token", $this->reset_password_token);
+        $stmt->bindParam(":expiry", $this->reset_token_expiry);
+        $stmt->bindParam(":user_id", $this->user_id);
+
+        return $stmt->execute();
+    }
+
+    public function validateResetToken($token) {
+        $query = "SELECT user_id, reset_token_expiry FROM " . $this->table_name . "
+                WHERE reset_password_token = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $token);
+        $stmt->execute();
+
+        if($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Check if token has expired
+            if(strtotime($row['reset_token_expiry']) < time()) {
+                return ['status' => 'error', 'message' => 'Reset token has expired'];
+            }
+
+            return ['status' => 'success', 'user_id' => $row['user_id']];
+        }
+        
+        return ['status' => 'error', 'message' => 'Invalid reset token'];
+    }
+
+    public function resetPassword($new_password) {
+        $query = "UPDATE " . $this->table_name . "
+                SET password = :password,
+                    reset_password_token = NULL,
+                    reset_token_expiry = NULL
+                WHERE user_id = :user_id";
+
+        $stmt = $this->conn->prepare($query);
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        $stmt->bindParam(":password", $hashed_password);
         $stmt->bindParam(":user_id", $this->user_id);
 
         return $stmt->execute();

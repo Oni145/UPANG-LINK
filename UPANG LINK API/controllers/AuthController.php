@@ -48,6 +48,12 @@ class AuthController {
                                     case 'logout':
                                         $this->logout();
                                         break;
+                                    case 'forgot-password':
+                                        $this->forgotPassword();
+                                        break;
+                                    case 'reset-password':
+                                        $this->resetPassword();
+                                        break;
                                     default:
                                         $this->sendError('Invalid student endpoint');
                                 }
@@ -412,6 +418,71 @@ class AuthController {
             ]);
         } else {
             $this->sendError('Unable to delete user');
+        }
+    }
+
+    private function forgotPassword() {
+        $data = json_decode(file_get_contents("php://input"));
+        
+        if(!empty($data->email)) {
+            $user = $this->user->getByEmail($data->email);
+            
+            if($user) {
+                $this->user->user_id = $user['user_id'];
+                if($this->user->generateResetToken()) {
+                    // Send reset password email
+                    $emailHandler = new EmailHandler();
+                    $emailHandler->sendResetPasswordEmail($user['email'], $this->user->reset_password_token);
+                    
+                    http_response_code(200);
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Password reset instructions have been sent to your email'
+                    ]);
+                } else {
+                    $this->sendError('Failed to generate reset token');
+                }
+            } else {
+                // For security reasons, don't reveal if email exists
+                http_response_code(200);
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'If an account exists with this email, password reset instructions have been sent'
+                ]);
+            }
+        } else {
+            $this->sendError('Email is required');
+        }
+    }
+
+    private function resetPassword() {
+        $data = json_decode(file_get_contents("php://input"));
+        
+        if(!empty($data->token) && !empty($data->password)) {
+            // Validate password strength
+            if(strlen($data->password) < 8) {
+                $this->sendError('Password must be at least 8 characters long');
+                return;
+            }
+
+            $result = $this->user->validateResetToken($data->token);
+            
+            if($result['status'] === 'success') {
+                $this->user->user_id = $result['user_id'];
+                if($this->user->resetPassword($data->password)) {
+                    http_response_code(200);
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Password has been reset successfully'
+                    ]);
+                } else {
+                    $this->sendError('Failed to reset password');
+                }
+            } else {
+                $this->sendError($result['message']);
+            }
+        } else {
+            $this->sendError('Token and new password are required');
         }
     }
 
