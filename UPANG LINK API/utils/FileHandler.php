@@ -1,180 +1,139 @@
 <?php
-
 class FileHandler {
-    private $uploadDir;
-    private $allowedMimeTypes;
-    private $maxFileSize;
+    private $config;
+    private $upload_dir;
+    private $allowed_types;
+    private $max_file_size;
 
     public function __construct() {
-        // Set upload directory relative to the project root
-        $this->uploadDir = dirname(__DIR__) . '/uploads/';
-        
-        // Initialize allowed MIME types
-        $this->allowedMimeTypes = [
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'image/jpg',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-
-        // Default max file size (5MB)
-        $this->maxFileSize = 5 * 1024 * 1024;
+        $this->config = require_once __DIR__ . '/../config/config.php';
+        $this->upload_dir = __DIR__ . '/../uploads/';
+        $this->allowed_types = $this->config['security']['allowed_file_types'];
+        $this->max_file_size = $this->config['security']['max_file_size'];
 
         // Create upload directory if it doesn't exist
-        if (!file_exists($this->uploadDir)) {
-            mkdir($this->uploadDir, 0755, true);
+        if (!file_exists($this->upload_dir)) {
+            mkdir($this->upload_dir, 0755, true);
         }
     }
 
-    /**
-     * Upload a file to the server
-     * 
-     * @param array $file The file data from $_FILES
-     * @param string $subDirectory Optional subdirectory within uploads
-     * @return string The URL of the uploaded file
-     * @throws Exception if file upload fails
-     */
-    public function uploadFile($file, $subDirectory = '') {
-        try {
-            // Validate file
-            $this->validateFile($file);
+    public function uploadFile($file, $subdirectory = '') {
+        // Validate file
+        $validation = $this->validateFile($file);
+        if ($validation !== true) {
+            return ['status' => 'error', 'message' => $validation];
+        }
 
-            // Create subdirectory if provided
-            $targetDir = $this->uploadDir;
-            if ($subDirectory) {
-                $targetDir .= trim($subDirectory, '/') . '/';
-                if (!file_exists($targetDir)) {
-                    mkdir($targetDir, 0755, true);
-                }
+        // Create subdirectory if provided
+        $target_dir = $this->upload_dir;
+        if ($subdirectory) {
+            $target_dir .= trim($subdirectory, '/') . '/';
+            if (!file_exists($target_dir)) {
+                mkdir($target_dir, 0755, true);
             }
+        }
 
-            // Generate unique filename
-            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-            $filename = uniqid() . '_' . time() . '.' . $extension;
-            $targetPath = $targetDir . $filename;
+        // Generate unique filename
+        $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $unique_filename = uniqid() . '_' . time() . '.' . $file_extension;
+        $target_path = $target_dir . $unique_filename;
 
+        // Compress image if it's an image file
+        if (in_array($file_extension, ['jpg', 'jpeg', 'png'])) {
+            if ($this->compressImage($file['tmp_name'], $target_path, 75)) {
+                return [
+                    'status' => 'success',
+                    'filename' => $unique_filename,
+                    'path' => str_replace($this->upload_dir, '', $target_path)
+                ];
+            }
+        } else {
             // Move uploaded file
-            if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-                throw new Exception('Failed to move uploaded file');
+            if (move_uploaded_file($file['tmp_name'], $target_path)) {
+                return [
+                    'status' => 'success',
+                    'filename' => $unique_filename,
+                    'path' => str_replace($this->upload_dir, '', $target_path)
+                ];
             }
-
-            // Return relative path from uploads directory
-            return ($subDirectory ? $subDirectory . '/' : '') . $filename;
-        } catch (Exception $e) {
-            throw new Exception('File upload failed: ' . $e->getMessage());
         }
+
+        return ['status' => 'error', 'message' => 'Failed to upload file'];
     }
 
-    /**
-     * Delete a file from the server
-     * 
-     * @param string $fileUrl The relative URL of the file to delete
-     * @return bool True if file was deleted successfully
-     */
-    public function deleteFile($fileUrl) {
-        if (!$fileUrl) {
+    private function validateFile($file) {
+        // Check for upload errors
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            return 'Upload failed with error code: ' . $file['error'];
+        }
+
+        // Check file size
+        if ($file['size'] > $this->max_file_size) {
+            return 'File size exceeds limit of ' . ($this->max_file_size / 1024 / 1024) . 'MB';
+        }
+
+        // Check file type
+        $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($file_extension, $this->allowed_types)) {
+            return 'File type not allowed. Allowed types: ' . implode(', ', $this->allowed_types);
+        }
+
+        // Verify MIME type
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        $allowed_mimes = [
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png'
+        ];
+
+        if (!in_array($mime_type, $allowed_mimes)) {
+            return 'Invalid file type detected';
+        }
+
+        // Additional security checks
+        if (preg_match('/\.(php|phtml|php3|php4|php5|php7|phar|jar)$/i', $file['name'])) {
+            return 'File type not allowed for security reasons';
+        }
+
+        return true;
+    }
+
+    private function compressImage($source, $destination, $quality) {
+        $info = getimagesize($source);
+
+        if ($info['mime'] == 'image/jpeg') {
+            $image = imagecreatefromjpeg($source);
+        } elseif ($info['mime'] == 'image/png') {
+            $image = imagecreatefrompng($source);
+        } else {
             return false;
         }
 
-        $filePath = $this->uploadDir . $fileUrl;
-        if (file_exists($filePath)) {
-            return unlink($filePath);
+        // Compress and save
+        if ($info['mime'] == 'image/jpeg') {
+            return imagejpeg($image, $destination, $quality);
+        } elseif ($info['mime'] == 'image/png') {
+            return imagepng($image, $destination, round(9 * $quality / 100));
         }
 
         return false;
     }
 
-    /**
-     * Validate uploaded file
-     * 
-     * @param array $file The file data from $_FILES
-     * @throws Exception if validation fails
-     */
-    private function validateFile($file) {
-        // Check for upload errors
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception($this->getUploadErrorMessage($file['error']));
+    public function deleteFile($filepath) {
+        $full_path = $this->upload_dir . trim($filepath, '/');
+        if (file_exists($full_path) && is_file($full_path)) {
+            return unlink($full_path);
         }
-
-        // Check file size
-        if ($file['size'] > $this->maxFileSize) {
-            throw new Exception('File size exceeds maximum limit of ' . $this->formatFileSize($this->maxFileSize));
-        }
-
-        // Verify MIME type
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimeType = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
-
-        if (!in_array($mimeType, $this->allowedMimeTypes)) {
-            throw new Exception('File type not allowed. Allowed types: PDF, JPEG, PNG, DOC, DOCX');
-        }
-
-        // Additional security checks
-        if (!is_uploaded_file($file['tmp_name'])) {
-            throw new Exception('Invalid upload attempt');
-        }
+        return false;
     }
 
-    /**
-     * Get human-readable error message for upload errors
-     * 
-     * @param int $errorCode The error code from $_FILES['error']
-     * @return string Human-readable error message
-     */
-    private function getUploadErrorMessage($errorCode) {
-        switch ($errorCode) {
-            case UPLOAD_ERR_INI_SIZE:
-                return 'The uploaded file exceeds the upload_max_filesize directive in php.ini';
-            case UPLOAD_ERR_FORM_SIZE:
-                return 'The uploaded file exceeds the MAX_FILE_SIZE directive in the HTML form';
-            case UPLOAD_ERR_PARTIAL:
-                return 'The uploaded file was only partially uploaded';
-            case UPLOAD_ERR_NO_FILE:
-                return 'No file was uploaded';
-            case UPLOAD_ERR_NO_TMP_DIR:
-                return 'Missing a temporary folder';
-            case UPLOAD_ERR_CANT_WRITE:
-                return 'Failed to write file to disk';
-            case UPLOAD_ERR_EXTENSION:
-                return 'A PHP extension stopped the file upload';
-            default:
-                return 'Unknown upload error';
-        }
-    }
-
-    /**
-     * Format file size to human-readable string
-     * 
-     * @param int $bytes File size in bytes
-     * @return string Formatted file size
-     */
-    private function formatFileSize($bytes) {
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-        $pow = min($pow, count($units) - 1);
-        
-        return round($bytes / pow(1024, $pow), 2) . ' ' . $units[$pow];
-    }
-
-    /**
-     * Set maximum allowed file size
-     * 
-     * @param int $size Size in bytes
-     */
-    public function setMaxFileSize($size) {
-        $this->maxFileSize = $size;
-    }
-
-    /**
-     * Set allowed MIME types
-     * 
-     * @param array $types Array of MIME types
-     */
-    public function setAllowedMimeTypes($types) {
-        $this->allowedMimeTypes = $types;
+    public function getFileUrl($filepath) {
+        return $this->config['app']['api_url'] . '/uploads/' . trim($filepath, '/');
     }
 } 

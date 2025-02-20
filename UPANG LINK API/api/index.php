@@ -1,7 +1,7 @@
 <?php
 // Set error reporting
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
@@ -49,9 +49,12 @@ $request_uri = urldecode($_SERVER['REQUEST_URI']);
 $uri_parts = parse_url($request_uri);
 $path = $uri_parts['path'];
 
+// Get the script directory name
+$script_dir = dirname($_SERVER['SCRIPT_NAME']);
+$base_path = $script_dir;
+
 // Remove the base path if it exists
-$base_path = '/UPANG LINK/api/';
-$endpoint = str_replace($base_path, '', $path);
+$endpoint = preg_replace('#^' . preg_quote($base_path, '#') . '#', '', $path);
 $uri = explode('/', trim($endpoint, '/'));
 
 // Get client IP address

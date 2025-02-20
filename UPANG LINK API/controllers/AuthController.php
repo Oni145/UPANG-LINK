@@ -8,6 +8,15 @@ class AuthController {
         $this->user = new User($db);
     }
 
+    private function sendError($message, $code = 400) {
+        http_response_code($code);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $message,
+            'code' => $code
+        ]);
+    }
+
     public function handleRequest($method, $uri) {
         switch($method) {
             case 'POST':
@@ -142,46 +151,82 @@ class AuthController {
         if(!empty($data->email) && !empty($data->password)) {
             $user = $this->user->getByEmail($data->email);
             
-            if($user && password_verify($data->password, $user['password'])) {
-                if($user['role'] !== 'student') {
-                    $this->sendError('Access denied. Student access only.', 403);
-                    return;
-                }
+            if(!$user) {
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'The email you entered is not registered. Please check your email or sign up for a new account.',
+                    'error_type' => 'email_not_found'
+                ]);
+                return;
+            }
 
-                if(!$user['email_verified']) {
-                    $this->sendError('Please verify your email address first.', 403);
-                    return;
-                }
+            if(!password_verify($data->password, $user['password'])) {
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Wrong password. Please try again.',
+                    'error_type' => 'invalid_password'
+                ]);
+                return;
+            }
 
-                // Create session
-                $device_info = $_SERVER['HTTP_USER_AGENT'] ?? null;
-                $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
-                $session = $this->user->createSession($user['user_id'], $device_info, $ip_address);
+            if($user['role'] !== 'student') {
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'This account is not a student account. Please use the correct login page.',
+                    'error_type' => 'invalid_role'
+                ]);
+                return;
+            }
 
-                if($session) {
-                    // Remove sensitive data from response
-                    unset($user['password']);
-                    unset($user['email_verification_token']);
-                    unset($user['email_token_expiry']);
-                    
-                    http_response_code(200);
-                    echo json_encode([
-                        'status' => 'success',
-                        'message' => 'Login successful',
-                        'data' => [
-                            'user' => $user,
-                            'token' => $session['token'],
-                            'expires_at' => $session['expires_at']
-                        ]
-                    ]);
-                } else {
-                    $this->sendError('Failed to create session');
-                }
+            if(!$user['email_verified']) {
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Please verify your email address before logging in. Check your inbox for the verification link.',
+                    'error_type' => 'email_not_verified'
+                ]);
+                return;
+            }
+
+            // Create session
+            $device_info = $_SERVER['HTTP_USER_AGENT'] ?? null;
+            $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
+            $session = $this->user->createSession($user['user_id'], $device_info, $ip_address);
+
+            if($session) {
+                // Remove sensitive data from response
+                unset($user['password']);
+                unset($user['email_verification_token']);
+                unset($user['email_token_expiry']);
+                
+                http_response_code(200);
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Login successful',
+                    'data' => [
+                        'user' => $user,
+                        'token' => $session['token'],
+                        'expires_at' => $session['expires_at']
+                    ]
+                ]);
             } else {
-                $this->sendError('Invalid credentials');
+                http_response_code(200); // Changed to 200 to hide HTTP errors from users
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Unable to log in. Please try again.',
+                    'error_type' => 'session_error'
+                ]);
             }
         } else {
-            $this->sendError('Incomplete data');
+            http_response_code(200); // Changed to 200 to hide HTTP errors from users
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Please enter your email and password.',
+                'error_type' => 'missing_fields'
+            ]);
         }
     }
 
@@ -485,13 +530,4 @@ class AuthController {
             $this->sendError('Token and new password are required');
         }
     }
-
-    private function sendError($message, $code = 400) {
-        http_response_code($code);
-        echo json_encode([
-            'status' => 'error',
-            'message' => $message
-        ]);
-    }
-} 
 } 

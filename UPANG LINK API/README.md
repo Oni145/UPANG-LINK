@@ -1,6 +1,6 @@
 # UPANG LINK API Documentation
 
-UPANG LINK is an application that simplifies the process of requesting documents and services within UPANG. This repository contains the API implementation.
+UPANG LINK is an application that simplifies the process of requesting essential items and services within UPANG. This repository contains the API implementation.
 
 ## Table of Contents
 1. [Features](#features)
@@ -10,15 +10,23 @@ UPANG LINK is an application that simplifies the process of requesting documents
 5. [API Endpoints](#api-endpoints)
 6. [Authentication](#authentication)
 7. [File Handling](#file-handling)
-8. [Error Handling](#error-handling)
+8. [Email System](#email-system)
+9. [Rate Limiting](#rate-limiting)
+10. [Error Handling](#error-handling)
+11. [Security](#security)
+12. [Examples](#examples)
 
 ## Features
 
-- User Authentication (Student)
+- User Authentication (Admin & Student)
+- Email Verification System
+- Password Reset System
+- Session Management with Token Expiration
 - Request Management System
-- Secure File Upload System
-- Request Status Tracking
-- Error Handling
+- Real-time Notifications
+- Secure File Upload Management
+- Rate Limiting
+- Error Logging
 - CORS Support
 
 ## Requirements
@@ -26,10 +34,12 @@ UPANG LINK is an application that simplifies the process of requesting documents
 - PHP 7.4 or higher
 - MySQL 5.7 or higher
 - Apache/Nginx web server
+- SSL certificate (for production)
 - PHP Extensions:
   - PDO
-  - FileInfo
+  - GD (for image processing)
   - OpenSSL
+  - FileInfo
 
 ## Installation
 
@@ -41,8 +51,8 @@ cd upang-link-api
 
 2. Create required directories:
 ```bash
-mkdir uploads
-chmod 755 uploads
+mkdir uploads logs
+chmod 755 uploads logs
 ```
 
 3. Set up the database:
@@ -59,22 +69,92 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ /index.php [QSA,L]
 ```
 
+## Configuration
+
+1. Copy and edit the configuration file:
+```php
+// config/config.php
+return [
+    'app' => [
+        'name' => 'UPANG LINK',
+        'version' => '1.0.0',
+        'frontend_url' => 'http://your-frontend-url',
+        'api_url' => 'http://your-api-url',
+    ],
+    'database' => [
+        'host' => 'localhost',
+        'name' => 'upang_link',
+        'username' => 'your_username',
+        'password' => 'your_password'
+    ],
+    'email' => [
+        'host' => 'smtp.gmail.com',
+        'port' => 587,
+        'username' => 'your-email@gmail.com',
+        'password' => 'your-app-password',
+        'from_name' => 'UPANG LINK',
+        'from_email' => 'noreply@upang-link.com'
+    ],
+    'security' => [
+        'token_expiry' => 24, // hours
+        'verification_expiry' => 24, // hours
+        'password_min_length' => 8,
+        'allowed_file_types' => ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
+        'max_file_size' => 5 * 1024 * 1024 // 5MB
+    ]
+];
+```
+
 ## API Endpoints
 
 ### Authentication
 
+#### Admin Endpoints
+
 ```http
 # Login
-POST /api/auth/student/login
+POST /auth/admin/login
 Content-Type: application/json
 
 {
-    "email": "student@example.com",
+    "email": "admin@example.com",
     "password": "password"
 }
 
+# Response
+{
+    "status": "success",
+    "message": "Login successful",
+    "data": {
+        "user": {
+            "user_id": 1,
+            "email": "admin@example.com",
+            "first_name": "Admin",
+            "last_name": "User",
+            "role": "admin"
+        },
+        "token": "your-auth-token",
+        "expires_at": "2024-02-21 12:00:00"
+    }
+}
+
 # Register
-POST /api/auth/student/register
+POST /auth/admin/register
+Content-Type: application/json
+
+{
+    "email": "admin@example.com",
+    "password": "password",
+    "first_name": "Admin",
+    "last_name": "User"
+}
+```
+
+#### Student Endpoints
+
+```http
+# Register
+POST /auth/student/register
 Content-Type: application/json
 
 {
@@ -89,112 +169,119 @@ Content-Type: application/json
     "admission_year": "2023"
 }
 
-# Get Profile
-GET /api/auth/student/profile
-Authorization: Bearer {token}
-
-# Update Profile
-PUT /api/auth/student/profile
-Authorization: Bearer {token}
+# Verify Email
+POST /auth/student/verify-email
 Content-Type: application/json
 
 {
-    "first_name": "Updated",
-    "last_name": "Name",
-    "course": "BSIT",
-    "year_level": 2,
-    "block": "B"
+    "token": "verification_token"
 }
 
-# Change Password
-POST /api/auth/student/change-password
-Authorization: Bearer {token}
+# Login
+POST /auth/student/login
 Content-Type: application/json
 
 {
-    "current_password": "old_password",
-    "new_password": "new_password",
-    "confirm_password": "new_password"
+    "email": "student@example.com",
+    "password": "password"
 }
 
-# Logout
-POST /api/auth/student/logout
-Authorization: Bearer {token}
+# Forgot Password
+POST /auth/forgot-password
+Content-Type: application/json
+
+{
+    "email": "student@example.com"
+}
+
+# Reset Password
+POST /auth/reset-password
+Content-Type: application/json
+
+{
+    "token": "reset_token",
+    "password": "new_password"
+}
 ```
 
 ### Request Management
 
 ```http
-# Get All Requests
-GET /api/requests
-Authorization: Bearer {token}
-
-# Get Request Details
-GET /api/requests/{id}
-Authorization: Bearer {token}
-
 # Create Request
-POST /api/requests
+POST /requests
 Authorization: Bearer {token}
 Content-Type: multipart/form-data
 
 {
     "type_id": 1,
-    "purpose": "For employment purposes",
-    "files[]": (file1, file2, ...)
+    "requirements": {
+        "clearance_form": (file),
+        "request_letter": (file),
+        "purpose": "Transcript request for employment"
+    }
 }
 
-# Get Request Types
-GET /api/requests/types
+# Get Request Status
+GET /requests/{id}
 Authorization: Bearer {token}
 
-# Get Requirements for Request Type
-GET /api/requests/requirements/{typeId}
+# Update Request Status (Admin only)
+PUT /requests/{id}
 Authorization: Bearer {token}
-
-# Upload Requirement
-POST /api/requests/{requestId}/requirements/{requirementId}
-Authorization: Bearer {token}
-Content-Type: multipart/form-data
+Content-Type: application/json
 
 {
-    "file": (file)
+    "status": "approved"
 }
-
-# Delete Requirement
-DELETE /api/requests/{requestId}/requirements/{requirementId}
-Authorization: Bearer {token}
-
-# Cancel Request
-POST /api/requests/{id}/cancel
-Authorization: Bearer {token}
-
-# Get Request Statistics
-GET /api/requests/statistics
-Authorization: Bearer {token}
 ```
 
 ## File Handling
 
-The API includes a secure file handling system with the following features:
-- File type validation (PDF, JPEG, PNG, DOC, DOCX)
-- File size restrictions (default 5MB)
+The API includes a robust file handling system with the following features:
+- Secure file uploads with type validation
+- File size restrictions
+- Image compression
 - Unique filename generation
 - Organized directory structure
+- URL generation for file access
 
 ```php
-// Supported file types
-$allowedMimeTypes = [
-    'application/pdf',
-    'image/jpeg',
-    'image/png',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-];
+// Example: Upload file
+$fileHandler = new FileHandler();
+$result = $fileHandler->uploadFile($_FILES['document'], 'requests');
 
-// Maximum file size (5MB)
-$maxFileSize = 5 * 1024 * 1024;
+if ($result['status'] === 'success') {
+    $filePath = $result['path'];
+    $fileUrl = $fileHandler->getFileUrl($filePath);
+}
 ```
+
+## Email System
+
+The API includes a comprehensive email system that supports:
+- SMTP configuration
+- HTML email templates
+- Email verification
+- Password reset emails
+- Fallback to PHP mail() function
+
+```php
+// Example: Send verification email
+$emailHandler = new EmailHandler();
+$emailHandler->sendVerificationEmail($userEmail, $verificationToken);
+
+// Example: Send password reset email
+$emailHandler->sendResetPasswordEmail($userEmail, $resetToken);
+```
+
+## Rate Limiting
+
+The API implements rate limiting to prevent abuse:
+- 1000 requests per hour per IP address
+- Rate limit headers in response:
+  - X-RateLimit-Remaining
+  - Retry-After (when limit exceeded)
+- Endpoint-specific limits can be configured
 
 ## Error Handling
 
@@ -212,48 +299,154 @@ All API responses follow this format:
 {
     "status": "error",
     "message": "Error description",
-    "data": null
+    "code": 400
 }
 ```
 
-Common HTTP status codes:
-- 200: Success
-- 400: Bad Request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not Found
-- 422: Validation Error
-- 500: Server Error
-
 ## Security Best Practices
 
-1. Input validation for all requests
-2. Prepared statements for database queries
-3. File type and size validation
-4. Token-based authentication
-5. Password hashing
-6. CORS configuration for development
-7. Error handling and logging
+1. Always use HTTPS in production
+2. Store sensitive data in environment variables
+3. Implement proper input validation
+4. Use prepared statements for database queries
+5. Keep dependencies updated
+6. Enable error logging
+7. Use rate limiting
+8. Implement proper CORS policies
+9. Secure password reset process
+   - One-time use tokens
+   - 1-hour expiration
+   - Secure token generation
+   - Email verification
+
+## Examples
+
+### Complete Authentication Flow
+
+1. Student Registration:
+```javascript
+async function registerStudent() {
+    const response = await fetch('/auth/student/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            student_number: "0001-2023-00001",
+            email: "student@example.com",
+            password: "password",
+            first_name: "Student",
+            last_name: "User",
+            course: "BSIT"
+        })
+    });
+    
+    const data = await response.json();
+    // Handle verification email
+}
+```
+
+2. Password Reset Flow:
+```javascript
+// Request password reset
+async function forgotPassword() {
+    const response = await fetch('/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: "student@example.com"
+        })
+    });
+    
+    const data = await response.json();
+    // User receives reset email
+}
+
+// Reset password
+async function resetPassword(token, newPassword) {
+    const response = await fetch('/auth/reset-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token: token,
+            password: newPassword
+        })
+    });
+    
+    const data = await response.json();
+    // Handle password reset response
+}
+```
+
+3. Submit Document Request:
+```javascript
+async function submitRequest() {
+    const formData = new FormData();
+    formData.append('type_id', 1);
+    formData.append('clearance_form', clearanceFile);
+    formData.append('request_letter', requestLetterFile);
+    formData.append('purpose', 'Transcript request for employment');
+
+    const response = await fetch('/requests', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+        body: formData
+    });
+    
+    const data = await response.json();
+    // Handle response
+}
+```
 
 ## Development
 
-For local development:
+1. Enable error reporting in development:
 ```php
-// Set development environment
-define('ENVIRONMENT', 'development');
-
-// Enable error reporting
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
-// Configure CORS for development
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
 ```
+
+2. Use the test database:
+```sql
+USE upang_link_test;
+```
+
+3. Test email functionality:
+```php
+// config/config.php
+'email' => [
+    'host' => 'localhost',
+    'port' => 1025, // Mailhog
+    ...
+]
+```
+
+## Production Deployment
+
+1. Update configuration:
+- Set proper database credentials
+- Configure production email settings
+- Update CORS settings
+- Set proper file permissions
+- Enable HTTPS
+
+2. Security checklist:
+- Enable HTTPS
+- Set secure headers
+- Configure rate limiting
+- Enable error logging
+- Disable debug mode
+- Set proper file permissions
+- Configure backup system
 
 ## Support
 
 For support, please contact:
-- Email: support@upang-link.com
-- Issue Tracker: https://github.com/your-username/upang-link-api/issues 
+- Email: jerickogarcia0@gmail.com
+- Issue Tracker: https://github.com/Oni145/UPANG-LINK/issues 

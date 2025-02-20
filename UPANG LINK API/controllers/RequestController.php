@@ -1,496 +1,311 @@
 <?php
-
 class RequestController {
     private $db;
-    private $user;
-    private $fileHandler;
+    private $request;
 
     public function __construct($db) {
         $this->db = $db;
-        $this->user = new User($db);
-        $this->fileHandler = new FileHandler();
+        $this->request = new Request($db);
     }
 
     public function handleRequest($method, $uri) {
-        $userId = $_SESSION['user_id'] ?? null;
-        if (!$userId) {
-            http_response_code(401);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Unauthorized'
-            ]);
-            return;
-        }
-
-        switch ($method) {
+        switch($method) {
             case 'GET':
-                if (count($uri) === 1) {
-                    // GET /requests - List requests
-                    $this->getRequests($userId);
-                } elseif (count($uri) === 2) {
-                    // GET /requests/{id} - Get request details
-                    $this->getRequest($uri[1], $userId);
-                } elseif ($uri[1] === 'types' && count($uri) === 2) {
-                    // GET /requests/types - Get request types
-                    $this->getRequestTypes();
-                } elseif ($uri[1] === 'requirements' && count($uri) === 3) {
-                    // GET /requests/requirements/{typeId} - Get requirements
-                    $this->getRequirements($uri[2]);
-                } elseif ($uri[1] === 'statistics' && count($uri) === 2) {
-                    // GET /requests/statistics - Get statistics
-                    $this->getStatistics($userId);
+                if(isset($uri[1])) {
+                    if($uri[1] === 'user' && isset($uri[2])) {
+                        $this->getRequestsByUser($uri[2]);
+                    } else if($uri[1] === 'status' && isset($uri[2])) {
+                        $this->getRequestsByStatus($uri[2]);
+                    } else if($uri[1] === 'notes' && isset($uri[2])) {
+                        $this->getRequestNotes($uri[2]);
+                    } else if($uri[1] === 'form' && isset($uri[2])) {
+                        $this->getRequestForm($uri[2]);
+                    } else {
+                        $this->getRequest($uri[1]);
+                    }
                 } else {
-                    throw new Exception('Invalid endpoint', 404);
+                    $this->getAllRequests();
                 }
                 break;
-
             case 'POST':
-                if (count($uri) === 1) {
-                    // POST /requests - Create request
-                    $this->createRequest($userId);
-                } elseif (count($uri) === 4 && $uri[2] === 'requirements') {
-                    // POST /requests/{requestId}/requirements/{requirementId} - Upload requirement
-                    $this->uploadRequirement($uri[1], $uri[3], $userId);
-                } elseif (count($uri) === 3 && $uri[2] === 'cancel') {
-                    // POST /requests/{id}/cancel - Cancel request
-                    $this->cancelRequest($uri[1], $userId);
+                if(isset($uri[1]) && $uri[1] === 'notes') {
+                    $this->addRequirementNote();
                 } else {
-                    throw new Exception('Invalid endpoint', 404);
+                    $this->createRequest();
                 }
                 break;
-
+            case 'PUT':
+                if(isset($uri[1])) {
+                    $this->updateRequest($uri[1]);
+                } else {
+                    $this->sendError('Request ID required');
+                }
+                break;
             case 'DELETE':
-                if (count($uri) === 4 && $uri[2] === 'requirements') {
-                    // DELETE /requests/{requestId}/requirements/{requirementId} - Delete requirement
-                    $this->deleteRequirement($uri[1], $uri[3], $userId);
+                if(isset($uri[1])) {
+                    $this->deleteRequest($uri[1]);
                 } else {
-                    throw new Exception('Invalid endpoint', 404);
+                    $this->sendError('Request ID required');
                 }
                 break;
-
             default:
-                throw new Exception('Method not allowed', 405);
+                $this->sendError('Method not allowed', 405);
         }
     }
 
-    private function getRequests($userId) {
-        try {
-            $query = "SELECT r.*, rt.name as type_name, rt.description as type_description, 
-                     rt.processing_time, rt.fee 
-                     FROM requests r 
-                     JOIN request_types rt ON r.type_id = rt.id 
-                     WHERE r.student_id = :student_id 
-                     ORDER BY r.created_at DESC";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':student_id', $userId);
-            $stmt->execute();
+    private function getAllRequests() {
+        $stmt = $this->request->read();
+        $num = $stmt->rowCount();
 
-            $requests = [];
+        if($num > 0) {
+            $requests_arr = array();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $request = $this->formatRequest($row);
-                $request['requirements'] = $this->getRequestRequirements($row['id']);
-                $requests[] = $request;
+                array_push($requests_arr, $row);
             }
 
+            http_response_code(200);
             echo json_encode([
                 'status' => 'success',
-                'message' => 'Requests retrieved successfully',
-                'data' => $requests
+                'data' => $requests_arr
             ]);
-        } catch (Exception $e) {
-            throw new Exception('Failed to get requests: ' . $e->getMessage());
+        } else {
+            $this->sendError('No requests found', 404);
         }
     }
 
-    private function getRequest($requestId, $userId) {
-        try {
-            $query = "SELECT r.*, rt.name as type_name, rt.description as type_description, 
-                     rt.processing_time, rt.fee 
-                     FROM requests r 
-                     JOIN request_types rt ON r.type_id = rt.id 
-                     WHERE r.id = :id AND r.student_id = :student_id";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id', $requestId);
-            $stmt->bindParam(':student_id', $userId);
-            $stmt->execute();
+    private function getRequest($id) {
+        $this->request->request_id = $id;
+        $result = $this->request->readOne();
 
-            if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $request = $this->formatRequest($row);
-                $request['requirements'] = $this->getRequestRequirements($requestId);
-
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Request retrieved successfully',
-                    'data' => $request
-                ]);
-            } else {
-                throw new Exception('Request not found', 404);
-            }
-        } catch (Exception $e) {
-            throw new Exception('Failed to get request: ' . $e->getMessage());
-        }
-    }
-
-    private function getRequestTypes() {
-        try {
-            $query = "SELECT * FROM request_types WHERE is_active = 1";
-            $stmt = $this->db->prepare($query);
-            $stmt->execute();
-
-            $types = [];
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $type = [
-                    'id' => (int)$row['id'],
-                    'name' => $row['name'],
-                    'description' => $row['description'],
-                    'processing_time' => $row['processing_time'],
-                    'fee' => (float)$row['fee'],
-                    'requirements' => $this->getTypeRequirements($row['id'])
-                ];
-                $types[] = $type;
-            }
-
+        if($result) {
+            http_response_code(200);
             echo json_encode([
                 'status' => 'success',
-                'message' => 'Request types retrieved successfully',
-                'data' => $types
+                'data' => $result
             ]);
-        } catch (Exception $e) {
-            throw new Exception('Failed to get request types: ' . $e->getMessage());
+        } else {
+            $this->sendError('Request not found', 404);
         }
     }
 
-    private function getRequirements($typeId) {
-        try {
-            $requirements = $this->getTypeRequirements($typeId);
+    private function createRequest() {
+        $data = json_decode(file_get_contents("php://input"));
+        
+        if(!empty($data->user_id) && !empty($data->type_id)) {
+            // Validate the submission
+            $formGenerator = new FormGenerator($this->db);
+            $validation = $formGenerator->validateSubmission($data->type_id, (array)$data, $_FILES);
             
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'Requirements retrieved successfully',
-                'data' => $requirements
-            ]);
-        } catch (Exception $e) {
-            throw new Exception('Failed to get requirements: ' . $e->getMessage());
-        }
-    }
-
-    private function createRequest($userId) {
-        try {
-            $this->db->beginTransaction();
-
-            // Validate input
-            $typeId = filter_input(INPUT_POST, 'type_id', FILTER_VALIDATE_INT);
-            $purpose = filter_input(INPUT_POST, 'purpose', FILTER_SANITIZE_STRING);
-
-            if (!$typeId || !$purpose) {
-                throw new Exception('Invalid input', 400);
-            }
-
-            // Create request
-            $query = "INSERT INTO requests (id, student_id, type_id, purpose, status, created_at, updated_at) 
-                     VALUES (UUID(), :student_id, :type_id, :purpose, 'PENDING', NOW(), NOW())";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':student_id', $userId);
-            $stmt->bindParam(':type_id', $typeId);
-            $stmt->bindParam(':purpose', $purpose);
-            $stmt->execute();
-
-            $requestId = $this->db->lastInsertId();
-
-            // Handle file uploads
-            if (isset($_FILES['files'])) {
-                foreach ($_FILES['files']['tmp_name'] as $index => $tmpName) {
-                    $file = [
-                        'name' => $_FILES['files']['name'][$index],
-                        'type' => $_FILES['files']['type'][$index],
-                        'tmp_name' => $tmpName,
-                        'error' => $_FILES['files']['error'][$index],
-                        'size' => $_FILES['files']['size'][$index]
-                    ];
-
-                    $fileUrl = $this->fileHandler->uploadFile($file, 'requirements');
-                    
-                    // Save file submission
-                    $this->saveRequirementSubmission($requestId, $file['name'], $fileUrl);
-                }
-            }
-
-            $this->db->commit();
-
-            // Get the created request
-            $this->getRequest($requestId, $userId);
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            throw new Exception('Failed to create request: ' . $e->getMessage());
-        }
-    }
-
-    private function uploadRequirement($requestId, $requirementId, $userId) {
-        try {
-            // Verify request ownership
-            $this->verifyRequestOwnership($requestId, $userId);
-
-            if (!isset($_FILES['file'])) {
-                throw new Exception('No file uploaded', 400);
-            }
-
-            $file = $_FILES['file'];
-            $fileUrl = $this->fileHandler->uploadFile($file, 'requirements');
-            
-            // Save or update requirement submission
-            $query = "INSERT INTO requirement_submissions (request_id, requirement_id, file_url, status, submitted_at) 
-                     VALUES (:request_id, :requirement_id, :file_url, 'SUBMITTED', NOW())
-                     ON DUPLICATE KEY UPDATE 
-                     file_url = VALUES(file_url),
-                     status = VALUES(status),
-                     submitted_at = VALUES(submitted_at)";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':request_id', $requestId);
-            $stmt->bindParam(':requirement_id', $requirementId);
-            $stmt->bindParam(':file_url', $fileUrl);
-            $stmt->execute();
-
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'Requirement uploaded successfully'
-            ]);
-        } catch (Exception $e) {
-            throw new Exception('Failed to upload requirement: ' . $e->getMessage());
-        }
-    }
-
-    private function deleteRequirement($requestId, $requirementId, $userId) {
-        try {
-            // Verify request ownership
-            $this->verifyRequestOwnership($requestId, $userId);
-
-            // Get the file URL
-            $query = "SELECT file_url FROM requirement_submissions 
-                     WHERE request_id = :request_id AND requirement_id = :requirement_id";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':request_id', $requestId);
-            $stmt->bindParam(':requirement_id', $requirementId);
-            $stmt->execute();
-
-            if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                // Delete the file
-                $this->fileHandler->deleteFile($row['file_url']);
-
-                // Delete the submission
-                $query = "DELETE FROM requirement_submissions 
-                         WHERE request_id = :request_id AND requirement_id = :requirement_id";
+            if($validation['is_valid']) {
+                $this->request->user_id = $data->user_id;
+                $this->request->type_id = $data->type_id;
+                $this->request->status = "pending";
                 
-                $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':request_id', $requestId);
-                $stmt->bindParam(':requirement_id', $requirementId);
-                $stmt->execute();
-
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Requirement deleted successfully'
-                ]);
+                // Handle file uploads if present
+                $files = [];
+                if(!empty($_FILES)) {
+                    foreach($_FILES as $key => $file) {
+                        if($file['error'] === UPLOAD_ERR_OK) {
+                            $files[$key] = $file;
+                        }
+                    }
+                }
+                
+                if($this->request->createWithRequirements($files)) {
+                    $response = [
+                        'status' => 'success',
+                        'message' => 'Request created successfully',
+                        'request_id' => $this->request->request_id
+                    ];
+                    
+                    // Add warnings if any
+                    if(!empty($validation['warnings'])) {
+                        $response['warnings'] = $validation['warnings'];
+                    }
+                    
+                    http_response_code(201);
+                    echo json_encode($response);
+                } else {
+                    $this->sendError('Unable to create request');
+                }
             } else {
-                throw new Exception('Requirement not found', 404);
+                $this->sendError('Validation failed', 400, $validation['errors']);
             }
-        } catch (Exception $e) {
-            throw new Exception('Failed to delete requirement: ' . $e->getMessage());
+        } else {
+            $this->sendError('Incomplete data');
         }
     }
 
-    private function cancelRequest($requestId, $userId) {
-        try {
-            // Verify request ownership
-            $this->verifyRequestOwnership($requestId, $userId);
+    private function updateRequest($id) {
+        $data = json_decode(file_get_contents("php://input"));
 
-            // Update request status
-            $query = "UPDATE requests SET status = 'CANCELLED', updated_at = NOW() 
-                     WHERE id = :id AND student_id = :student_id";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id', $requestId);
-            $stmt->bindParam(':student_id', $userId);
-            $stmt->execute();
+        if(!empty($data->status)) {
+            $this->request->request_id = $id;
+            $this->request->status = $data->status;
 
-            if ($stmt->rowCount() > 0) {
+            if($this->request->update()) {
+                http_response_code(200);
                 echo json_encode([
                     'status' => 'success',
-                    'message' => 'Request cancelled successfully'
+                    'message' => 'Request status updated successfully'
                 ]);
             } else {
-                throw new Exception('Request not found', 404);
+                $this->sendError('Unable to update request');
             }
-        } catch (Exception $e) {
-            throw new Exception('Failed to cancel request: ' . $e->getMessage());
+        } else {
+            $this->sendError('Status is required');
         }
     }
 
-    private function getStatistics($userId) {
-        try {
-            // Get total counts
-            $query = "SELECT 
-                     COUNT(*) as total,
-                     SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending,
-                     SUM(CASE WHEN status IN ('IN_REVIEW', 'PROCESSING') THEN 1 ELSE 0 END) as in_progress,
-                     SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-                     SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
-                     FROM requests 
-                     WHERE student_id = :student_id";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':student_id', $userId);
-            $stmt->execute();
-            $counts = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            // Get counts by type
-            $query = "SELECT rt.name, COUNT(*) as count 
-                     FROM requests r 
-                     JOIN request_types rt ON r.type_id = rt.id 
-                     WHERE r.student_id = :student_id 
-                     GROUP BY rt.id, rt.name";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':student_id', $userId);
-            $stmt->execute();
-            
-            $byType = [];
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $byType[$row['name']] = (int)$row['count'];
-            }
-
-            // Get counts by month
-            $query = "SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count 
-                     FROM requests 
-                     WHERE student_id = :student_id 
-                     GROUP BY DATE_FORMAT(created_at, '%Y-%m') 
-                     ORDER BY month DESC 
-                     LIMIT 12";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':student_id', $userId);
-            $stmt->execute();
-            
-            $byMonth = [];
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $byMonth[$row['month']] = (int)$row['count'];
-            }
-
-            $statistics = [
-                'total' => (int)$counts['total'],
-                'pending' => (int)$counts['pending'],
-                'in_progress' => (int)$counts['in_progress'],
-                'completed' => (int)$counts['completed'],
-                'cancelled' => (int)$counts['cancelled'],
-                'by_type' => $byType,
-                'by_month' => $byMonth
-            ];
-
+    private function deleteRequest($id) {
+        $this->request->request_id = $id;
+        
+        if($this->request->delete()) {
+            http_response_code(200);
             echo json_encode([
                 'status' => 'success',
-                'message' => 'Statistics retrieved successfully',
-                'data' => $statistics
+                'message' => 'Request deleted successfully'
             ]);
-        } catch (Exception $e) {
-            throw new Exception('Failed to get statistics: ' . $e->getMessage());
+        } else {
+            $this->sendError('Unable to delete request');
         }
     }
 
-    private function getTypeRequirements($typeId) {
-        $query = "SELECT * FROM requirements WHERE type_id = :type_id";
+    private function getRequestsByUser($user_id) {
+        $result = $this->request->readByUser($user_id);
+        $num = $result->rowCount();
+
+        if($num > 0) {
+            $requests_arr = array();
+            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                array_push($requests_arr, $row);
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'data' => $requests_arr
+            ]);
+        } else {
+            $this->sendError('No requests found for this user', 404);
+        }
+    }
+
+    private function getRequestsByStatus($status) {
+        $result = $this->request->readByStatus($status);
+        $num = $result->rowCount();
+
+        if($num > 0) {
+            $requests_arr = array();
+            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                array_push($requests_arr, $row);
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'data' => $requests_arr
+            ]);
+        } else {
+            $this->sendError('No requests found with this status', 404);
+        }
+    }
+
+    private function getRequestRequirements($type_id) {
+        $query = "SELECT requirements FROM request_types WHERE type_id = ?";
         $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':type_id', $typeId);
+        $stmt->bindParam(1, $type_id);
         $stmt->execute();
-
-        $requirements = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $requirements[] = [
-                'id' => $row['id'],
-                'name' => $row['name'],
-                'description' => $row['description'],
-                'is_required' => (bool)$row['is_required'],
-                'allowed_file_types' => json_decode($row['allowed_file_types']),
-                'max_file_size' => (int)$row['max_file_size']
-            ];
-        }
-        return $requirements;
-    }
-
-    private function getRequestRequirements($requestId) {
-        $query = "SELECT r.*, rs.file_url, rs.status, rs.remarks, rs.submitted_at, rs.verified_at 
-                 FROM requirements r 
-                 LEFT JOIN requirement_submissions rs ON r.id = rs.requirement_id AND rs.request_id = :request_id";
         
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':request_id', $requestId);
-        $stmt->execute();
-
-        $requirements = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $requirements[] = [
-                'id' => $row['id'],
-                'requirement_id' => $row['id'],
-                'requirement' => [
-                    'id' => $row['id'],
-                    'name' => $row['name'],
-                    'description' => $row['description'],
-                    'is_required' => (bool)$row['is_required'],
-                    'allowed_file_types' => json_decode($row['allowed_file_types']),
-                    'max_file_size' => (int)$row['max_file_size']
-                ],
-                'file_url' => $row['file_url'],
-                'status' => $row['status'],
-                'remarks' => $row['remarks'],
-                'submitted_at' => $row['submitted_at'],
-                'verified_at' => $row['verified_at']
-            ];
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if($result) {
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'data' => json_decode($result['requirements'], true)
+            ]);
+        } else {
+            $this->sendError('Request type not found', 404);
         }
-        return $requirements;
     }
 
-    private function formatRequest($row) {
-        return [
-            'id' => $row['id'],
-            'student_id' => $row['student_id'],
-            'type_id' => (int)$row['type_id'],
-            'type' => [
-                'id' => (int)$row['type_id'],
-                'name' => $row['type_name'],
-                'description' => $row['type_description'],
-                'processing_time' => $row['processing_time'],
-                'fee' => (float)$row['fee']
-            ],
-            'status' => $row['status'],
-            'purpose' => $row['purpose'],
-            'remarks' => $row['remarks'],
-            'created_at' => $row['created_at'],
-            'updated_at' => $row['updated_at']
+    private function addRequirementNote() {
+        $data = json_decode(file_get_contents("php://input"));
+        
+        if(!empty($data->request_id) && 
+           !empty($data->admin_id) && 
+           !empty($data->requirement_name) && 
+           !empty($data->note)) {
+            
+            $note = new RequirementNote($this->db);
+            $note->request_id = $data->request_id;
+            $note->admin_id = $data->admin_id;
+            $note->requirement_name = $data->requirement_name;
+            $note->note = $data->note;
+            
+            if($note->create()) {
+                // Update request status to indicate missing requirements
+                $this->request->request_id = $data->request_id;
+                $this->request->status = "requirements_needed";
+                $this->request->update();
+                
+                http_response_code(201);
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Requirement note added successfully'
+                ]);
+            } else {
+                $this->sendError('Unable to add requirement note');
+            }
+        } else {
+            $this->sendError('Incomplete data');
+        }
+    }
+
+    private function getRequestNotes($request_id) {
+        $note = new RequirementNote($this->db);
+        $result = $note->getByRequest($request_id);
+        
+        if($result->rowCount() > 0) {
+            $notes_arr = [];
+            while($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                array_push($notes_arr, $row);
+            }
+            
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'data' => $notes_arr
+            ]);
+        } else {
+            $this->sendError('No notes found', 404);
+        }
+    }
+
+    private function getRequestForm($type_id) {
+        $formGenerator = new FormGenerator($this->db);
+        $form = $formGenerator->getRequestForm($type_id);
+        
+        if($form) {
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'data' => $form
+            ]);
+        } else {
+            $this->sendError('Request type not found', 404);
+        }
+    }
+
+    private function sendError($message, $code = 400, $errors = null) {
+        http_response_code($code);
+        $response = [
+            'status' => 'error',
+            'message' => $message
         ];
-    }
-
-    private function verifyRequestOwnership($requestId, $userId) {
-        $query = "SELECT id FROM requests WHERE id = :id AND student_id = :student_id";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':id', $requestId);
-        $stmt->bindParam(':student_id', $userId);
-        $stmt->execute();
-
-        if (!$stmt->fetch()) {
-            throw new Exception('Request not found or unauthorized', 404);
+        if($errors !== null) {
+            $response['errors'] = $errors;
         }
-    }
-
-    private function saveRequirementSubmission($requestId, $fileName, $fileUrl) {
-        $query = "INSERT INTO requirement_submissions (request_id, requirement_id, file_url, status, submitted_at) 
-                 VALUES (:request_id, :requirement_id, :file_url, 'SUBMITTED', NOW())";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':request_id', $requestId);
-        $stmt->bindParam(':requirement_id', $requirementId);
-        $stmt->bindParam(':file_url', $fileUrl);
-        $stmt->execute();
+        echo json_encode($response);
     }
 } 
