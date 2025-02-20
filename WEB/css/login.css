@@ -6,15 +6,15 @@
     --error-color: #dc3545;
 }
 
-/* Add a keyframe for sliding down and fading in */
-@keyframes slideDownFadeIn {
+/* Slide in from the left and fade in */
+@keyframes slideInLeft {
     0% {
         opacity: 0;
-        transform: translateY(-50px); /* Start 50px above its final position */
+        transform: translateX(-100px); /* Start 100px to the left */
     }
     100% {
         opacity: 1;
-        transform: translateY(0); /* End at its normal position */
+        transform: translateX(0); /* End at normal position */
     }
 }
 
@@ -26,20 +26,23 @@
 }
 
 body {
-    background: url('../assets/5667001.jpg') no-repeat center center fixed;
-    background-size: cover; 
+    background: url('../assets/loginbg.jpg') no-repeat center center fixed;
+    background-size: cover; /* Make sure the image covers the viewport */
+    background-color: #000; /* Fallback color */
     min-height: 100vh;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end; /* Push content to the right side */
 }
 
+/* Container on the right with slide-in from the left */
 .login-container {
     width: 100%;
     max-width: 500px;
     padding: 1px;
     border-radius: 2px;
-    animation: slideDownFadeIn 1s ease-out; /* Apply slide-down and fade-in animation */
+    animation: slideInLeft 1s ease-out; /* Apply horizontal slide animation */
+    margin-right: 50px; /* Optional: Add spacing from the right edge if desired */
 }
 
 .login-card {
@@ -106,6 +109,7 @@ body {
 }
 
 .login-btn {
+    position: relative; /* Needed for loading spinner overlay */
     width: 100%;
     padding: 12px;
     background-color: green;

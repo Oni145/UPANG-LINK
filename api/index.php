@@ -21,6 +21,7 @@ include_once __DIR__ . '/../models/RequestType.php';
 include_once __DIR__ . '/../models/Notification.php';
 include_once __DIR__ . '/../controllers/AdminController.php';
 
+
 $database = new Database();
 $db = $database->getConnection();
 
@@ -48,6 +49,7 @@ if (empty($uri[0])) {
         'endpoints' => [
             'auth'    => '/auth',
             'admin'   => '/admin',
+            'staff'   => '/staff',
             'requests'=> '/requests',
             'users'   => '/users'
         ]
@@ -55,25 +57,51 @@ if (empty($uri[0])) {
     exit();
 }
 
-// Route the request to the appropriate controller
+// Determine which controller to use
 $requestMethod = $_SERVER["REQUEST_METHOD"];
 $controller = null;
 
-switch($uri[0]) {
+switch ($uri[0]) {
     case 'admin':
+        // Existing Admin route
         $controller = new AdminAuthController($db);
+        // We prepend 'auth' here to match how your AdminController expects the URI
         array_unshift($uri, 'auth');
         break;
+
     case 'auth':
+        // Existing Auth route
         include_once __DIR__ . '/../controllers/AuthController.php';
         $controller = new AuthController($db);
+        // remove 'auth' from $uri so handleRequest sees the sub-path
         array_shift($uri);
         break;
+
     case 'requests':
+        // Existing Requests route
         include_once __DIR__ . '/../controllers/RequestController.php';
         $controller = new RequestController($db);
+        // remove 'requests' from $uri if needed
+        // array_shift($uri);
         break;
+
+    // ================
+    // NEW STAFF ROUTE
+    // ================
+    case 'staff':
+        // Include the staff controller
+        include_once __DIR__ . '/../controllers/StaffAuthController.php';
+        $controller = new StaffAuthController($db);
+
+        // Remove 'staff' from $uri so that, for example:
+        // GET /staff/staffs => then $uri[0] = 'staffs'
+        // POST /staff/login => then $uri[0] = 'login'
+        array_shift($uri);
+
+        break;
+
     default:
+        // If we don't recognize the first segment, 404
         header("HTTP/1.1 404 Not Found");
         echo json_encode([
             'status' => 'error',
@@ -88,6 +116,5 @@ switch($uri[0]) {
         exit();
 }
 
-// Let the controller handle the request with the (possibly modified) URI
+// Let the chosen controller handle the request
 $controller->handleRequest($requestMethod, $uri);
-?>

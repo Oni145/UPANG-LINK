@@ -155,11 +155,7 @@ class AdminAuthController {
         }
     }
 
-    /**
-     * GET endpoint: Retrieves admin details based on the provided token.
-     * If a specific admin ID is provided, returns that admin's data (excluding the password).
-     * If no admin ID is provided, returns a list of all admins (excluding passwords).
-     */
+
     private function getUsers($adminId = null) {
         // Retrieve the token from the Authorization header
         $headers = apache_request_headers();
