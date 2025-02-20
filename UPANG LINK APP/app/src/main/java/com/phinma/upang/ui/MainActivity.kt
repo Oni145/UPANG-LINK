@@ -1,11 +1,10 @@
 package com.phinma.upang.ui
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.phinma.upang.R
 import com.phinma.upang.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,15 +24,15 @@ class MainActivity : AppCompatActivity() {
         val navController = navHostFragment.navController
         
         // Setup bottom navigation with nav controller
-        binding.bottomNavigation.setupWithNavController(navController)
+        binding.bottomNavigation?.setupWithNavController(navController)
 
         // Hide bottom navigation for auth screens
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            binding.bottomNavigation.isVisible = when (destination.id) {
+            binding.bottomNavigation?.visibility = when (destination.id) {
                 R.id.loginFragment,
                 R.id.registerFragment,
-                R.id.forgotPasswordFragment -> false
-                else -> true
+                R.id.forgotPasswordFragment -> View.GONE
+                else -> View.VISIBLE
             }
         }
     }

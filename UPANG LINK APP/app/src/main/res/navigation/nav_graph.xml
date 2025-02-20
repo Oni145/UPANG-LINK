@@ -10,18 +10,22 @@
         android:name="com.phinma.upang.ui.auth.LoginFragment"
         android:label="Login">
         <action
-            android:id="@+id/action_login_to_register"
+            android:id="@+id/action_loginFragment_to_registerFragment"
             app:destination="@id/registerFragment"
             app:enterAnim="@anim/nav_default_enter_anim"
-            app:exitAnim="@anim/nav_default_exit_anim" />
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
         <action
-            android:id="@+id/action_login_to_forgot_password"
+            android:id="@+id/action_loginFragment_to_forgotPasswordFragment"
             app:destination="@id/forgotPasswordFragment"
             app:enterAnim="@anim/nav_default_enter_anim"
-            app:exitAnim="@anim/nav_default_exit_anim" />
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
         <action
-            android:id="@+id/action_login_to_home"
-            app:destination="@id/navigation_home"
+            android:id="@+id/action_loginFragment_to_mainFragment"
+            app:destination="@id/mainFragment"
             app:enterAnim="@anim/nav_default_enter_anim"
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popUpTo="@id/loginFragment"
@@ -31,12 +35,59 @@
     <fragment
         android:id="@+id/registerFragment"
         android:name="com.phinma.upang.ui.auth.RegisterFragment"
-        android:label="Register" />
+        android:label="Register">
+        <action
+            android:id="@+id/action_registerFragment_to_emailVerificationFragment"
+            app:destination="@id/emailVerificationFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+    </fragment>
 
     <fragment
         android:id="@+id/forgotPasswordFragment"
         android:name="com.phinma.upang.ui.auth.ForgotPasswordFragment"
-        android:label="Forgot Password" />
+        android:label="Forgot Password">
+        <action
+            android:id="@+id/action_forgotPasswordFragment_to_resetPasswordSentFragment"
+            app:destination="@id/resetPasswordSentFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/emailVerificationFragment"
+        android:name="com.phinma.upang.ui.auth.EmailVerificationFragment"
+        android:label="Email Verification">
+        <action
+            android:id="@+id/action_emailVerificationFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/resetPasswordSentFragment"
+        android:name="com.phinma.upang.ui.auth.ResetPasswordSentFragment"
+        android:label="Reset Password Sent">
+        <action
+            android:id="@+id/action_resetPasswordSentFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.phinma.upang.ui.main.MainFragment"
+        android:label="Main" />
 
     <!-- Main Flow -->
     <fragment
@@ -77,5 +128,13 @@
             android:name="requestId"
             app:argType="string" />
     </fragment>
+
+    <action
+        android:id="@+id/action_profile_to_login"
+        app:destination="@id/loginFragment"
+        app:enterAnim="@anim/nav_default_enter_anim"
+        app:exitAnim="@anim/nav_default_exit_anim"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
 
 </navigation> 

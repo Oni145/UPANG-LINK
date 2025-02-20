@@ -1,84 +1,65 @@
 package com.phinma.upang.ui.auth
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.Toast
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.phinma.upang.R
 import com.phinma.upang.databinding.FragmentForgotPasswordBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class ForgotPasswordFragment : Fragment() {
-
+class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
     private var _binding: FragmentForgotPasswordBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: ForgotPasswordViewModel by viewModels()
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentForgotPasswordBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+    private val viewModel: AuthViewModel by viewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupListeners()
+        _binding = FragmentForgotPasswordBinding.bind(view)
+
+        setupClickListeners()
         observeViewModel()
     }
 
-    private fun setupListeners() {
-        binding.resetButton.setOnClickListener {
-            val email = binding.emailInput.text.toString()
-            viewModel.resetPassword(email)
-        }
+    private fun setupClickListeners() {
+        with(binding) {
+            btnBack.setOnClickListener {
+                findNavController().navigateUp()
+            }
 
-        binding.backToLoginText.setOnClickListener {
-            findNavController().navigateUp()
-        }
-    }
+            btnResetPassword.setOnClickListener {
+                val email = etEmail.text.toString()
+                viewModel.resetPassword(email)
+            }
 
-    private fun observeViewModel() {
-        viewModel.forgotPasswordState.observe(viewLifecycleOwner) { state ->
-            when (state) {
-                is ForgotPasswordViewModel.ForgotPasswordState.Loading -> {
-                    showLoading(true)
-                }
-                is ForgotPasswordViewModel.ForgotPasswordState.Success -> {
-                    showLoading(false)
-                    showSuccess(state.message)
-                    // Navigate back to login after a short delay
-                    binding.root.postDelayed({
-                        findNavController().navigateUp()
-                    }, 2000)
-                }
-                is ForgotPasswordViewModel.ForgotPasswordState.Error -> {
-                    showLoading(false)
-                    showError(state.message)
-                }
+            btnLogin.setOnClickListener {
+                findNavController().navigateUp()
             }
         }
     }
 
-    private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.isVisible = isLoading
-        binding.resetButton.isEnabled = !isLoading
-        binding.emailInput.isEnabled = !isLoading
-    }
-
-    private fun showSuccess(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun showError(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+    private fun observeViewModel() {
+        viewModel.resetPasswordState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is AuthViewModel.AuthState.Loading -> {
+                    binding.btnResetPassword.isEnabled = false
+                    // Show loading indicator if needed
+                }
+                is AuthViewModel.AuthState.Success -> {
+                    binding.btnResetPassword.isEnabled = true
+                    findNavController().navigate(R.id.action_forgotPasswordFragment_to_resetPasswordSentFragment)
+                }
+                is AuthViewModel.AuthState.Error -> {
+                    binding.btnResetPassword.isEnabled = true
+                    // Show error message
+                }
+                else -> {
+                    binding.btnResetPassword.isEnabled = true
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {

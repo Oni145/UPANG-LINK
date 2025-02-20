@@ -7,7 +7,7 @@
 
     <item
         android:id="@+id/navigation_requests"
-        android:icon="@drawable/ic_document"
+        android:icon="@drawable/ic_request"
         android:title="Requests" />
 
     <item

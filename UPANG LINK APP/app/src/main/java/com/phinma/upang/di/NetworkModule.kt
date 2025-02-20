@@ -2,8 +2,10 @@ package com.phinma.upang.di
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.phinma.upang.BuildConfig
 import com.phinma.upang.data.api.AuthApi
 import com.phinma.upang.data.api.RequestApi
+import com.phinma.upang.data.api.NotificationApi
 import com.phinma.upang.data.api.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -34,7 +36,11 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
+                level = if (BuildConfig.DEBUG) {
+                    HttpLoggingInterceptor.Level.BODY
+                } else {
+                    HttpLoggingInterceptor.Level.NONE
+                }
             })
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
@@ -46,7 +52,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://192.168.1.10/UPANG-LINK/UPANG%20LINK%20API/api/") // Added /api/ to the path
+            .baseUrl(BuildConfig.API_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
@@ -62,5 +68,11 @@ object NetworkModule {
     @Singleton
     fun provideRequestApi(retrofit: Retrofit): RequestApi {
         return retrofit.create(RequestApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationApi(retrofit: Retrofit): NotificationApi {
+        return retrofit.create(NotificationApi::class.java)
     }
 } 

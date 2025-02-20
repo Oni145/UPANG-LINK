@@ -1,42 +1,34 @@
 package com.phinma.upang.ui.home
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import com.phinma.upang.R
 import com.phinma.upang.databinding.FragmentHomeBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class HomeFragment : Fragment() {
+class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: HomeViewModel by viewModels()
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        return binding.root
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentHomeBinding.bind(view)
+
         setupViews()
-        setupObservers()
     }
 
     private fun setupViews() {
-        // TODO: Setup views
-    }
+        binding.newRequestButton.setOnClickListener {
+            findNavController().navigate(R.id.action_requests_to_create)
+        }
 
-    private fun setupObservers() {
-        // TODO: Setup observers
+        binding.viewRequestsButton.setOnClickListener {
+            findNavController().navigate(R.id.navigation_requests)
+        }
     }
 
     override fun onDestroyView() {
