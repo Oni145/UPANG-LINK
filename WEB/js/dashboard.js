@@ -435,41 +435,81 @@ class Dashboard {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded, initializing Dashboard.");
     new Dashboard();
+
+    // Debug: Log the staff_tokens to the console to verify it's being properly loaded.
+    const staffTokens = localStorage.getItem('staff_tokens');
+    console.log("staff_tokens:", staffTokens);
 });
 
-// Authentication object containing logout functionality
-    const auth = {
-        /**
-         * Logs out the current admin by calling the logout API,
-         * removes stored tokens, and redirects to the login page.
-         */
-        logout: async function() {
-            console.log("Attempting logout...");
-            // Show the loading screen before proceeding with the logout
-            const dashboard = new Dashboard(); // Create a new Dashboard instance to access the showLoading method
-            dashboard.showLoading();
-
-            if (localStorage.getItem('token')) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/admin/logout`, {
-                        method: 'POST',
-                        headers: getAuthHeaders(localStorage.getItem('token'))
-                    });
-                    const result = await response.json();
-                    if (result.status === 'success') {
-                        console.log('Logout successful:', result.message);
-                    } else {
-                        console.error('Logout failed:', result.message);
-                    }
-                } catch (error) {
-                    console.error('Error during logout:', error);
-                }
-            }
-            // Remove the stored token and user data
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-
-            // After the logout is processed, redirect to the login page
-            window.location.href = 'login.html';
+const auth = {
+    /**
+     * Logs out the current user (admin or staff) by calling the logout API,
+     * removes stored tokens, and redirects to the login page.
+     */
+    logout: async function() {
+        console.log("Attempting logout...");
+        
+        // Show the loading indicator
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) {
+            loadingEl.style.display = 'flex';
+            loadingEl.style.justifyContent = 'center';
+            loadingEl.style.alignItems = 'center';
         }
-    };
+        
+        // Retrieve tokens for both admin and staff (if available)
+        const adminToken = localStorage.getItem('token');
+        const staffTokens = localStorage.getItem('staff_tokens');
+
+        // Call logout API for admin if token exists
+        if (adminToken) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/logout`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(adminToken)
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    console.log('Admin logout successful:', result.message);
+                } else {
+                    console.error('Admin logout failed:', result.message);
+                }
+            } catch (error) {
+                console.error('Error during admin logout:', error);
+            }
+        }
+
+        // Call logout API for staff if token exists
+        if (staffTokens) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/staff/logout`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(staffTokens)
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    console.log('Staff logout successful:', result.message);
+                } else {
+                    console.error('Staff logout failed:', result.message);
+                }
+            } catch (error) {
+                console.error('Error during staff logout:', error);
+            }
+        }
+
+        // Debug: Log the value of staff_tokens before removal
+        console.log("Before removal, staff_tokens:", localStorage.getItem('staff_tokens'));
+
+        // Clear all tokens and related user data from localStorage
+        localStorage.removeItem('token');
+        localStorage.removeItem('staff_tokens'); // Ensure staff token is removed
+        localStorage.removeItem('user');
+        localStorage.removeItem('loggedAdminId'); // If applicable
+
+        // Debug: Log the value of staff_tokens after removal
+        console.log("After removal, staff_tokens:", localStorage.getItem('staff_tokens'));
+
+        // Redirect to the login page after logout
+        window.location.href = 'login.html';
+    }
+};

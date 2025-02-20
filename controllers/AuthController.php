@@ -12,7 +12,8 @@ class AuthController {
     public function handleRequest($method, $uri) {
         switch ($method) {
             case 'POST':
-                // Login, register, and logout do not require a token (logout validates token internally)
+                // Login, register, and logout do not require a token normally,
+                // but if a token is provided during registration and it is a staff token, block it.
                 if (isset($uri[0])) {
                     switch ($uri[0]) {
                         case 'login':
@@ -45,8 +46,12 @@ class AuthController {
                 }
                 break;
             case 'PUT':
-                // Require token for PUT endpoints
-                $this->requireToken();
+                // Require token for PUT endpoints; staff tokens are not allowed to modify data.
+                $tokenData = $this->requireToken();
+                if ($tokenData['type'] === 'staff') {
+                    $this->sendError('Staff tokens are only allowed for fetching users, and updating tickets', 403);
+                    exit;
+                }
                 if (isset($uri[0]) && $uri[0] === 'users') {
                     if (isset($uri[1]) && !empty(trim($uri[1]))) {
                         $this->updateUser($uri[1]);
@@ -58,8 +63,12 @@ class AuthController {
                 }
                 break;
             case 'DELETE':
-                // Require token for DELETE endpoints
-                $this->requireToken();
+                // Require token for DELETE endpoints; staff tokens are not allowed to delete data.
+                $tokenData = $this->requireToken();
+                if ($tokenData['type'] === 'staff') {
+                    $this->sendError('Staff tokens are only allowed for fetching users', 403);
+                    exit;
+                }
                 if (isset($uri[0]) && $uri[0] === 'users') {
                     if (isset($uri[1]) && !empty(trim($uri[1]))) {
                         $this->deleteUser($uri[1]);
@@ -119,6 +128,20 @@ class AuthController {
 
     // ----- REGISTRATION FUNCTIONALITY -----
     private function register() {
+        // If a token is provided in the header and it is a staff token, block registration.
+        $headers = apache_request_headers();
+        if (isset($headers['Authorization']) || isset($headers['authorization'])) {
+            $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : $headers['authorization'];
+            if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+                $token = $matches[1];
+                $tokenData = $this->validateToken($token);
+                if ($tokenData && $tokenData['type'] === 'staff') {
+                    $this->sendError('Staff tokens are only allowed for fetching users', 403);
+                    return;
+                }
+            }
+        }
+
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
         if (empty($data->student_number)) {
@@ -314,24 +337,7 @@ class AuthController {
 
     // ----- TOKEN VALIDATION & SLIDING EXPIRATION -----
     public function validateToken($token) {
-        // Check auth_tokens first (for normal users)
-        $stmt = $this->db->prepare("SELECT user_id, expires_at FROM auth_tokens WHERE token = ?");
-        $stmt->execute([$token]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($row) {
-            $currentTime = new DateTime();
-            $expiresAt = new DateTime($row['expires_at']);
-            if ($currentTime > $expiresAt) {
-                $del = $this->db->prepare("DELETE FROM auth_tokens WHERE token = ?");
-                $del->execute([$token]);
-                return false;
-            }
-            $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
-            $updateStmt = $this->db->prepare("UPDATE auth_tokens SET expires_at = ? WHERE token = ?");
-            $updateStmt->execute([$newExpiresAt, $token]);
-            return ['id' => $row['user_id'], 'type' => 'user'];
-        }
-        // If not found, check admin_tokens (for admin users)
+        // --- First, check admin_tokens (for admin users) ---
         $stmt = $this->db->prepare("SELECT admin_id AS id, expires_at FROM admin_tokens WHERE token = ?");
         $stmt->execute([$token]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -348,6 +354,42 @@ class AuthController {
             $updateStmt->execute([$newExpiresAt, $token]);
             return ['id' => $row['id'], 'type' => 'admin'];
         }
+        
+        // --- Next, check staff_tokens (for staff users) ---
+        $stmt = $this->db->prepare("SELECT staff_id AS id, expires_at FROM staff_tokens WHERE token = ?");
+        $stmt->execute([$token]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $currentTime = new DateTime();
+            $expiresAt = new DateTime($row['expires_at']);
+            if ($currentTime > $expiresAt) {
+                $del = $this->db->prepare("DELETE FROM staff_tokens WHERE token = ?");
+                $del->execute([$token]);
+                return false;
+            }
+            $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
+            $updateStmt = $this->db->prepare("UPDATE staff_tokens SET expires_at = ? WHERE token = ?");
+            $updateStmt->execute([$newExpiresAt, $token]);
+            return ['id' => $row['id'], 'type' => 'staff'];
+        }
+        
+        // --- Finally, check auth_tokens (for normal users) ---
+        $stmt = $this->db->prepare("SELECT user_id AS id, expires_at FROM auth_tokens WHERE token = ?");
+        $stmt->execute([$token]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $currentTime = new DateTime();
+            $expiresAt = new DateTime($row['expires_at']);
+            if ($currentTime > $expiresAt) {
+                $del = $this->db->prepare("DELETE FROM auth_tokens WHERE token = ?");
+                $del->execute([$token]);
+                return false;
+            }
+            $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
+            $updateStmt = $this->db->prepare("UPDATE auth_tokens SET expires_at = ? WHERE token = ?");
+            $updateStmt->execute([$newExpiresAt, $token]);
+            return ['id' => $row['id'], 'type' => 'user'];
+        }
         return false;
     }
 
@@ -357,7 +399,7 @@ class AuthController {
     }
 
     // ----- REQUIRE TOKEN -----
-    // This method checks for the token in the Authorization header, validates it (from either table),
+    // This method checks for the token in the Authorization header, validates it (from any of the token tables),
     // and exits with an error if it's missing or invalid.
     private function requireToken() {
         $headers = apache_request_headers();
