@@ -5,6 +5,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.phinma.upang.R
 import com.phinma.upang.databinding.FragmentLoginBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,6 +34,13 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             btnLogin.setOnClickListener {
                 val email = etEmail.text.toString()
                 val password = etPassword.text.toString()
+
+                // Validate inputs
+                if (email.isBlank() || password.isBlank()) {
+                    showErrorDialog("Please fill in all fields")
+                    return@setOnClickListener
+                }
+
                 viewModel.login(email, password)
             }
 
@@ -51,18 +59,33 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             when (state) {
                 is AuthViewModel.AuthState.Loading -> {
                     binding.btnLogin.isEnabled = false
+                    binding.progressBar.visibility = View.VISIBLE
                 }
                 is AuthViewModel.AuthState.Success -> {
                     binding.btnLogin.isEnabled = true
+                    binding.progressBar.visibility = View.GONE
                     findNavController().navigate(R.id.action_loginFragment_to_mainFragment)
                 }
                 is AuthViewModel.AuthState.Error -> {
                     binding.btnLogin.isEnabled = true
-                }
-                else -> {
-                    binding.btnLogin.isEnabled = true
+                    binding.progressBar.visibility = View.GONE
+                    showErrorDialog(state.message)
                 }
             }
         }
+    }
+
+    private fun showErrorDialog(message: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Error")
+            .setMessage(message)
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+                viewModel.clearLoginState()
+            }
+            .setOnDismissListener {
+                viewModel.clearLoginState()
+            }
+            .show()
     }
 } 
