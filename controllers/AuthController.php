@@ -124,6 +124,9 @@ class AuthController {
         if (empty($data->student_number)) {
             $missing[] = "student_number";
         }
+        if (empty($data->email)) {
+            $missing[] = "email";
+        }
         if (empty($data->password)) {
             $missing[] = "password";
         }
@@ -153,8 +156,9 @@ class AuthController {
             return;
         }
         
-        // Set all required fields
+        // Set all required fields including email
         $this->user->student_number   = $data->student_number;
+        $this->user->email            = $data->email;
         $this->user->password         = password_hash($data->password, PASSWORD_DEFAULT);
         $this->user->first_name       = $data->first_name;
         $this->user->last_name        = $data->last_name;
@@ -215,6 +219,9 @@ class AuthController {
     private function updateUser($id) {
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
+        if (empty($data->email)) {
+            $missing[] = "email";
+        }
         if (empty($data->first_name)) {
             $missing[] = "first_name";
         }
@@ -241,6 +248,7 @@ class AuthController {
             return;
         }
         $this->user->user_id         = $id;
+        $this->user->email           = $data->email;
         $this->user->first_name      = $data->first_name;
         $this->user->last_name       = $data->last_name;
         $this->user->role            = $data->role;

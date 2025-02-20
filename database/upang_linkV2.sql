@@ -2,10 +2,11 @@
 CREATE DATABASE IF NOT EXISTS upang_link;
 USE upang_link;
 
--- Users table
+-- Users table updated to include an email column
 CREATE TABLE users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
     student_number VARCHAR(50) UNIQUE,
+    email VARCHAR(255) UNIQUE NOT NULL,  -- New email column added with UNIQUE constraint
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
@@ -151,13 +152,16 @@ INSERT INTO request_types (category_id, name, description, requirements, process
 (3, 'School Uniform Request', 'Regular school uniform set', JSON_ARRAY('Valid student ID'), '3-5 working days'),
 (4, 'Course Module Request', 'Subject-specific learning materials', JSON_ARRAY('Valid student ID', 'Professor approval'), '1-2 working days');
 
--- Insert default admin user into the users table
-INSERT INTO users (student_number, password, first_name, last_name, role) VALUES
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin');
+-- Insert default admin user into the users table with email
+INSERT INTO users (student_number, email, password, first_name, last_name, role) VALUES
+('admin', 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin');
 
--- Insert sample student account
-INSERT INTO users (student_number, password, first_name, last_name, role, course, year_level, block, admission_year) VALUES
-('0001-2021-00123', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Matthew Cymon', 'Estrada', 'student', 'BSIT', 3, 'BN', '2021');
+-- Insert sample student account with email
+INSERT INTO users (student_number, email, password, first_name, last_name, role, course, year_level, block, admission_year) VALUES
+('0001-2021-00123', 'matthew.estrada@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Matthew Cymon', 'Estrada', 'student', 'BSIT', 3, 'BN', '2021');
+
+-- Sample update query for inserting/updating an email:
+UPDATE users SET email = 'new.email@example.com' WHERE user_id = 2;
 
 -- Ensure the requirements column is JSON type (if not already)
 ALTER TABLE request_types 
