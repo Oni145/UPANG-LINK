@@ -16,10 +16,18 @@ class StaffAuthController {
      * POST /staff/register
      * POST /staff/login
      * POST /staff/logout
-     * GET  /staff/staffs or GET /staff/staffs/{id}
+     * GET  /staff/staffs         => fetch all staff
+     * GET  /staff/staffs/{id}    => fetch one staff by id
+     *
+     * If no sub-route is provided in a GET request, it defaults to "staffs".
      */
     public function handleRequest($method, $uri) {
         try {
+            // If no sub-route is provided for GET, default to fetching all staff.
+            if ($method === 'GET' && empty($uri)) {
+                $uri[0] = 'staffs';
+            }
+            
             if ($method === 'POST' && isset($uri[0])) {
                 switch ($uri[0]) {
                     case 'register':
@@ -94,21 +102,17 @@ class StaffAuthController {
         // Invalidate existing tokens
         $stmt = $this->db->prepare("DELETE FROM staff_tokens WHERE staff_id = ?");
         $stmt->execute([$staff['staff_id']]);
-
         // Generate new token
         $token     = bin2hex(random_bytes(16)); // 32-character hex token
         $expiresAt = date('Y-m-d H:i:s', time() + 86400); // Token expires in 24 hours
-
         // Insert the token into the staff_tokens table
         $stmt = $this->db->prepare("INSERT INTO staff_tokens (token, staff_id, login_time, expires_at) VALUES (?, ?, NOW(), ?)");
         if (!$stmt->execute([$token, $staff['staff_id'], $expiresAt])) {
             $this->sendError("Could not generate token", 500);
             return;
         }
-        
         // Remove password from response data
         unset($staff['password']);
-
         http_response_code(200);
         echo json_encode([
             'status'     => 'success',
@@ -127,21 +131,17 @@ class StaffAuthController {
             $this->sendError("Authorization token not provided", 401);
             return;
         }
-        
         if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
             $this->sendError("Invalid Authorization header format", 400);
             return;
         }
-        
         $token = $matches[1];
         if (empty($token)) {
             $this->sendError("Token is empty", 401);
             return;
         }
-        
         $stmt = $this->db->prepare("DELETE FROM staff_tokens WHERE token = ?");
         $stmt->execute([$token]);
-        
         if ($stmt->rowCount() > 0) {
             http_response_code(200);
             echo json_encode([
@@ -171,6 +171,7 @@ class StaffAuthController {
             $this->sendError("Token is empty", 401);
             return;
         }
+        // Validate token in staff_tokens
         $stmt = $this->db->prepare("SELECT * FROM staff_tokens WHERE token = ? AND expires_at > NOW()");
         $stmt->execute([$token]);
         $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -222,3 +223,4 @@ class StaffAuthController {
         exit();
     }
 }
+?>
