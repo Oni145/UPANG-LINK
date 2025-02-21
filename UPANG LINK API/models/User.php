@@ -277,6 +277,7 @@ class User {
 
         $stmt = $this->conn->prepare($query);
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        
         $stmt->bindParam(":password", $hashed_password);
         $stmt->bindParam(":user_id", $this->user_id);
 

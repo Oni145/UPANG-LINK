@@ -3,8 +3,8 @@ return [
     'app' => [
         'name' => 'UPANG LINK',
         'version' => '1.0.0',
-        'frontend_url' => 'http://your-frontend-url',
-        'api_url' => 'http://your-api-url',
+        'frontend_url' => 'http://192.168.1.7/UPANG-LINK/UPANG%20LINK%20API/pages',
+        'api_url' => 'http://192.168.1.7/UPANG-LINK/UPANG%20LINK%20API',
     ],
     'database' => [
         'host' => 'localhost',
@@ -13,12 +13,12 @@ return [
         'password' => ''
     ],
     'email' => [
-        'host' => 'smtp.your-email-provider.com',
+        'host' => 'smtp.gmail.com',
         'port' => 587,
-        'username' => 'your-email@domain.com',
-        'password' => 'your-email-password',
+        'username' => 'jerickogarcia0@gmail.com',
+        'password' => 'laht squw emyi ggix',
         'from_name' => 'UPANG LINK',
-        'from_email' => 'noreply@upang-link.com'
+        'from_email' => 'jerickogarcia0@gmail.com'
     ],
     'security' => [
         'token_expiry' => 24, // hours
@@ -28,7 +28,7 @@ return [
         'max_file_size' => 5 * 1024 * 1024 // 5MB
     ],
     'cors' => [
-        'allowed_origins' => ['http://localhost:3000', 'http://localhost:8080'],
+        'allowed_origins' => ['http://192.168.1.7', 'http://localhost', 'http://192.168.1.7/UPANG-LINK'],
         'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With']
     ]

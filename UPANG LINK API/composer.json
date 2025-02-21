@@ -1,0 +1,14 @@
+{
+    "name": "upang-link/api",
+    "description": "UPANG LINK API",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "phpmailer/phpmailer": "^6.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+} 

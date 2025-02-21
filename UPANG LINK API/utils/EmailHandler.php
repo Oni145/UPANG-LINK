@@ -1,125 +1,102 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+require __DIR__ . '/../vendor/autoload.php';
+
 class EmailHandler {
     private $config;
+    private $mailer;
     private $from_email;
     private $from_name;
 
     public function __construct() {
-        $this->config = require_once __DIR__ . '/../config/config.php';
-        $this->from_email = $this->config['email']['from_email'];
-        $this->from_name = $this->config['email']['from_name'];
+        $config_file = __DIR__ . '/../config/config.php';
+        if (!file_exists($config_file)) {
+            throw new Exception('Configuration file not found');
+        }
+        
+        $this->config = require $config_file;
+        if (!is_array($this->config)) {
+            throw new Exception('Invalid configuration format');
+        }
+        
+        $this->from_email = $this->config['email']['from_email'] ?? '';
+        $this->from_name = $this->config['email']['from_name'] ?? '';
+        
+        $this->mailer = new PHPMailer(true);
+        $this->setupMailer();
+    }
+
+    private function setupMailer() {
+        try {
+            $this->mailer->isSMTP();
+            $this->mailer->Host = $this->config['email']['host'];
+            $this->mailer->SMTPAuth = true;
+            $this->mailer->Username = $this->config['email']['username'];
+            $this->mailer->Password = $this->config['email']['password'];
+            $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $this->mailer->Port = $this->config['email']['port'];
+            $this->mailer->setFrom($this->from_email, $this->from_name);
+            $this->mailer->isHTML(true);
+            
+            // Enable debug output in development
+            if (isset($this->config['app']['debug']) && $this->config['app']['debug']) {
+                $this->mailer->SMTPDebug = SMTP::DEBUG_SERVER;
+            }
+        } catch (Exception $e) {
+            error_log('Error setting up mailer: ' . $e->getMessage());
+            throw $e;
+        }
     }
 
     public function sendVerificationEmail($to_email, $token) {
-        $subject = "Verify your UPANG LINK account";
-        $verification_link = $this->config['app']['frontend_url'] . "/verify-email?token=" . $token;
-        
-        $message = $this->getEmailTemplate('verification', [
-            'verification_link' => $verification_link,
-            'app_name' => $this->config['app']['name']
-        ]);
+        try {
+            $subject = "Verify your UPANG LINK account";
+            $verification_link = $this->config['app']['frontend_url'] . "/verify-email?token=" . $token;
+            
+            $message = $this->getEmailTemplate('verification', [
+                'verification_link' => $verification_link,
+                'app_name' => $this->config['app']['name'] ?? 'UPANG LINK'
+            ]);
 
-        return $this->send($to_email, $subject, $message);
+            return $this->send($to_email, $subject, $message);
+        } catch (Exception $e) {
+            error_log('Error sending verification email: ' . $e->getMessage());
+            return false;
+        }
     }
 
     public function sendResetPasswordEmail($to_email, $token) {
-        $subject = "Reset your UPANG LINK password";
-        $reset_link = $this->config['app']['frontend_url'] . "/reset-password?token=" . $token;
-        
-        $message = $this->getEmailTemplate('reset_password', [
-            'reset_link' => $reset_link,
-            'app_name' => $this->config['app']['name']
-        ]);
+        try {
+            $subject = "Reset your UPANG LINK password";
+            $reset_link = $this->config['app']['frontend_url'] . "/reset-password?token=" . $token;
+            
+            $message = $this->getEmailTemplate('reset_password', [
+                'reset_link' => $reset_link,
+                'app_name' => $this->config['app']['name'] ?? 'UPANG LINK'
+            ]);
 
-        return $this->send($to_email, $subject, $message);
+            return $this->send($to_email, $subject, $message);
+        } catch (Exception $e) {
+            error_log('Error sending reset password email: ' . $e->getMessage());
+            return false;
+        }
     }
 
     private function send($to_email, $subject, $message) {
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-type: text/html; charset=UTF-8',
-            'From: ' . $this->from_name . ' <' . $this->from_email . '>',
-            'Reply-To: ' . $this->from_email,
-            'X-Mailer: PHP/' . phpversion()
-        ];
-
-        // Use SMTP if configured
-        if ($this->config['email']['host']) {
-            return $this->sendSMTP($to_email, $subject, $message);
-        }
-
-        // Fallback to mail()
-        return mail($to_email, $subject, $message, implode("\r\n", $headers));
-    }
-
-    private function sendSMTP($to_email, $subject, $message) {
-        $smtp = fsockopen(
-            $this->config['email']['host'],
-            $this->config['email']['port'],
-            $errno,
-            $errstr,
-            30
-        );
-
-        if (!$smtp) {
-            error_log("SMTP Connection Failed: $errstr ($errno)");
+        try {
+            $this->mailer->clearAddresses();
+            $this->mailer->addAddress($to_email);
+            $this->mailer->Subject = $subject;
+            $this->mailer->Body = $message;
+            
+            return $this->mailer->send();
+        } catch (Exception $e) {
+            error_log('Error sending email: ' . $e->getMessage());
             return false;
         }
-
-        $this->getResponse($smtp);
-        fwrite($smtp, "EHLO " . $_SERVER['SERVER_NAME'] . "\r\n");
-        $this->getResponse($smtp);
-        
-        // Start TLS if port 587
-        if ($this->config['email']['port'] == 587) {
-            fwrite($smtp, "STARTTLS\r\n");
-            $this->getResponse($smtp);
-            stream_socket_enable_crypto($smtp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-            fwrite($smtp, "EHLO " . $_SERVER['SERVER_NAME'] . "\r\n");
-            $this->getResponse($smtp);
-        }
-
-        // Authentication
-        fwrite($smtp, "AUTH LOGIN\r\n");
-        $this->getResponse($smtp);
-        fwrite($smtp, base64_encode($this->config['email']['username']) . "\r\n");
-        $this->getResponse($smtp);
-        fwrite($smtp, base64_encode($this->config['email']['password']) . "\r\n");
-        $this->getResponse($smtp);
-
-        // Send email
-        fwrite($smtp, "MAIL FROM:<" . $this->from_email . ">\r\n");
-        $this->getResponse($smtp);
-        fwrite($smtp, "RCPT TO:<" . $to_email . ">\r\n");
-        $this->getResponse($smtp);
-        fwrite($smtp, "DATA\r\n");
-        $this->getResponse($smtp);
-
-        // Email headers and content
-        $email_content = "Subject: " . $subject . "\r\n";
-        $email_content .= "To: " . $to_email . "\r\n";
-        $email_content .= "From: " . $this->from_name . " <" . $this->from_email . ">\r\n";
-        $email_content .= "MIME-Version: 1.0\r\n";
-        $email_content .= "Content-type: text/html; charset=UTF-8\r\n";
-        $email_content .= "\r\n" . $message . "\r\n.\r\n";
-
-        fwrite($smtp, $email_content);
-        $this->getResponse($smtp);
-
-        // Close connection
-        fwrite($smtp, "QUIT\r\n");
-        fclose($smtp);
-
-        return true;
-    }
-
-    private function getResponse($smtp) {
-        $response = '';
-        while ($str = fgets($smtp, 515)) {
-            $response .= $str;
-            if (substr($str, 3, 1) == ' ') break;
-        }
-        return $response;
     }
 
     private function getEmailTemplate($template_name, $variables = []) {
@@ -131,7 +108,6 @@ class EmailHandler {
 
         $template = file_get_contents($template_path);
         
-        // Replace variables in template
         foreach ($variables as $key => $value) {
             $template = str_replace('{{' . $key . '}}', $value, $template);
         }
@@ -161,7 +137,7 @@ class EmailHandler {
                 </head>
                 <body>
                     <div class="container">
-                        <h2>Welcome to ' . $variables['app_name'] . '!</h2>
+                        <h2>Welcome to ' . ($variables['app_name'] ?? 'UPANG LINK') . '!</h2>
                         <p>Thank you for registering. Please verify your email address by clicking the button below:</p>
                         <p><a href="' . $variables['verification_link'] . '" class="button">Verify Email</a></p>
                         <p>Or copy and paste this link in your browser:</p>
@@ -194,7 +170,7 @@ class EmailHandler {
                 </head>
                 <body>
                     <div class="container">
-                        <h2>Reset Your ' . $variables['app_name'] . ' Password</h2>
+                        <h2>Reset Your ' . ($variables['app_name'] ?? 'UPANG LINK') . ' Password</h2>
                         <p>We received a request to reset your password. Click the button below to create a new password:</p>
                         <p><a href="' . $variables['reset_link'] . '" class="button">Reset Password</a></p>
                         <p>Or copy and paste this link in your browser:</p>

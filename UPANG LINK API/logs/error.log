@@ -1,2 +1,25 @@
 [19-Feb-2025 15:40:51 Europe/Berlin] Error: Endpoint not found
 Stack trace: #0 {main}
+[21-Feb-2025 01:26:09 Europe/Berlin] Database Connection Error: SQLSTATE[HY000] [1049] Unknown database 'upang_link'
+[21-Feb-2025 01:26:09 Europe/Berlin] PHP Fatal error:  Uncaught Exception: Database connection failed in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\config\Database.php:21
+Stack trace:
+#0 C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\api\index.php(42): Database->getConnection()
+#1 {main}
+  thrown in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\config\Database.php on line 21
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type bool in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 9
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 9
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type bool in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 10
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 10
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type bool in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 27
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 27
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type bool in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 31
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 31
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type bool in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 47
+[21-Feb-2025 01:29:01 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 47
+[21-Feb-2025 01:29:03 Europe/Berlin] PHP Warning:  mail(): Failed to connect to mailserver at &quot;localhost&quot; port 25, verify your &quot;SMTP&quot; and &quot;smtp_port&quot; setting in php.ini or use ini_set() in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 52
+[21-Feb-2025 02:02:13 Europe/Berlin] Error: Endpoint not found
+Stack trace: #0 {main}
+[21-Feb-2025 02:09:12 Europe/Berlin] Error: Endpoint not found
+Stack trace: #0 {main}
+[21-Feb-2025 02:15:42 Europe/Berlin] Error: Endpoint not found
+Stack trace: #0 {main}
