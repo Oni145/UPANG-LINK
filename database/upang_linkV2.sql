@@ -135,6 +135,27 @@ CREATE TABLE request_requirement_notes (
     FOREIGN KEY (admin_id) REFERENCES users(user_id)
 );
 
+-- Staffs table (extracted from the original schema)
+CREATE TABLE staffs (
+    staff_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(100),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Staff tokens table
+CREATE TABLE staff_tokens (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    token VARCHAR(64) NOT NULL,
+    staff_id INT NOT NULL,
+    login_time DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (staff_id) REFERENCES staffs(staff_id)
+);
+
 -- Insert default categories
 INSERT INTO categories (name, description) VALUES
 ('Academic Documents', 'Transcripts, certificates, and other academic records'),
@@ -159,6 +180,10 @@ INSERT INTO users (student_number, email, password, first_name, last_name, role)
 -- Insert sample student account with email
 INSERT INTO users (student_number, email, password, first_name, last_name, role, course, year_level, block, admission_year) VALUES
 ('0001-2021-00123', 'matthew.estrada@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Matthew Cymon', 'Estrada', 'student', 'BSIT', 3, 'BN', '2021');
+
+-- Insert sample staff account extracted from the previous table
+INSERT INTO staffs (username, name, email, password)
+VALUES ('matthew', 'matthew', 'test@gmail.com', '$2y$10$5aRF6Ix2fkBcho75IBfS4uwfCvvQNtappWMpPkncFydoAzJFeZqja');
 
 -- Sample update query for inserting/updating an email:
 UPDATE users SET email = 'new.email@example.com' WHERE user_id = 2;

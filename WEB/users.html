@@ -3,107 +3,100 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UPANG LINK Admin</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="../WEB/css/style.css">
+  <title>UPANG LINK Admin </title>
+  <!-- Font Awesome CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="../WEB/css/users.css">
 </head>
 <body>
-  <div id="loadingIndicator" style="display: none;">
-    <img id="loadingLogo" src="../WEB/assets/phinma-logo.png" alt="Loading..." />
+  <!-- Loading Indicator -->
+  <div id="loadingIndicator">
+    <img id="loadingLogo" src="assets/phinma-logo.png" alt="Loading..." />
   </div>
+
   <div class="wrapper">
     <!-- Sidebar -->
     <nav id="sidebar">
       <div class="sidebar-header">
         <img src="assets/upang-logo.png" alt="UPANG LINK" class="logo">
         <h3>UPANG LINK</h3>
-        <p class="text-muted small">PHINMA Education Network</p>
+        <p class="subtitle">PHINMA Education Network</p>
       </div>
-      <ul class="list-unstyled components">
-        <li>
-          <a href="index.html">
-            <i class="bi bi-grid"></i>
-            Dashboard
-          </a>
-        </li>
-        <li>
-          <a href="requests.html">
-            <i class="bi bi-file-text"></i>
-            Requests
-          </a>
-        </li>
-        <li class="active">
-          <a href="users.html">
-            <i class="bi bi-people"></i>
-            Users
-          </a>
-        </li>
+      <ul class="sidebar-menu">
+        <li><a href="index.html"><i class="fas fa-house" style="color:green;"></i> Dashboard</a></li>
+        <li><a href="requests.html"><i class="fas fa-file-lines" style="color:green;"></i> Requests</a></li>
+        <li><a href="users.html"><i class="fas fa-users" style="color:green;"></i> Users</a></li>
       </ul>
     </nav>
+
     <!-- Page Content -->
     <div id="content">
-      <!-- Top Navigation -->
-      <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-          <!-- Left side empty -->
-          <div></div>
-          <!-- Right side icons -->
-          <div class="ms-auto d-flex align-items-center">
-            <!-- User's name -->
-            <div class="me-4">
-              <span class="fw-semibold" id="userFullName">Admin User</span>
+      <!-- Top Navbar -->
+      <header class="top-navbar">
+        <button id="toggleSidebar">&#9776;</button>
+        <div class="user-info">
+          <span id="userFullName">Admin User</span>
+          <button onclick="auth.logout()">Logout</button>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main>
+        <div class="card">
+          <div class="card-header">
+            <span>Users</span>
+            <div id="paginationContainer"></div>
+          </div>
+          <div class="card-body">
+            <input type="text" id="searchInput" placeholder="Search by student number, name, email, role, course, etc...">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Student No.</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Course</th>
+                    <th>Year Level</th>
+                    <th>Block</th>
+                    <th>Admission Year</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+              </table>
             </div>
-            <!-- Profile -->
-            <div class="dropdown ms-3">
-              <button class="btn" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-person-circle"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#" onclick="auth.logout()">Logout</a></li>
-              </ul>
-            </div>
           </div>
         </div>
-      </nav>
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <span>Users</span>
-          <!-- Pagination Container placed on top (if needed) -->
-          <div id="paginationContainer"></div>
-        </div>
-        <div class="card-body">
-          <!-- Search Input -->
-          <div class="mb-3">
-            <input type="text" id="searchInput" class="form-control" placeholder="Search by student number or name...">
-          </div>
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>User ID</th>
-                  <th>Student No.</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Course</th>
-                  <th>Year Level</th>
-                  <th>Block</th>
-                  <th>Admission Year</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="requestsTableBody">
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   </div>
-  
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
   <script src="../WEB/js/users.js"></script>
-  <script src="../WEB/js/auth.js"></script>
+  <script>
+    // Toggle sidebar on small screens
+    const toggleButton = document.getElementById('toggleSidebar');
+    const sidebar = document.getElementById('sidebar');
+    toggleButton.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+    });
+
+    // Highlight active sidebar menu item based on current page URL.
+    document.addEventListener('DOMContentLoaded', () => {
+      const currentPage = window.location.pathname.split('/').pop();
+      const menuLinks = document.querySelectorAll('#sidebar .sidebar-menu li a');
+      menuLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPage) {
+          // Add active class to both the link and its parent li
+          link.classList.add('active');
+          link.parentElement.classList.add('active');
+        } else {
+          link.classList.remove('active');
+          link.parentElement.classList.remove('active');
+        }
+      });
+    });
+  </script>
 </body>
 </html>

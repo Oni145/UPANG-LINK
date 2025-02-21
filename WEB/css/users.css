@@ -1,0 +1,280 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Global Styles */
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #333;
+  }
+  
+  /* Loading Indicator */
+  #loadingIndicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  
+  /* Spinning Logo */
+  #loadingLogo {
+    animation: spin 2s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Wrapper Layout */
+  .wrapper {
+    display: flex;
+    min-height: 100vh;
+  }
+  
+  /* Sidebar */
+  #sidebar {
+    width: 250px;         /* Adjust width as needed */
+    background: #fff;      /* White background */
+    color: #333;          /* Dark text for contrast */
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+  
+  #sidebar.active {
+    left: 0;
+  }
+  
+  .sidebar-header {
+    padding: 20px;
+    background: #fafafa;   /* Light background for header */
+    text-align: center;
+    color: #28a745;
+  }
+  
+  .sidebar-header .logo {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+    background-color: #fafafa;
+  }
+  
+  .sidebar-header h3 {
+    margin-bottom: 5px;
+    font-size: 1.5rem;
+  }
+  
+  .sidebar-header .subtitle {
+    font-size: 0.9rem;
+    color: #777;
+  }
+  
+  .sidebar-menu {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .sidebar-menu li {
+    border-bottom: 1px solid #ddd;
+  }
+  
+  /* Sidebar links styling */
+  .sidebar-menu li a {
+    display: block;
+    padding: 15px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.3s, color 0.3s;
+  }
+  
+  /* Hover state */
+  .sidebar-menu li a:hover {
+    background: #e6e6e6;
+    color: #000;
+  }
+  
+  /* Active tab styling */
+  .sidebar-menu li a.active {
+    background: #e6e6e6;
+    color: #000;
+    border-left: 4px solid #28a745;
+  }
+  
+  /* Menu Icon */
+  .menu-icon {
+    margin-right: 10px;
+  }
+  
+  /* Page Content */
+  #content {
+    flex: 1;
+    padding: 20px;
+  }
+  
+  /* Top Navbar */
+  .top-navbar {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    padding: 10px 20px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+  }
+  
+  .top-navbar #toggleSidebar {
+    display: none;
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .user-info {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+  }
+  
+  .user-info span {
+    margin-right: 15px;
+    font-weight: bold;
+  }
+  
+  .user-info button {
+    padding: 5px 10px;
+    background: #e74c3c;
+    border: none;
+    color: #fff;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  /* Card */
+  .card {
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  
+  .card-header {
+    padding: 15px;
+    background: #f7f7f7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .card-body {
+    padding: 15px;
+  }
+  
+  .card-body input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+  }
+  
+  /* Table */
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  table th, table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  table th {
+    background: #f2f2f2;
+  }
+  
+  /* Target only the Status data cells (4th column) */
+  table td:nth-child(4) {
+    text-align: center;
+    font-size: 0.9rem;
+  }
+  
+  /* Buttons */
+  .btn {
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+  
+  /* "View" Button */
+  /* Outside the dialog, center it using block and auto margins */
+  .btn-primary {
+    background: green;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    display: block;
+    margin: 0 auto;
+  }
+  
+  .sidebar-menu li a.active,
+  .sidebar-menu li.active a {
+    background: #28a745;  /* green */
+    color: #fff;          /* white text */
+    border-left: 4px solid #fff;
+  }
+  
+  /* Secondary Button */
+  .btn-secondary {
+    background: #95a5a6;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+  }
+  
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+  
+  /* Responsive Styles */
+  @media (max-width: 768px) {
+    .top-navbar #toggleSidebar {
+      display: block;
+    }
+    #sidebar {
+      position: fixed;
+      left: -250px;
+      top: 0;
+      height: 100%;
+      z-index: 1100;
+    }
+    #sidebar.active {
+      left: 0;
+    }
+    #content {
+      padding: 20px 10px;
+    }
+  }
+  

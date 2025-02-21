@@ -58,7 +58,7 @@ body {
 
 .sidebar-header {
   padding: 20px;
-  background: #f0f0f0;   /* Light background for header */
+  background: #fafafa;   /* Light background for header */
   text-align: center;
   color: #28a745;
 }
@@ -67,7 +67,7 @@ body {
   max-width: 100%;
   height: auto;
   margin-bottom: 10px;
-  background-color: #f0f0f0;
+  background-color: #fafafa;
 }
 
 .sidebar-header h3 {
@@ -81,6 +81,13 @@ body {
   color: #777;
 }
 
+.sidebar-menu li a.active,
+.sidebar-menu li.active a {
+  background: #28a745;  /* green */
+  color: #fff;          /* white text */
+  border-left: 4px solid #fff;
+}
+
 .sidebar-menu {
   list-style: none;
   padding: 0;
@@ -90,6 +97,7 @@ body {
   border-bottom: 1px solid #ddd;
 }
 
+/* Sidebar links styling */
 .sidebar-menu li a {
   display: block;
   padding: 15px 20px;
@@ -98,12 +106,20 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
-.sidebar-menu li a:hover,
-.sidebar-menu li a.active {
+/* Hover state */
+.sidebar-menu li a:hover {
   background: #e6e6e6;
   color: #000;
 }
 
+/* Active tab styling */
+.sidebar-menu li a.active {
+  background: #e6e6e6;
+  color: #000;
+  border-left: 4px solid #28a745;
+}
+
+/* Menu Icon */
 .menu-icon {
   margin-right: 10px;
 }
@@ -201,10 +217,10 @@ table th {
 }
 
 /* Target only the Status data cells (4th column) */
+/* Updated font-size to 0.9rem to match the .btn-primary */
 table td:nth-child(4) {
   text-align: center;
-  font-size: 1.4rem; /* Increase the font size for status data */
-
+  font-size: 0.9rem;
 }
 
 /* Modal */
@@ -263,11 +279,20 @@ table td:nth-child(4) {
 }
 
 /* "View" Button */
+/* Outside the dialog, center it using block and auto margins */
 .btn-primary {
-  background: #3498db;
+  background: green;
   color: #fff;
   padding: 10px 20px;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
+  display: block;
+  margin: 0 auto;
+}
+
+/* When the button is inside a modal footer, revert to inline-flex */
+.modal-footer .btn-primary {
+  display: inline-flex;
+  margin: 0;
 }
 
 /* Secondary Button */

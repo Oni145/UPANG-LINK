@@ -93,9 +93,6 @@
 
   /**
    * Fetches the logged-in user's data using the token.
-   * It first attempts the admin endpoint.
-   * If successful, sets window.currentUserRole to 'admin'.
-   * Otherwise, it tries the staff endpoint and sets role to 'staff'.
    */
   async function displayUserName() {
     console.log("Displaying logged-in user name...");
@@ -107,14 +104,12 @@
     let endpoint = `${API_BASE_URL}/admin/users`;
     let result;
     try {
-      // Try fetching admin credentials.
       let response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
       result = await response.json();
       if (response.ok && result.status === 'success') {
         window.currentUserRole = 'admin';
         console.log("Admin endpoint successful. Detected role: admin.");
       } else {
-        // Fallback: try staff endpoint.
         endpoint = `${API_BASE_URL}/staff/`;
         response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
         result = await response.json();
@@ -125,7 +120,6 @@
           throw new Error("Unable to fetch user details from either endpoint.");
         }
       }
-      // Use the first record for display.
       let currentUser = result.data[0];
       const nameEl = document.getElementById('userFullName');
       if (nameEl) {
@@ -164,7 +158,6 @@
       currentPage = 1;
       updatePaginationControls();
       displayUsersPage(currentPage);
-      placeCreateUserButton();
     } catch (error) {
       console.error("Error fetching users:", error);
       showErrorAlert(error.message);
@@ -184,28 +177,24 @@
 
   /**
    * Renders users in the table.
-   * The "View" button is shown only if the detected role is admin.
+   * Updated to target the element with id "usersTableBody".
    */
   function renderUsers(users) {
-    let tbody = document.getElementById('requestsTableBody');
+    let tbody = document.getElementById('usersTableBody');
     if (!tbody) {
       const container = document.getElementById('usersTableContainer') || document.body;
       const table = document.createElement('table');
       table.className = "table";
       tbody = document.createElement('tbody');
-      tbody.id = "requestsTableBody";
+      tbody.id = "usersTableBody";
       table.appendChild(tbody);
       container.appendChild(table);
     }
     if (!users || users.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="10" class="text-center">No users to display</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="text-center">No users to display</td></tr>`;
       return;
     }
-    tbody.innerHTML = users.map(user => {
-      const viewBtn = (window.currentUserRole === 'admin')
-        ? `<button class="btn btn-sm btn-primary" onclick="viewUser(${user.user_id})">View</button>`
-        : '';
-      return `
+    tbody.innerHTML = users.map(user => `
         <tr>
           <td>${user.user_id || 'N/A'}</td>
           <td>${user.student_number || 'N/A'}</td>
@@ -216,9 +205,8 @@
           <td>${user.year_level || 'N/A'}</td>
           <td>${user.block || 'N/A'}</td>
           <td>${user.admission_year || 'N/A'}</td>
-          <td>${viewBtn}</td>
-        </tr>`;
-    }).join('');
+        </tr>
+    `).join('');
   }
 
   /**
@@ -259,390 +247,8 @@
   }
 
   /**
-   * Inserts the "Create User" button if the detected role is admin.
+   * Logout function.
    */
- 
-  /**
-   * Opens a modal to view/update a user's details.
-   */
-  function viewUser(userId) {
-    const user = allUsersData.find(u => u.user_id == userId);
-    if (!user) {
-      console.error("User not found for ID:", userId);
-      return;
-    }
-    let modal = document.getElementById("userModal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "userModal";
-      modal.className = "modal fade";
-      modal.setAttribute("tabindex", "-1");
-      modal.innerHTML = `
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">User Details</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label">Student Number</label>
-                <div class="form-control-plaintext" id="displayStudentNumber"></div>
-              </div>
-              <form id="userForm">
-                <div class="mb-3">
-                  <label for="firstName" class="form-label">First Name</label>
-                  <input type="text" class="form-control" id="firstName" name="first_name">
-                </div>
-                <div class="mb-3">
-                  <label for="lastName" class="form-label">Last Name</label>
-                  <input type="text" class="form-control" id="lastName" name="last_name">
-                </div>
-                <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
-                  <input type="text" class="form-control" id="email" name="email">
-                </div>
-                <div class="mb-3">
-                  <label for="role" class="form-label">Role</label>
-                  <input type="text" class="form-control" id="role" name="role">
-                </div>
-                <div class="mb-3">
-                  <label for="course" class="form-label">Course</label>
-                  <input type="text" class="form-control" id="course" name="course">
-                </div>
-                <div class="mb-3">
-                  <label for="yearLevel" class="form-label">Year Level</label>
-                  <input type="text" class="form-control" id="yearLevel" name="year_level">
-                </div>
-                <div class="mb-3">
-                  <label for="block" class="form-label">Block</label>
-                  <input type="text" class="form-control" id="block" name="block">
-                </div>
-                <div class="mb-3">
-                  <label for="admissionYear" class="form-label">Admission Year</label>
-                  <input type="text" class="form-control" id="admissionYear" name="admission_year">
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" id="saveUserBtn">Save changes</button>
-            </div>
-          </div>
-        </div>`;
-      document.body.appendChild(modal);
-    }
-    modal.querySelector("#displayStudentNumber").textContent = user.student_number || "";
-    modal.querySelector("#firstName").value = user.first_name || "";
-    modal.querySelector("#lastName").value = user.last_name || "";
-    modal.querySelector("#email").value = user.email || "";
-    modal.querySelector("#role").value = user.role || "";
-    modal.querySelector("#course").value = user.course || "";
-    modal.querySelector("#yearLevel").value = user.year_level || "";
-    modal.querySelector("#block").value = user.block || "";
-    modal.querySelector("#admissionYear").value = user.admission_year || "";
-    modal.querySelector("#saveUserBtn").onclick = () => updateUser(user.user_id);
-    (bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal)).show();
-  }
-
-  /**
-   * Sends a PUT request to update a user's details.
-   */
-  async function updateUser(userId) {
-    const token = getToken();
-    if (!token) {
-      console.error("No token found.");
-      return;
-    }
-    const originalUser = allUsersData.find(u => u.user_id == userId);
-    if (!originalUser) {
-      console.error("Original user not found for ID:", userId);
-      return;
-    }
-    const modal = document.getElementById("userModal");
-    const form = modal.querySelector("#userForm");
-    const formData = new FormData(form);
-    const updatedUser = {
-      student_number: originalUser.student_number,
-      first_name: formData.get('first_name')?.trim() || originalUser.first_name,
-      last_name: formData.get('last_name')?.trim() || originalUser.last_name,
-      email: formData.get('email')?.trim() || originalUser.email,
-      role: formData.get('role')?.trim() || originalUser.role,
-      course: formData.get('course')?.trim() || originalUser.course,
-      year_level: formData.get('year_level')?.trim() || originalUser.year_level,
-      block: formData.get('block')?.trim() || originalUser.block,
-      admission_year: formData.get('admission_year')?.trim() || originalUser.admission_year
-    };
-    try {
-      showLoading();
-      const response = await fetch(`${API_BASE_URL}/auth/users/${userId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify(updatedUser)
-      });
-      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-      const result = await response.json();
-      if (result.status === 'success') {
-        bootstrap.Modal.getInstance(modal)?.hide();
-        loadUsers();
-      } else {
-        throw new Error("Error updating user: " + result.message);
-      }
-    } catch (error) {
-      console.error("Error updating user:", error);
-      showErrorAlert(error.message);
-    } finally {
-      hideLoading();
-    }
-  }
-
-  /**
-   * Builds the modal structure for creating or viewing a user.
-   */
-  function createUserModalStructure(modalId, title, isCreate) {
-    let modal = document.createElement("div");
-    modal.id = modalId;
-    modal.className = "modal fade";
-    modal.setAttribute("tabindex", "-1");
-    modal.innerHTML = isCreate ?
-      `<div class="modal-dialog modal-lg">
-         <div class="modal-content">
-           <div class="modal-header">
-             <h5 class="modal-title">${title}</h5>
-             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-           </div>
-           <div class="modal-body">
-             <form id="createUserForm">${modalFormFields(true)}</form>
-           </div>
-           <div class="modal-footer">
-             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-             <button type="button" class="btn btn-primary" id="saveCreateUserBtn">Create User</button>
-           </div>
-         </div>
-       </div>` :
-      `<div class="modal-dialog modal-lg">
-         <div class="modal-content">
-           <div class="modal-header">
-             <h5 class="modal-title">${title}</h5>
-             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-           </div>
-           <div class="modal-body">
-             <div class="mb-3">
-               <label class="form-label">Student Number</label>
-               <div class="form-control-plaintext" id="displayStudentNumber"></div>
-             </div>
-             <form id="userForm">${modalFormFields(false)}</form>
-           </div>
-           <div class="modal-footer">
-             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-             <button type="button" class="btn btn-primary" id="saveUserBtn">Save changes</button>
-           </div>
-         </div>
-       </div>`;
-    document.body.appendChild(modal);
-    return modal;
-  }
-
-  /**
-   * Generates form fields.
-   */
-  function modalFormFields(isCreate) {
-    const fields = [
-      { id: "studentNumber", name: "student_number", label: "Student Number", type: "text", show: isCreate },
-      { id: "firstName", name: "first_name", label: "First Name", type: "text", show: true },
-      { id: "lastName", name: "last_name", label: "Last Name", type: "text", show: true },
-      { id: "email", name: "email", label: "Email", type: isCreate ? "email" : "text", show: true },
-      { id: "password", name: "password", label: "Password", type: "password", show: isCreate },
-      { id: "role", name: "role", label: "Role", type: "text", show: true },
-      { id: "course", name: "course", label: "Course", type: "text", show: true },
-      { id: "yearLevel", name: "year_level", label: "Year Level", type: "text", show: true },
-      { id: "block", name: "block", label: "Block", type: "text", show: true },
-      { id: "admissionYear", name: "admission_year", label: "Admission Year", type: "text", show: true }
-    ];
-    return fields.filter(f => f.show).map(f => `
-      <div class="mb-3">
-        <label for="${f.id}${isCreate ? "Create" : ""}" class="form-label">${f.label}</label>
-        <input type="${f.type}" class="form-control" id="${f.id}${isCreate ? "Create" : ""}" name="${f.name}">
-        ${isCreate ? `<div id="${f.id}Error" class="invalid-feedback"></div>` : ""}
-      </div>`).join('');
-  }
-
-  /**
-   * Shows the modal for creating a user.
-   */
-  function showCreateUserModal() {
-    let modal = document.getElementById("createUserModal") || createUserModalStructure("createUserModal", "Create User", true);
-    modal.querySelector("#saveCreateUserBtn").onclick = createUser;
-    (bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal)).show();
-  }
-
-  /**
-   * Sends a POST request to create a new user.
-   */
-  async function createUser() {
-    const token = getToken();
-    if (!token) {
-      console.error("No token found in localStorage.");
-      return;
-    }
-    const modal = document.getElementById("createUserModal");
-    const form = modal.querySelector("#createUserForm");
-    const formData = new FormData(form);
-    const newUser = {
-      student_number: formData.get('student_number')?.trim() || "",
-      first_name: formData.get('first_name')?.trim() || "",
-      last_name: formData.get('last_name')?.trim() || "",
-      email: formData.get('email')?.trim() || "",
-      password: formData.get('password')?.trim() || "",
-      role: formData.get('role')?.trim() || "",
-      course: formData.get('course')?.trim() || "",
-      year_level: formData.get('year_level')?.trim() || "",
-      block: formData.get('block')?.trim() || "",
-      admission_year: formData.get('admission_year')?.trim() || ""
-    };
-
-    const fields = ["studentNumber", "firstName", "lastName", "email", "password", "role", "course", "yearLevel", "block", "admissionYear"];
-    fields.forEach(field => {
-      const inp = document.getElementById(field + "Create"),
-            err = document.getElementById(field + "Error");
-      if (inp && err) {
-        err.textContent = "";
-        inp.classList.remove("is-invalid");
-      }
-    });
-
-    let hasError = false;
-    if (!newUser.student_number) {
-      markError("studentNumberCreate", "studentNumberError", "Student number is missing");
-      hasError = true;
-    }
-    if (allUsersData.some(u => u.student_number === newUser.student_number)) {
-      markError("studentNumberCreate", "studentNumberError", "Student number duplicate");
-      hasError = true;
-    }
-    if (!newUser.first_name) {
-      markError("firstNameCreate", "firstNameError", "First name is missing");
-      hasError = true;
-    }
-    if (!newUser.last_name) {
-      markError("lastNameCreate", "lastNameError", "Last name is missing");
-      hasError = true;
-    }
-    if (!newUser.email) {
-      markError("emailCreate", "emailError", "Email is missing");
-      hasError = true;
-    }
-    if (!newUser.password) {
-      markError("passwordCreate", "passwordError", "Password is missing");
-      hasError = true;
-    }
-    if (!newUser.role) {
-      markError("roleCreate", "roleError", "Role is missing");
-      hasError = true;
-    }
-    if (!newUser.course) {
-      markError("courseCreate", "courseError", "Course is missing");
-      hasError = true;
-    }
-    if (!newUser.year_level) {
-      markError("yearLevelCreate", "yearLevelError", "Year level is missing");
-      hasError = true;
-    }
-    if (!newUser.block) {
-      markError("blockCreate", "blockError", "Block is missing");
-      hasError = true;
-    }
-    if (!newUser.admission_year) {
-      markError("admissionYearCreate", "admissionYearError", "Admission year is missing");
-      hasError = true;
-    }
-    if (hasError) return;
-    
-    try {
-      showLoading();
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify(newUser)
-      });
-      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-      const result = await response.json();
-      if (result.status === 'success') {
-        console.log("User created successfully");
-        form.reset();
-        fields.forEach(field => {
-          const inp = document.getElementById(field + "Create"),
-                err = document.getElementById(field + "Error");
-          if (inp && err) {
-            err.textContent = "";
-            inp.classList.remove("is-invalid");
-          }
-        });
-        bootstrap.Modal.getInstance(modal)?.hide();
-        loadUsers();
-      } else {
-        throw new Error("Error creating user: " + result.message);
-      }
-    } catch (error) {
-      console.error("Error creating user:", error);
-      showErrorAlert(error.message);
-    } finally {
-      hideLoading();
-    }
-  }
-
-  /**
-   * Sends a PUT request to update a user's details.
-   */
-  async function updateUser(userId) {
-    const token = getToken();
-    if (!token) {
-      console.error("No token found.");
-      return;
-    }
-    const originalUser = allUsersData.find(u => u.user_id == userId);
-    if (!originalUser) {
-      console.error("Original user not found for ID:", userId);
-      return;
-    }
-    const modal = document.getElementById("userModal");
-    const form = modal.querySelector("#userForm");
-    const formData = new FormData(form);
-    const updatedUser = {
-      student_number: originalUser.student_number,
-      first_name: formData.get('first_name')?.trim() || originalUser.first_name,
-      last_name: formData.get('last_name')?.trim() || originalUser.last_name,
-      email: formData.get('email')?.trim() || originalUser.email,
-      role: formData.get('role')?.trim() || originalUser.role,
-      course: formData.get('course')?.trim() || originalUser.course,
-      year_level: formData.get('year_level')?.trim() || originalUser.year_level,
-      block: formData.get('block')?.trim() || originalUser.block,
-      admission_year: formData.get('admission_year')?.trim() || originalUser.admission_year
-    };
-    try {
-      showLoading();
-      const response = await fetch(`${API_BASE_URL}/auth/users/${userId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify(updatedUser)
-      });
-      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-      const result = await response.json();
-      if (result.status === 'success') {
-        bootstrap.Modal.getInstance(modal)?.hide();
-        loadUsers();
-      } else {
-        throw new Error("Error updating user: " + result.message);
-      }
-    } catch (error) {
-      console.error("Error updating user:", error);
-      showErrorAlert(error.message);
-    } finally {
-      hideLoading();
-    }
-  }
-
-  // Logout and event listeners.
   const auth = {
     logout: async function() {
       console.log("Attempting logout...");
@@ -675,25 +281,6 @@
   };
 
   window.auth = auth;
-  window.viewUser = function(userId) {
-    const user = allUsersData.find(u => u.user_id == userId);
-    if (!user) {
-      console.error("User not found:", userId);
-      return;
-    }
-    let modal = document.getElementById("userModal") || createUserModalStructure("userModal", "User Details", false);
-    modal.querySelector("#displayStudentNumber").textContent = user.student_number || "";
-    modal.querySelector("#firstName").value = user.first_name || "";
-    modal.querySelector("#lastName").value = user.last_name || "";
-    modal.querySelector("#email").value = user.email || "";
-    modal.querySelector("#role").value = user.role || "";
-    modal.querySelector("#course").value = user.course || "";
-    modal.querySelector("#yearLevel").value = user.year_level || "";
-    modal.querySelector("#block").value = user.block || "";
-    modal.querySelector("#admissionYear").value = user.admission_year || "";
-    modal.querySelector("#saveUserBtn").onclick = () => updateUser(user.user_id);
-    (bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal)).show();
-  };
 
   document.addEventListener('DOMContentLoaded', async () => {
     await displayUserName();
