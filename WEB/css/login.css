@@ -1,0 +1,177 @@
+:root {
+    --primary-color: #1a73e8;
+    --secondary-color: #f8f9fa;
+    --text-color: #333;
+    --border-color: #ddd;
+    --error-color: #dc3545;
+}
+
+/* Slide in from the left and fade in */
+@keyframes slideInLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-100px); /* Start 100px to the left */
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0); /* End at normal position */
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: url('../assets/loginbg.jpg') no-repeat center center fixed;
+    background-size: cover; /* Make sure the image covers the viewport */
+    background-color: #000; /* Fallback color */
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Push content to the right side */
+}
+
+/* Container on the right with slide-in from the left */
+.login-container {
+    width: 100%;
+    max-width: 500px;
+    padding: 1px;
+    border-radius: 2px;
+    animation: slideInLeft 1s ease-out; /* Apply horizontal slide animation */
+    margin-right: 50px; /* Optional: Add spacing from the right edge if desired */
+}
+
+.login-card {
+    background: #fafafa;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-header .logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+}
+
+.login-header h1 {
+    color: var(--text-color);
+    margin-bottom: 5px;
+}
+
+.login-header p {
+    color: #666;
+}
+
+.login-form .form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-color);
+}
+
+.form-group label i {
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Style for dropdown selector to match inputs */
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    background-color: #fff;
+}
+
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.error-message {
+    color: var(--error-color);
+    font-size: 14px;
+    margin-bottom: 15px;
+    min-height: 20px;
+}
+
+.login-btn {
+    position: relative; /* Needed for loading spinner overlay */
+    width: 100%;
+    padding: 12px;
+    background-color: green;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background-color 0.3s;
+}
+
+.login-btn:hover {
+    background-color: darkgreen;
+}
+
+.login-btn i {
+    font-size: 18px;
+}
+
+/* Loading state */
+.login-btn.loading {
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+.login-btn.loading span {
+    visibility: hidden;
+}
+
+.login-btn.loading::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 3px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

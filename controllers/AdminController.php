@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json');
 require_once __DIR__ . '/../models/Admin.php';
 
 class AdminAuthController {
@@ -10,7 +11,6 @@ class AdminAuthController {
         $this->adminModel = new Admin($db);
     }
 
-  
     public function handleRequest($method, $uri) {
         try {
             if ($method === 'POST' && isset($uri[2])) {
@@ -27,6 +27,9 @@ class AdminAuthController {
                     default:
                         $this->sendError("Invalid endpoint or method", 400);
                 }
+            } else if ($method === 'GET' && isset($uri[2]) && $uri[2] === 'users') {
+                $adminId = isset($uri[3]) ? $uri[3] : null;
+                $this->getUsers($adminId);
             } else {
                 $this->sendError("Invalid endpoint or method", 400);
             }
@@ -35,12 +38,6 @@ class AdminAuthController {
         }
     }
 
-    /**
-     * Admin Login: Verifies the admin's username and password.
-     * Provides specific error messages if the admin is not found or if the password is incorrect.
-     * On success, generates a token (stored in the admin_tokens table) and returns the admin's info.
-     */
-    
     private function login() {
         $data = json_decode(file_get_contents("php://input"));
         if (empty($data->username) || empty($data->password)) {
@@ -155,6 +152,84 @@ class AdminAuthController {
             ]);
         } else {
             $this->sendError("Invalid token or already logged out", 401);
+        }
+    }
+
+
+    private function getUsers($adminId = null) {
+        // Retrieve the token from the Authorization header
+        $headers = apache_request_headers();
+        $authHeader = null;
+        if (isset($headers['Authorization'])) {
+            $authHeader = $headers['Authorization'];
+        } elseif (isset($headers['authorization'])) {
+            $authHeader = $headers['authorization'];
+        } else {
+            $this->sendError("Authorization token not provided", 401);
+            return;
+        }
+
+        if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        } else {
+            $this->sendError("Invalid Authorization header format", 400);
+            return;
+        }
+
+        if (empty($token)) {
+            $this->sendError("Token is empty", 401);
+            return;
+        }
+
+        // Validate the token exists and has not expired
+        $stmt = $this->db->prepare("SELECT * FROM admin_tokens WHERE token = ? AND expires_at > NOW()");
+        $stmt->execute([$token]);
+        $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$tokenData) {
+            $this->sendError("Invalid or expired token", 401);
+            return;
+        }
+
+        // If a specific admin ID is provided, fetch that admin's details
+        if ($adminId !== null) {
+            // Use the Admin model if it has getById; otherwise, query directly from the admins table.
+            if (method_exists($this->adminModel, 'getById')) {
+                $admin = $this->adminModel->getById($adminId);
+            } else {
+                $stmt = $this->db->prepare("SELECT * FROM admins WHERE admin_id = ?");
+                $stmt->execute([$adminId]);
+                $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+            }
+            
+            if (!$admin) {
+                $this->sendError("Admin not found", 404);
+                return;
+            }
+            if (isset($admin['password'])) {
+                unset($admin['password']);
+            }
+            http_response_code(200);
+            echo json_encode([
+                'status'  => 'success',
+                'message' => 'Admin details retrieved successfully',
+                'data'    => $admin
+            ]);
+        } else {
+            // No specific ID provided; list all admins.
+            $stmt = $this->db->prepare("SELECT * FROM admins");
+            $stmt->execute();
+            $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($admins as &$admin) {
+                if (isset($admin['password'])) {
+                    unset($admin['password']);
+                }
+            }
+            http_response_code(200);
+            echo json_encode([
+                'status'  => 'success',
+                'message' => 'Admins list retrieved successfully',
+                'data'    => $admins
+            ]);
         }
     }
 

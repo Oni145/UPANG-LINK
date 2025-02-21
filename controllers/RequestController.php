@@ -18,7 +18,8 @@ class RequestController {
     /**
      * Authenticate the incoming request.
      * Expects the header "Authorization: Bearer YOUR_VALID_TOKEN".
-     * First checks the admin_tokens table, then checks the auth_tokens table.
+     * First checks the admin_tokens table, then staff_tokens table,
+     * and finally checks the auth_tokens table for student tokens.
      * Applies sliding expiration for the token found.
      */
     private function authenticate() {
@@ -62,6 +63,26 @@ class RequestController {
             return; // Authenticated as admin.
         }
         
+        // --- Next, check staff_tokens table for staff token ---
+        $stmtStaff = $this->db->prepare("SELECT staff_id, expires_at FROM staff_tokens WHERE token = ?");
+        $stmtStaff->execute([$token]);
+        $staffRow = $stmtStaff->fetch(PDO::FETCH_ASSOC);
+        if ($staffRow) {
+            $currentTime = new DateTime();
+            $expiresAt = new DateTime($staffRow['expires_at']);
+            if ($currentTime > $expiresAt) {
+                $delStmt = $this->db->prepare("DELETE FROM staff_tokens WHERE token = ?");
+                $delStmt->execute([$token]);
+                $this->sendError("Access Denied: Staff token expired", 401);
+                exit;
+            }
+            // Sliding expiration for staff token: update expires_at to 24 hours from now
+            $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
+            $updateStmt = $this->db->prepare("UPDATE staff_tokens SET expires_at = ? WHERE token = ?");
+            $updateStmt->execute([$newExpiresAt, $token]);
+            return; // Authenticated as staff.
+        }
+        
         // --- Next, check auth_tokens table for student token ---
         $stmtStudent = $this->db->prepare("SELECT user_id, expires_at FROM auth_tokens WHERE token = ?");
         $stmtStudent->execute([$token]);
@@ -82,7 +103,7 @@ class RequestController {
             return; // Authenticated as student.
         }
         
-        // If token is not found in either table:
+        // If token is not found in any table:
         $this->sendError("Access Denied: Invalid or expired token", 401);
         exit;
     }

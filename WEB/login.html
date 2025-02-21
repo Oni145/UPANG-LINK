@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPANG LINK - Login</title>
+  <link rel="stylesheet" href="../WEB/css/login.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="../WEB/assets/upang-logo.png" alt="UPANG LINK Logo" class="logo">
+        <h1>UPANG LINK</h1>
+        <p>Admin & Staff Dashboard</p>
+      </div>
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="username">
+            <i class="fas fa-user" style="color:green;"></i>
+            Username
+          </label>
+          <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">
+            <i class="fas fa-lock" style="color:green;"></i>
+            Password
+          </label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <!-- New Account Type Selector -->
+        <div class="form-group">
+          <label for="accountType">
+            <i class="fas fa-user-circle" style="color:green;"></i>
+            Account Type
+          </label>
+          <select id="accountType" name="accountType" required>
+            <option value="admin">Admin</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+        <div class="error-message" id="errorMessage"></div>
+        <button type="submit" class="login-btn">
+          <span>Login</span>
+          <i class="fas fa-sign-in-alt"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <!-- Optional: Remove or integrate additional spinner simulation as needed -->
+</body>
+</html>
