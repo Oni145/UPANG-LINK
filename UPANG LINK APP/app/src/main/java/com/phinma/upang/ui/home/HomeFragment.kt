@@ -2,26 +2,28 @@ package com.phinma.upang.ui.home
 
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.phinma.upang.R
 import com.phinma.upang.databinding.FragmentHomeBinding
+import com.phinma.upang.ui.base.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(R.layout.fragment_home) {
+class HomeFragment : BaseFragment(R.layout.fragment_home) {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
+    override val hasCustomInsetHandling: Boolean = true
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHomeBinding.bind(view)
-
         setupViews()
     }
 
     private fun setupViews() {
+        // Quick Actions
         binding.newRequestButton.setOnClickListener {
             findNavController().navigate(R.id.action_requests_to_create)
         }
@@ -29,6 +31,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.viewRequestsButton.setOnClickListener {
             findNavController().navigate(R.id.navigation_requests)
         }
+
+        // Initially show the "No requests" message
+        binding.tvNoRequests.visibility = View.VISIBLE
+        binding.rvRecentRequests.visibility = View.GONE
     }
 
     override fun onDestroyView() {

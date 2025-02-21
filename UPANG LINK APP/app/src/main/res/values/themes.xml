@@ -8,29 +8,33 @@
     </style>
 
     <!-- Base application theme -->
-    <style name="Base.Theme.UPANGLINK" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Status bar -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:enforceStatusBarContrast">false</item>
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:fitsSystemWindows">false</item>
-        
-        <!-- Window background -->
-        <item name="android:windowBackground">@color/white</item>
-        <item name="android:navigationBarColor">@color/white</item>
-        
-        <!-- Primary colors -->
+    <style name="Theme.UpangLink" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Primary brand color. -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primary_dark</item>
         <item name="colorOnPrimary">@color/white</item>
         
-        <!-- Secondary colors -->
-        <item name="colorSecondary">@color/accent_green</item>
-        <item name="colorSecondaryVariant">@color/accent_green_dark</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/accent_orange</item>
+        <item name="colorSecondaryVariant">@color/accent_orange_dark</item>
         <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- System bars and edge-to-edge -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        
+        <!-- Window background -->
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        
+        <!-- Make sure we draw under system bars -->
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
     </style>
 
-    <style name="Theme.UPANGLINK" parent="Base.Theme.UPANGLINK" />
+    <style name="Theme.UPANGLINK" parent="Theme.UpangLink" />
 </resources>

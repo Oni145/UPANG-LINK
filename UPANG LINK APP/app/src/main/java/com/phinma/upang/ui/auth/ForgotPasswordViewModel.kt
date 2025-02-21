@@ -2,6 +2,7 @@ package com.phinma.upang.ui.auth
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phinma.upang.data.repository.AuthRepository
@@ -11,15 +12,27 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ForgotPasswordViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _forgotPasswordState = MutableLiveData<ForgotPasswordState>()
     val forgotPasswordState: LiveData<ForgotPasswordState> = _forgotPasswordState
 
+    private val _email = MutableLiveData<String>()
+    val email: LiveData<String> = _email
+
+    var lastEmail: String
+        get() = _email.value ?: savedStateHandle.get<String>(KEY_EMAIL) ?: ""
+        private set(value) {
+            _email.value = value
+            savedStateHandle.set(KEY_EMAIL, value)
+        }
+
     fun resetPassword(email: String) {
         if (!validateInput(email)) return
 
+        lastEmail = email
         _forgotPasswordState.value = ForgotPasswordState.Loading
 
         viewModelScope.launch {
@@ -35,6 +48,10 @@ class ForgotPasswordViewModel @Inject constructor(
                     )
                 }
         }
+    }
+
+    fun clearState() {
+        _forgotPasswordState.value = null
     }
 
     private fun validateInput(email: String): Boolean {
@@ -55,5 +72,9 @@ class ForgotPasswordViewModel @Inject constructor(
         object Loading : ForgotPasswordState()
         data class Success(val message: String) : ForgotPasswordState()
         data class Error(val message: String) : ForgotPasswordState()
+    }
+
+    companion object {
+        private const val KEY_EMAIL = "email"
     }
 } 
