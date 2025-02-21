@@ -71,7 +71,7 @@ class EmailHandler {
     public function sendResetPasswordEmail($to_email, $token) {
         try {
             $subject = "Reset your UPANG LINK password";
-            $reset_link = $this->config['app']['frontend_url'] . "/reset-password?token=" . $token;
+            $reset_link = $this->config['app']['base_url'] . "/UPANG-LINK/UPANG%20LINK%20API/pages/reset-password?token=" . $token;
             
             $message = $this->getEmailTemplate('reset_password', [
                 'reset_link' => $reset_link,

@@ -196,7 +196,7 @@ if (empty($token)) {
             }
             
             // Send reset request to API
-            fetch('http://192.168.1.7/UPANG-LINK/UPANG%20LINK%20API/api/auth/student/reset-password', {
+            fetch('<?php echo $config['app']['base_url']; ?>/UPANG-LINK/UPANG%20LINK%20API/api/auth/student/reset-password', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
