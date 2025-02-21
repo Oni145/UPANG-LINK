@@ -261,22 +261,7 @@
   /**
    * Inserts the "Create User" button if the detected role is admin.
    */
-  function placeCreateUserButton() {
-    if (window.currentUserRole !== 'admin') {
-      console.log("Detected role is not admin. Create User button will not be shown.");
-      return;
-    }
-    const table = document.querySelector('table.table');
-    if (!table || document.getElementById('createUserBtn')) return;
-    const createUserBtn = document.createElement('button');
-    createUserBtn.id = 'createUserBtn';
-    createUserBtn.className = "btn btn-primary mb-3";
-    createUserBtn.textContent = "Create User";
-    createUserBtn.addEventListener("click", showCreateUserModal);
-    table.parentElement.insertBefore(createUserBtn, table);
-    console.log("Create User button inserted.");
-  }
-
+ 
   /**
    * Opens a modal to view/update a user's details.
    */
