@@ -63,3 +63,18 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         document.getElementById('errorMessage').innerText = error.message;
     }
 });
+
+document.getElementById('loginForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const loginButton = document.querySelector('.login-btn');
+    loginButton.classList.add('loading'); // Add the loading class to show the spinner and hide text
+
+    // Simulate an API call with a timeout (You can replace this with your actual login process)
+    setTimeout(() => {
+      // After the login action (e.g., API call), you can remove the loading class
+      loginButton.classList.remove('loading');
+      
+      // Handle login logic here, such as redirecting the user or showing an error
+    }, 3000); // Simulate 3 seconds delay
+  });
