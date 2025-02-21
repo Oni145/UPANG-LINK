@@ -1,5 +1,3 @@
-// requests.js
-
 // Base URL for the API without a trailing slash
 const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/api';
 
@@ -27,13 +25,11 @@ function getAuthHeaders(token) {
 
 /**
  * Displays a loading indicator with a centered logo.
- * Modified to display in front as an overlay while preserving the original background color.
  */
 function showLoading() {
     const loadingEl = document.getElementById('loadingIndicator');
     const loadingLogo = document.getElementById('loadingLogo');
     if (loadingEl && loadingLogo) {
-        // Set styles to cover the viewport and appear in front
         loadingEl.style.display = 'flex';
         loadingEl.style.justifyContent = 'center';
         loadingEl.style.alignItems = 'center';
@@ -42,8 +38,6 @@ function showLoading() {
         loadingEl.style.left = '0';
         loadingEl.style.width = '100%';
         loadingEl.style.height = '100%';
-        // Removed the forced background color so that the original color is preserved
-        // loadingEl.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
         loadingEl.style.zIndex = '9999';
         loadingLogo.style.display = 'block';
     }
@@ -60,42 +54,48 @@ function hideLoading() {
 }
 
 /**
- * Fetches and displays the logged-in admin's username.
+ * Fetches and displays the logged-in user's name.
+ * First, it attempts to fetch from the admin endpoint.
+ * If that succeeds, the role is set to "admin".
+ * Otherwise, it falls back to the staff endpoint and sets the role to "staff".
  */
 async function displayUserName() {
-    console.log("Displaying logged-in admin username...");
+    console.log("Displaying logged-in username...");
     const token = localStorage.getItem('token');
     if (!token) {
         console.error("No token found in localStorage.");
         return;
     }
     try {
-        const url = `${API_BASE_URL}/admin/users`;
-        const response = await fetch(url, { method: 'GET', headers: getAuthHeaders(token) });
-        if (!response.ok) {
-            console.error("HTTP error while fetching admin details:", response.status);
-            return;
-        }
-        const result = await response.json();
-        if (result.status === 'success' && Array.isArray(result.data)) {
-            const loggedAdminId = localStorage.getItem('loggedAdminId');
-            const currentAdmin = loggedAdminId 
-                ? result.data.find(admin => admin.admin_id == loggedAdminId) 
-                : result.data[0];
-            if (currentAdmin && currentAdmin.username) {
-                const userFullNameEl = document.getElementById('userFullName');
-                if (userFullNameEl) {
-                    userFullNameEl.textContent = currentAdmin.username;
-                }
-                console.log("Logged in admin username:", currentAdmin.username);
-            } else {
-                console.error("No matching admin record found.");
-            }
+        // Try admin endpoint first
+        let endpoint = `${API_BASE_URL}/admin/users`;
+        let response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
+        let result = await response.json();
+        if (response.ok && result.status === 'success') {
+            window.currentUserRole = 'admin';
+            console.log("Admin endpoint successful. Detected role: admin.");
         } else {
-            console.error("Error fetching admin details:", result.message);
+            // Fallback: try staff endpoint
+            endpoint = `${API_BASE_URL}/staff/`;
+            response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
+            result = await response.json();
+            if (response.ok && result.status === 'success') {
+                window.currentUserRole = 'staff';
+                console.log("Staff endpoint successful. Detected role: staff.");
+            } else {
+                throw new Error("Unable to fetch user details from either endpoint.");
+            }
         }
+        // Use the first record for display
+        let currentUser = result.data[0];
+        const userFullNameEl = document.getElementById('userFullName');
+        if (userFullNameEl) {
+            const displayName = currentUser.username || `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
+            userFullNameEl.textContent = displayName;
+        }
+        console.log("Logged in user data:", currentUser);
     } catch (error) {
-        console.error("Error fetching admin details:", error);
+        console.error("Error fetching user details:", error);
     }
 }
 
@@ -106,14 +106,14 @@ let allRequests = [];
 let allUsersData = [];
 // Global variable for the data currently displayed (allRequests or filtered)
 let displayData = [];
-// Default currentPage is 1; this value will be preserved on updates.
+// Default currentPage is 1.
 let currentPage = 1;
 const itemsPerPage = 10;
 let totalPages = 1;
 
 /**
  * Fetches requests and users data, sorts the requests by submission date,
- * and initializes (or refreshes) pagination without resetting the current page.
+ * and initializes (or refreshes) pagination.
  */
 async function loadRequestsUsingPagination() {
     console.log("Fetching all requests for pagination...");
@@ -158,7 +158,6 @@ async function loadRequestsUsingPagination() {
         // Initially, displayData is the full list
         displayData = allRequests;
         totalPages = Math.ceil(displayData.length / itemsPerPage);
-        // Ensure currentPage remains within valid bounds after refresh
         if (currentPage > totalPages) {
             currentPage = totalPages;
         }
@@ -256,7 +255,7 @@ function getStatusColor(status) {
 }
 
 /**
- * Updates the pagination controls, including Previous/Next buttons and a dedicated page counter.
+ * Updates the pagination controls.
  * @param {number} currentPage - The current page number.
  */
 function updatePaginationControls(currentPage) {
@@ -268,22 +267,16 @@ function updatePaginationControls(currentPage) {
         return;
     }
     
-    // Build the pagination controls HTML
     let controlsHtml = '';
     if (currentPage > 1) {
         controlsHtml += `<button id="prevPage" class="btn btn-secondary btn-sm me-2">Previous</button>`;
     }
-    
-    // Dedicated page counter span
     controlsHtml += `<span id="pageCounter">Page ${currentPage} of ${totalPages}</span>`;
-    
     if (currentPage < totalPages) {
         controlsHtml += `<button id="nextPage" class="btn btn-secondary btn-sm ms-2">Next</button>`;
     }
-    
     paginationContainer.innerHTML = controlsHtml;
     
-    // Attach event listeners for pagination buttons with loading indicator
     const prevPageButton = document.getElementById('prevPage');
     if (prevPageButton) {
         prevPageButton.addEventListener('click', () => {
@@ -311,9 +304,9 @@ function updatePaginationControls(currentPage) {
 }
 
 /**
- * Opens a Bootstrap modal to display the full view of a ticket.
- * Replaces the separate update buttons with a dropdown selection and an Update button.
- * @param {number} requestId - The ID of the ticket/request to view.
+ * Opens a modal to view a ticket/request.
+ * (This function assumes that the modal elements already exist in the DOM.)
+ * @param {number} requestId - The ID of the request to view.
  */
 function viewRequest(requestId) {
     // Find the selected request
@@ -324,8 +317,8 @@ function viewRequest(requestId) {
     }
     // Find the associated user details
     const user = allUsersData.find(u => u.user_id == request.user_id);
-
-    // Build the modal title and body content
+    
+    // Build modal title and content
     const modalTitle = `Ticket Details - Request #${request.request_id}`;
     const modalBodyContent = `
       <p><strong>Student Number:</strong> ${user ? user.student_number : 'N/A'}</p>
@@ -336,7 +329,6 @@ function viewRequest(requestId) {
       <p><strong>Additional Information:</strong> ${request.details || 'No additional details available.'}</p>
     `;
     
-    // Populate modal elements (ensure these IDs match your HTML modal)
     const modalTitleEl = document.getElementById('ticketModalLabel');
     const modalBodyEl = document.getElementById('ticketModalBody');
     if (modalTitleEl && modalBodyEl) {
@@ -347,39 +339,16 @@ function viewRequest(requestId) {
          return;
     }
     
-    // Set up the dropdown selection and update button in the modal footer.
-    // Remove previous listeners by cloning the update button.
-    const updateStatusBtn = document.getElementById('updateStatusBtn');
-    if (updateStatusBtn) {
-         const newUpdateStatusBtn = updateStatusBtn.cloneNode(true);
-         newUpdateStatusBtn.addEventListener('click', () => {
-             const statusSelect = document.getElementById('statusSelect');
-             const newStatus = statusSelect.value;
-             updateTicketStatus(request.request_id, newStatus);
-         });
-         updateStatusBtn.parentNode.replaceChild(newUpdateStatusBtn, updateStatusBtn);
-    }
-    
-    // Show the modal using Bootstrap's modal plugin
+    // Show the modal using Bootstrap
     const ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
     ticketModal.show();
 }
 
 /**
- * Updates the status of a ticket by sending a PUT request to the API.
- * Endpoint: http://localhost:8000/requests/{request_id}
- * Method: PUT, with headers including the token and JSON content.
- * 
- * Body example: { "status": "approved" }
- * 
- * Expected response:
- * {
- *    "status": "success",
- *    "message": "Request status updated successfully"
- * }
- * 
- * @param {number} requestId - The ID of the ticket/request.
- * @param {string} newStatus - The new status (e.g., 'approved', 'in_progress', 'completed', 'rejected').
+ * Updates the status of a ticket by sending a PUT request.
+ * After updating, refreshes the requests data.
+ * @param {number} requestId - The ID of the request.
+ * @param {string} newStatus - The new status to set.
  */
 async function updateTicketStatus(requestId, newStatus) {
     const token = localStorage.getItem('token');
@@ -397,12 +366,7 @@ async function updateTicketStatus(requestId, newStatus) {
         const result = await response.json();
         if (result.status === 'success') {
             console.log(`Ticket ${requestId} updated to ${newStatus} successfully.`);
-            // Hide the modal after updating
-            const ticketModal = bootstrap.Modal.getInstance(document.getElementById('ticketModal'));
-            if (ticketModal) {
-                ticketModal.hide();
-            }
-            // Refresh the list of requests while preserving the current page and search filter
+            // Refresh the list while preserving current page and search filter
             loadRequestsUsingPagination();
         } else {
             console.error("Failed to update ticket status:", result.message);
@@ -414,41 +378,43 @@ async function updateTicketStatus(requestId, newStatus) {
     }
 }
 
-// Authentication object containing logout functionality
-const auth = {
-    /**
-     * Logs out the current admin by calling the logout API,
-     * removes stored tokens, and redirects to the login page.
-     */
+/**
+ * Logout fix: Uses dynamic role detection for logout.
+ * If window.currentUserRole is "staff", it calls the staff logout endpoint;
+ * otherwise, it calls the admin logout endpoint.
+ */
+window.auth = {
     logout: async function() {
         console.log("Attempting logout...");
         showLoading();
-
         const token = localStorage.getItem('token');
         if (token) {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/logout`, {
+                // Use the detected role; default to admin if not set
+                const role = window.currentUserRole || 'admin';
+                const logoutEndpoint = (role === 'staff')
+                    ? `${API_BASE_URL}/staff/logout`
+                    : `${API_BASE_URL}/admin/logout`;
+                const response = await fetch(logoutEndpoint, {
                     method: 'POST',
                     headers: getAuthHeaders(token)
                 });
                 const result = await response.json();
-                if (result.status === 'success') {
-                    console.log('Logout successful:', result.message);
-                } else {
-                    console.error('Logout failed:', result.message);
+                if (result.status !== 'success') {
+                    throw new Error("Logout failed: " + result.message);
                 }
+                console.log("Logout successful:", result.message);
             } catch (error) {
-                console.error('Error during logout:', error);
+                console.error("Logout error:", error);
             }
         }
-        // Remove stored token and user data, then redirect to login page
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = 'login.html';
     }
 };
 
-// Attach search functionality and initialize everything without deleting existing code.
+// Initialize data on DOM load and attach search functionality.
 document.addEventListener('DOMContentLoaded', () => {
     displayUserName();
     loadRequestsUsingPagination();
@@ -462,18 +428,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayData = allRequests;
             } else {
                 displayData = allRequests.filter(request => {
-                    // Fields for filtering.
                     const status = (request.status || "").toLowerCase();
                     const date = new Date(request.submitted_at).toLocaleDateString().toLowerCase();
                     const type = (requestTypeNames[request.type_id] || "").toLowerCase();
                     const user = allUsersData.find(u => u.user_id === request.user_id);
                     const studentNumber = user && user.student_number ? user.student_number.toLowerCase() : "";
                     const name = user ? (user.first_name + " " + user.last_name).toLowerCase() : "";
-                    // Return true if any field includes the query.
                     return status.includes(query) || date.includes(query) || type.includes(query) || studentNumber.includes(query) || name.includes(query);
                 });
             }
-            // Reset to first page after filtering.
             currentPage = 1;
             totalPages = Math.ceil(displayData.length / itemsPerPage);
             displayRequestsPage(currentPage);

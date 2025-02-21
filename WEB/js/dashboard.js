@@ -32,28 +32,27 @@ class Dashboard {
         }
         // Show loading indicator while data is being fetched.
         this.showLoading();
-        // Fetch initial data and display the logged-in admin name.
+        // Fetch initial data and display the logged-in user's name with role detection.
         this.initializeData();
         this.displayUserName();
     }
 
     /**
-     * Displays a loading message on the screen with the logo centered.
+     * Displays a loading message with the logo centered.
      */
     showLoading() {
         const loadingEl = document.getElementById('loadingIndicator');
         const loadingLogo = document.getElementById('loadingLogo');
-        
         if (loadingEl && loadingLogo) {
-            loadingEl.style.display = 'flex'; // Use 'flex' to center the logo
+            loadingEl.style.display = 'flex';
             loadingEl.style.justifyContent = 'center';
             loadingEl.style.alignItems = 'center';
-            loadingLogo.style.display = 'block'; // Ensure the logo is visible
+            loadingLogo.style.display = 'block';
         }
     }
 
     /**
-     * Hides the loading message from the screen.
+     * Hides the loading message.
      */
     hideLoading() {
         const loadingEl = document.getElementById('loadingIndicator');
@@ -63,8 +62,95 @@ class Dashboard {
     }
 
     /**
+     * Displays a global error alert that automatically hides after 5 seconds.
+     * @param {string} message - The error message.
+     */
+    showErrorAlert(message) {
+        let errorContainer = document.getElementById('errorContainer');
+        if (!errorContainer) {
+            errorContainer = document.createElement('div');
+            errorContainer.id = 'errorContainer';
+            errorContainer.className = 'alert alert-danger';
+            errorContainer.style.position = 'fixed';
+            errorContainer.style.top = '20px';
+            errorContainer.style.right = '20px';
+            errorContainer.style.zIndex = '10000';
+            errorContainer.style.padding = '10px 20px';
+            errorContainer.style.border = '1px solid red';
+            errorContainer.style.backgroundColor = '#f8d7da';
+            errorContainer.style.color = '#721c24';
+            document.body.appendChild(errorContainer);
+        }
+        errorContainer.textContent = message;
+        errorContainer.style.display = 'block';
+        setTimeout(() => {
+            errorContainer.style.display = 'none';
+        }, 5000);
+    }
+
+    /**
+     * Marks an input element as invalid and displays an error message.
+     */
+    markError(inputId, errorId, message) {
+        const input = document.getElementById(inputId);
+        const errorEl = document.getElementById(errorId);
+        if (input && errorEl) {
+            errorEl.textContent = message;
+            input.classList.add("is-invalid");
+        }
+    }
+
+    /**
+     * Returns the token from localStorage.
+     */
+    getToken() {
+        return localStorage.getItem('token');
+    }
+
+    /**
+     * Fetches and displays the logged-in user's name.
+     * It first attempts to fetch from the admin endpoint. If successful,
+     * it sets the role to "admin"; otherwise, it falls back to the staff endpoint
+     * and sets the role to "staff".
+     */
+    async displayUserName() {
+        console.log("Displaying logged-in user name...");
+        try {
+            let endpoint = `${API_BASE_URL}/admin/users`;
+            let response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(this.token) });
+            let result = await response.json();
+            if (response.ok && result.status === 'success') {
+                window.currentUserRole = 'admin';
+                console.log("Admin endpoint successful. Detected role: admin.");
+            } else {
+                // Fallback to staff endpoint.
+                endpoint = `${API_BASE_URL}/staff/`;
+                response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(this.token) });
+                result = await response.json();
+                if (response.ok && result.status === 'success') {
+                    window.currentUserRole = 'staff';
+                    console.log("Staff endpoint successful. Detected role: staff.");
+                } else {
+                    throw new Error("Unable to fetch user details from either endpoint.");
+                }
+            }
+            // Use the first record from the successful endpoint.
+            let currentUser = result.data[0];
+            const nameEl = document.getElementById('userFullName');
+            if (nameEl) {
+                const displayName = currentUser.username || `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
+                nameEl.textContent = displayName;
+            }
+            console.log("Logged in user data:", currentUser);
+        } catch (error) {
+            console.error("Error fetching user details:", error);
+            this.showErrorAlert(error.message);
+        }
+    }
+
+    /**
      * Fetches requests and users data concurrently from the API.
-     * Computes monthly counts and triggers various UI update functions.
+     * Computes monthly counts and triggers UI update functions.
      */
     async initializeData() {
         console.log("Fetching requests and users data...");
@@ -98,7 +184,7 @@ class Dashboard {
             console.log("Requests data fetched:", this.requestsData);
             console.log("Users data fetched:", this.usersData);
 
-            // Compute month counts once for use in multiple charts
+            // Compute month counts for charts
             this.monthCounts = this.requestsData.reduce((acc, request) => {
                 const date = new Date(request.submitted_at);
                 if (!isNaN(date)) {
@@ -118,14 +204,12 @@ class Dashboard {
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
-            // Hide loading indicator regardless of success or failure
             this.hideLoading();
         }
     }
 
     /**
-     * Updates the dashboard statistics (total requests, users, pending, and approved requests).
-     * It uses the pre-fetched requests and users data.
+     * Updates the dashboard statistics (total requests, users, pending, and approved).
      */
     loadStatsUsingData() {
         console.log("Updating stats using pre-fetched data...");
@@ -133,7 +217,6 @@ class Dashboard {
             console.error("Missing requests or users data for stats.");
             return;
         }
-        // Calculate stats with a single pass over requestsData
         const stats = this.requestsData.reduce((acc, request) => {
             if (request.status === 'pending') acc.pending++;
             if (request.status === 'approved') acc.completed++;
@@ -142,8 +225,6 @@ class Dashboard {
         const totalRequests = this.requestsData.length;
         const totalUsers = Array.isArray(this.usersData) ? this.usersData.length : 0;
         console.log("Stats calculated:", { totalRequests, totalUsers, pendingRequests: stats.pending, completedRequests: stats.completed });
-        
-        // Update DOM elements with the calculated stats
         const totalUsersEl = document.getElementById('totalUsers');
         const totalRequestsEl = document.getElementById('totalRequests');
         const pendingRequestsEl = document.getElementById('pendingRequests');
@@ -155,7 +236,7 @@ class Dashboard {
     }
 
     /**
-     * Renders the monthly requests chart using pre-computed month counts.
+     * Renders the monthly requests chart using the computed month counts.
      */
     loadMonthlyChartUsingData() {
         console.log("Rendering monthly chart using pre-fetched data...");
@@ -192,7 +273,7 @@ class Dashboard {
     }
 
     /**
-     * Renders a dynamic requests chart using the same monthly counts data.
+     * Renders a dynamic line chart for requests using the same monthly counts.
      */
     loadRequestsChartUsingData() {
         console.log("Rendering dynamic requests chart using pre-fetched data...");
@@ -228,15 +309,14 @@ class Dashboard {
     }
 
     /**
-     * Renders a donut chart that shows the count of requests per type.
+     * Renders a donut chart showing counts of requests per type.
      */
     loadRequestTypesChartUsingData() {
-        console.log("Rendering donut (doughnut) chart using pre-fetched data...");
+        console.log("Rendering donut chart using pre-fetched data...");
         if (!this.requestsData) {
             console.error("No requests data for donut chart.");
             return;
         }
-        // Initialize counts for each type based on the requestTypeNames mapping
         const typeCounts = {};
         Object.keys(requestTypeNames).forEach(key => {
             typeCounts[key] = 0;
@@ -246,7 +326,6 @@ class Dashboard {
             if (typeCounts.hasOwnProperty(type)) {
                 typeCounts[type]++;
             } else {
-                // Count any unexpected type as 'Others'
                 typeCounts[4] = (typeCounts[4] || 0) + 1;
             }
         });
@@ -289,7 +368,7 @@ class Dashboard {
     }
 
     /**
-     * Sorts the requests by submission date and displays the five most recent in a table.
+     * Displays the five most recent requests in a table.
      */
     loadRecentRequestsUsingData() {
         console.log("Rendering recent requests table using pre-fetched data...");
@@ -297,7 +376,6 @@ class Dashboard {
             console.error("No requests data for recent requests.");
             return;
         }
-        // Sort requests descending by submission date and take the top 5
         const sortedRequests = [...this.requestsData].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
         const limitedRequests = sortedRequests.slice(0, 5);
         console.log("Recent requests:", limitedRequests);
@@ -306,8 +384,6 @@ class Dashboard {
 
     /**
      * Renders the given list of requests into the requests table.
-     * Maps each request to its corresponding user data for display.
-     * @param {Array} requests - List of request objects to display.
      */
     displayRequests(requests) {
         console.log("Displaying requests in table...");
@@ -315,7 +391,6 @@ class Dashboard {
             console.error("No users data available.");
             return;
         }
-        // Create a lookup map for users based on user_id for fast access
         const userMap = {};
         this.usersData.forEach(user => {
             userMap[user.user_id] = user;
@@ -371,10 +446,10 @@ class Dashboard {
     }
 
     /**
-     * Updates the status of a specific request by sending a PUT request to the API.
-     * After a successful update, it refreshes the dashboard data.
-     * @param {number} requestId - The ID of the request to update.
-     * @param {string} newStatus - The new status to set.
+     * Updates the status of a specific request.
+     * After a successful update, refreshes the dashboard data.
+     * @param {number} requestId - The ID of the request.
+     * @param {string} newStatus - The new status.
      */
     async updateRequestStatus(requestId, newStatus) {
         console.log(`Updating status for request ${requestId} to ${newStatus}`);
@@ -387,7 +462,7 @@ class Dashboard {
             const result = await response.json();
             if (result.status === 'success') {
                 console.log("Request status updated successfully:", result.message);
-                this.initializeData(); // Refresh all data
+                this.initializeData(); // Refresh data
             } else {
                 console.error("Failed to update request status:", result.message);
             }
@@ -397,36 +472,136 @@ class Dashboard {
     }
 
     /**
-     * Fetches and displays the username of the logged-in admin.
+     * Opens a modal to view/update a user's details.
      */
-    async displayUserName() {
-        console.log("Displaying logged-in admin username...");
+    viewUser(userId) {
+        const user = allUsersData.find(u => u.user_id == userId);
+        if (!user) {
+            console.error("User not found for ID:", userId);
+            return;
+        }
+        let modal = document.getElementById("userModal");
+        if (!modal) {
+            modal = document.createElement("div");
+            modal.id = "userModal";
+            modal.className = "modal fade";
+            modal.setAttribute("tabindex", "-1");
+            modal.innerHTML = `
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">User Details</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Student Number</label>
+                        <div class="form-control-plaintext" id="displayStudentNumber"></div>
+                      </div>
+                      <form id="userForm">
+                        <div class="mb-3">
+                          <label for="firstName" class="form-label">First Name</label>
+                          <input type="text" class="form-control" id="firstName" name="first_name">
+                        </div>
+                        <div class="mb-3">
+                          <label for="lastName" class="form-label">Last Name</label>
+                          <input type="text" class="form-control" id="lastName" name="last_name">
+                        </div>
+                        <div class="mb-3">
+                          <label for="email" class="form-label">Email</label>
+                          <input type="text" class="form-control" id="email" name="email">
+                        </div>
+                        <div class="mb-3">
+                          <label for="role" class="form-label">Role</label>
+                          <input type="text" class="form-control" id="role" name="role">
+                        </div>
+                        <div class="mb-3">
+                          <label for="course" class="form-label">Course</label>
+                          <input type="text" class="form-control" id="course" name="course">
+                        </div>
+                        <div class="mb-3">
+                          <label for="yearLevel" class="form-label">Year Level</label>
+                          <input type="text" class="form-control" id="yearLevel" name="year_level">
+                        </div>
+                        <div class="mb-3">
+                          <label for="block" class="form-label">Block</label>
+                          <input type="text" class="form-control" id="block" name="block">
+                        </div>
+                        <div class="mb-3">
+                          <label for="admissionYear" class="form-label">Admission Year</label>
+                          <input type="text" class="form-control" id="admissionYear" name="admission_year">
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <button type="button" class="btn btn-primary" id="saveUserBtn">Save changes</button>
+                    </div>
+                  </div>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+        modal.querySelector("#displayStudentNumber").textContent = user.student_number || "";
+        modal.querySelector("#firstName").value = user.first_name || "";
+        modal.querySelector("#lastName").value = user.last_name || "";
+        modal.querySelector("#email").value = user.email || "";
+        modal.querySelector("#role").value = user.role || "";
+        modal.querySelector("#course").value = user.course || "";
+        modal.querySelector("#yearLevel").value = user.year_level || "";
+        modal.querySelector("#block").value = user.block || "";
+        modal.querySelector("#admissionYear").value = user.admission_year || "";
+        modal.querySelector("#saveUserBtn").onclick = () => this.updateUser(user.user_id);
+        (bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal)).show();
+    }
+
+    /**
+     * Sends a PUT request to update a user's details.
+     */
+    async updateUser(userId) {
+        const token = this.getToken();
+        if (!token) {
+            console.error("No token found.");
+            return;
+        }
+        const originalUser = allUsersData.find(u => u.user_id == userId);
+        if (!originalUser) {
+            console.error("Original user not found for ID:", userId);
+            return;
+        }
+        const modal = document.getElementById("userModal");
+        const form = modal.querySelector("#userForm");
+        const formData = new FormData(form);
+        const updatedUser = {
+            student_number: originalUser.student_number,
+            first_name: formData.get('first_name')?.trim() || originalUser.first_name,
+            last_name: formData.get('last_name')?.trim() || originalUser.last_name,
+            email: formData.get('email')?.trim() || originalUser.email,
+            role: formData.get('role')?.trim() || originalUser.role,
+            course: formData.get('course')?.trim() || originalUser.course,
+            year_level: formData.get('year_level')?.trim() || originalUser.year_level,
+            block: formData.get('block')?.trim() || originalUser.block,
+            admission_year: formData.get('admission_year')?.trim() || originalUser.admission_year
+        };
         try {
-            const url = `${API_BASE_URL}/admin/users`;
-            const response = await fetch(url, { method: 'GET', headers: getAuthHeaders(this.token) });
-            if (!response.ok) {
-                console.error("HTTP error while fetching admin details:", response.status);
-                return;
-            }
+            this.showLoading();
+            const response = await fetch(`${API_BASE_URL}/auth/users/${userId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(token),
+                body: JSON.stringify(updatedUser)
+            });
+            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
             const result = await response.json();
-            if (result.status === 'success' && Array.isArray(result.data)) {
-                // Use the stored loggedAdminId if available; otherwise, use the first admin record
-                const loggedAdminId = localStorage.getItem('loggedAdminId');
-                let currentAdmin = loggedAdminId ? result.data.find(admin => admin.admin_id == loggedAdminId) : result.data[0];
-                if (currentAdmin && currentAdmin.username) {
-                    const userFullNameEl = document.getElementById('userFullName');
-                    if (userFullNameEl) {
-                        userFullNameEl.textContent = currentAdmin.username;
-                    }
-                    console.log("Logged in admin username:", currentAdmin.username);
-                } else {
-                    console.error("No matching admin record found.");
-                }
+            if (result.status === 'success') {
+                bootstrap.Modal.getInstance(modal)?.hide();
+                this.loadUsers();
             } else {
-                console.error("Error fetching admin details:", result.message);
+                throw new Error("Error updating user: " + result.message);
             }
         } catch (error) {
-            console.error("Error fetching admin details:", error);
+            console.error("Error updating user:", error);
+            this.showErrorAlert(error.message);
+        } finally {
+            this.hideLoading();
         }
     }
 }
@@ -436,8 +611,44 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded, initializing Dashboard.");
     new Dashboard();
 
-    // Debug: Log the staff_tokens to the console to verify it's being properly loaded.
+    // Debug: Log staff_tokens to verify they are properly loaded.
     const staffTokens = localStorage.getItem('staff_tokens');
     console.log("staff_tokens:", staffTokens);
 });
 
+// Logout fix: attach a logout function to window.auth.
+// It checks window.currentUserRole and uses the proper logout endpoint.
+window.auth = {
+    logout: async function() {
+        console.log("Attempting logout...");
+        // Show a loading indicator (if available)
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) loadingEl.style.display = 'flex';
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                // Use window.currentUserRole if set, otherwise default to admin.
+                const userType = window.currentUserRole || 'admin';
+                const logoutEndpoint = (userType === 'staff')
+                    ? `${API_BASE_URL}/staff/logout`
+                    : `${API_BASE_URL}/admin/logout`;
+                const response = await fetch(logoutEndpoint, {
+                    method: 'POST',
+                    headers: getAuthHeaders(token)
+                });
+                const result = await response.json();
+                if (result.status !== 'success') {
+                    throw new Error("Logout failed: " + result.message);
+                }
+                console.log("Logout successful:", result.message);
+            } catch (error) {
+                console.error("Logout error:", error);
+                // Optionally, display an error alert.
+            }
+        }
+        // Clear local storage and redirect to login.
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+    }
+};
