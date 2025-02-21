@@ -11,6 +11,9 @@ android {
     namespace = "com.phinma.upang"
     compileSdk = 34
 
+    // Define the base URL as a constant
+    val baseUrl = "http://192.168.1.7/UPANG-LINK/UPANG%20LINK%20API/api/"
+
     defaultConfig {
         applicationId = "com.phinma.upang"
         minSdk = 24
@@ -20,7 +23,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.7/UPANG-LINK/UPANG%20LINK%20API/api/\"")
+        buildConfigField("String", "API_BASE_URL", "\"$baseUrl\"")
     }
 
     buildTypes {
@@ -30,7 +33,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "API_BASE_URL", "\"https://api.upanglink.com/api/\"")
+            buildConfigField("String", "API_BASE_URL", "\"$baseUrl\"")
         }
     }
 
