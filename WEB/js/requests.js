@@ -265,15 +265,37 @@ function viewRequest(requestId) {
   }
   const user = allUsersData.find(u => u.user_id == request.user_id);
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
-  const modalBodyContent = `
+  
+  // Build basic info HTML.
+  let modalBodyContent = `
     <p><strong>Student Number:</strong> ${user ? user.student_number : 'N/A'}</p>
     <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
     <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-    <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
+    <p><strong>Status:</strong> <span style="padding: 2px 6px; background-color: #eee;">${request.status}</span></p>
     <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-    <p><strong>Additional Information:</strong> ${request.details || 'No additional details available.'}</p>
-  `;
-  // Set the current request ID for later use when updating the status
+    <p><strong>Additional Information:</strong> ${request.details || 'No additional details available.'}</p>`;
+  
+  // Build file links for viewing and downloading.
+  let fileLinks = '';
+  if (request.Clearance) {
+    fileLinks += `<p><strong>Clearance:</strong> 
+      <a href="${request.Clearance.file_path}" target="_blank">View</a>
+      &nbsp;|&nbsp;
+      <a href="${request.Clearance.file_path}" download>Download (${request.Clearance.file_name})</a>
+    </p>`;
+  }
+  if (request.RequestLetter) {
+    fileLinks += `<p><strong>Request Letter:</strong> 
+      <a href="${request.RequestLetter.file_path}" target="_blank">View</a>
+      &nbsp;|&nbsp;
+      <a href="${request.RequestLetter.file_path}" download>Download (${request.RequestLetter.file_name})</a>
+    </p>`;
+  }
+  if (fileLinks) {
+    modalBodyContent += `<h3>Attached Files</h3>` + fileLinks;
+  }
+  
+  // Set the current request ID for later use
   currentRequestId = request.request_id;
   
   const modalTitleEl = document.getElementById('ticketModalLabel');
@@ -402,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // NEW: Attach event listener for the update status button.
+  // Attach event listener for the update status button.
   const updateStatusBtn = document.getElementById("updateStatusBtn");
   if (updateStatusBtn) {
     updateStatusBtn.addEventListener("click", function() {

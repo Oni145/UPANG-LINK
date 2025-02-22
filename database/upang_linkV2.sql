@@ -146,7 +146,7 @@ CREATE TABLE staffs (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Staff tokens table
+-- Staff tokensf table
 CREATE TABLE staff_tokens (
     id INT PRIMARY KEY AUTO_INCREMENT,
     token VARCHAR(64) NOT NULL,

@@ -366,3 +366,11 @@ table td:nth-child(4) {
     padding: 20px 10px;
   }
 }
+
+
+.sidebar-menu li a.active,
+.sidebar-menu li.active a {
+  background: #28a745;  /* green */
+  color: #fff;          /* white text */
+  border-left: 4px solid #fff;
+}

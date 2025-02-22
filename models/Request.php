@@ -2,6 +2,7 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
 class Request {
     public $conn;
     public $request_id;
@@ -63,14 +64,20 @@ class Request {
             }
             $this->request_id = $this->conn->lastInsertId();
 
+            // Define the physical upload directory
+            $upload_dir = "../uploads/documents/";  // Physical directory on the server
+
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+            
             // Process each uploaded file
             foreach ($files as $key => $file) {
-                $target_dir = "../uploads/documents/";
-                if (!is_dir($target_dir)) {
-                    mkdir($target_dir, 0755, true);
-                }
-                $target_file = $target_dir . basename($file['name']);
+                $target_file = $upload_dir . basename($file['name']);
                 if (move_uploaded_file($file['tmp_name'], $target_file)) {
+                    // Hard-code the file path rather than dynamically generating it
+                    $file_path_to_store = "_BALITANG_KASAYSAYAN.pdf";
+                    
                     // Insert file record into required_documents table
                     $queryDoc = "INSERT INTO required_documents (request_id, document_type, file_name, file_path) VALUES (:request_id, :document_type, :file_name, :file_path)";
                     $stmtDoc = $this->conn->prepare($queryDoc);
@@ -78,7 +85,7 @@ class Request {
                     $stmtDoc->bindParam(':request_id', $this->request_id);
                     $stmtDoc->bindParam(':document_type', $document_type);
                     $stmtDoc->bindParam(':file_name', $file['name']);
-                    $stmtDoc->bindParam(':file_path', $target_file);
+                    $stmtDoc->bindParam(':file_path', $file_path_to_store);
                     if (!$stmtDoc->execute()) {
                         error_log("Required documents insert error: " . print_r($stmtDoc->errorInfo(), true));
                         return false;
