@@ -44,9 +44,9 @@ body {
 
 /* Sidebar */
 #sidebar {
-  width: 250px;         /* Adjust width as needed */
-  background: #fff;      /* White background */
-  color: #333;          /* Dark text for contrast */
+  width: 250px;
+  background: #fff;
+  color: #333;
   transition: all 0.3s ease;
   flex-shrink: 0;
   overflow-y: auto;
@@ -58,7 +58,7 @@ body {
 
 .sidebar-header {
   padding: 20px;
-  background: #fafafa;   /* Light background for header */
+  background: #fafafa;
   text-align: center;
   color: #28a745;
 }
@@ -73,7 +73,6 @@ body {
 .sidebar-header h3 {
   margin-bottom: 5px;
   font-size: 1.5rem;
-
 }
 
 .sidebar-header .subtitle {
@@ -83,8 +82,8 @@ body {
 
 .sidebar-menu li a.active,
 .sidebar-menu li.active a {
-  background: #28a745;  /* green */
-  color: #fff;          /* white text */
+  background: #28a745;
+  color: #fff;
   border-left: 4px solid #fff;
 }
 
@@ -97,7 +96,6 @@ body {
   border-bottom: 1px solid #ddd;
 }
 
-/* Sidebar links styling */
 .sidebar-menu li a {
   display: block;
   padding: 15px 20px;
@@ -106,13 +104,11 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
-/* Hover state */
 .sidebar-menu li a:hover {
   background: #e6e6e6;
   color: #000;
 }
 
-/* Active tab styling */
 .sidebar-menu li a.active {
   background: #e6e6e6;
   color: #000;
@@ -174,6 +170,7 @@ body {
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
+  margin-bottom: 20px;
 }
 
 .card-header {
@@ -216,8 +213,6 @@ table th {
   background: #f2f2f2;
 }
 
-/* Target only the Status data cells (4th column) */
-/* Updated font-size to 0.9rem to match the .btn-primary */
 table td:nth-child(4) {
   text-align: center;
   font-size: 0.9rem;
@@ -244,7 +239,7 @@ table td:nth-child(4) {
 .modal-content {
   background: #fff;
   width: 90%;
-  max-width: 800px;  /* Slightly larger dialog */
+  max-width: 800px;
   border-radius: 5px;
   overflow: hidden;
 }
@@ -263,7 +258,7 @@ table td:nth-child(4) {
 
 .modal-body {
   padding: 15px;
-  font-size: 1.2rem;  /* Increased modal content text size */
+  font-size: 1.2rem;
   line-height: 1.5;
 }
 
@@ -278,8 +273,6 @@ table td:nth-child(4) {
   font-size: 1.2rem;
 }
 
-/* "View" Button */
-/* Outside the dialog, center it using block and auto margins */
 .btn-primary {
   background: green;
   color: #fff;
@@ -289,13 +282,11 @@ table td:nth-child(4) {
   margin: 0 auto;
 }
 
-/* When the button is inside a modal footer, revert to inline-flex */
 .modal-footer .btn-primary {
   display: inline-flex;
   margin: 0;
 }
 
-/* Secondary Button */
 .btn-secondary {
   background: #95a5a6;
   color: #fff;
@@ -341,10 +332,76 @@ table td:nth-child(4) {
 .status-completed { background: #007bff; }
 .status-secondary { background: #6c757d; }
 
-/* Make the "completed" status badge a bit bigger in the dialog */
 .modal .status-completed {
   font-size: 1rem;
   padding: 8px 12px;
+}
+
+/* Attached Files Styling */
+.attached-files {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.attached-files h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.attached-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.attached-file .file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attached-file .file-info i {
+  font-size: 1.5rem;
+  color: #28a745;
+}
+
+/* New styles for View and Download buttons */
+.attached-file .file-actions a.btn-view {
+  background: #007bff;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-right: 5px;
+  transition: background 0.3s;
+}
+
+.attached-file .file-actions a.btn-view:hover {
+  background: #0069d9;
+}
+
+.attached-file .file-actions a.btn-download {
+  background: transparent;
+  color: #28a745;
+  padding: 5px 10px;
+  border: 2px solid #28a745;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-right: 5px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.attached-file .file-actions a.btn-download:hover {
+  background: #28a745;
+  color: #fff;
 }
 
 /* Responsive Styles */
@@ -367,10 +424,10 @@ table td:nth-child(4) {
   }
 }
 
-
+/* Sidebar active link override */
 .sidebar-menu li a.active,
 .sidebar-menu li.active a {
-  background: #28a745;  /* green */
-  color: #fff;          /* white text */
+  background: #28a745;
+  color: #fff;
   border-left: 4px solid #fff;
 }

@@ -8,8 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="../WEB/css/requests.css">
   <style>
-    /* Active tab styling for sidebar links: green background with white text */
-   
+    /* Additional inline styles if needed */
   </style>
 </head>
 <body>
@@ -112,7 +111,6 @@
       const menuLinks = document.querySelectorAll('#sidebar .sidebar-menu li a');
       menuLinks.forEach(link => {
         if (link.getAttribute('href') === currentPage) {
-          // Add active class to both the link and its parent li
           link.classList.add('active');
           link.parentElement.classList.add('active');
         } else {

@@ -27,8 +27,14 @@ class FormGenerator {
             } elseif (is_array($requirements)) {
                 // If it's a plain array (e.g. ["Valid student ID"]), map each element.
                 $fields = array_map(function($req) {
-                    $name = strtolower(str_replace(' ', '_', $req));
                     $lower_req = strtolower($req);
+                    // If the requirement is "1x1 ID Picture (white background, formal attire)", use "id_picture"
+                    if (strpos($lower_req, '1x1 id picture') !== false) {
+                        $name = 'id_picture';
+                    } else {
+                        $name = strtolower(str_replace(' ', '_', $req));
+                    }
+                    
                     $type = 'text';  // Default field type.
                     $allowed_types = '';
                     

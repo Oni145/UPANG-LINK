@@ -50,14 +50,12 @@ async function displayUserName() {
     return;
   }
   try {
-    // Attempt the admin endpoint first.
     let endpoint = `${API_BASE_URL}/admin/users`;
     let response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
     let result = await response.json();
     if (response.ok && result.status === 'success') {
       window.currentUserRole = 'admin';
     } else {
-      // Fallback to the staff endpoint.
       endpoint = `${API_BASE_URL}/staff/`;
       response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
       result = await response.json();
@@ -78,15 +76,12 @@ async function displayUserName() {
   }
 }
 
-// Global variables for requests and pagination
 let allRequests = [];
 let allUsersData = [];
 let displayData = [];
 let currentPage = 1;
 const itemsPerPage = 10;
 let totalPages = 1;
-
-// Global variable to store the current request ID being viewed/updated
 let currentRequestId = null;
 
 /**
@@ -118,7 +113,6 @@ async function loadRequestsUsingPagination() {
       return;
     }
 
-    // Sort requests descending by submission date.
     allRequests = [...requestsData.data].sort(
       (a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)
     );
@@ -136,7 +130,7 @@ async function loadRequestsUsingPagination() {
 }
 
 /**
- * Returns the array of requests to display (filtered by search if applicable).
+ * Returns the array of requests to display.
  */
 function getDisplayData() {
   return displayData;
@@ -255,47 +249,62 @@ function updatePaginationControls(currentPage) {
 }
 
 /**
+ * Helper function to build a styled attached file element.
+ * The "View" button is styled with a blue background and the "Download" button uses a green outline.
+ * A custom label is used instead of the actual file name.
+ * Inline onclick handlers call showLoading() and hideLoading() after a short delay.
+ */
+function buildFileLink(file, label) {
+  const displayText = label || file.file_name;
+  return `
+    <div class="attached-file">
+      <div class="file-info">
+        <i class="fas fa-file"></i>
+        <span>${displayText}</span>
+      </div>
+      <div class="file-actions">
+        <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
+        <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Opens the ticket details modal and populates it with request data.
+ * The status is now rendered with the same badge styling as in the table.
+ * The function shows the spinner while loading and hides it after updating the modal.
  */
 function viewRequest(requestId) {
+  showLoading();
   const request = allRequests.find(r => r.request_id == requestId);
   if (!request) {
     console.error("Request not found!");
+    hideLoading();
     return;
   }
   const user = allUsersData.find(u => u.user_id == request.user_id);
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
-  // Build basic info HTML.
   let modalBodyContent = `
     <p><strong>Student Number:</strong> ${user ? user.student_number : 'N/A'}</p>
     <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
     <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-    <p><strong>Status:</strong> <span style="padding: 2px 6px; background-color: #eee;">${request.status}</span></p>
+    <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
     <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
     <p><strong>Additional Information:</strong> ${request.details || 'No additional details available.'}</p>`;
   
-  // Build file links for viewing and downloading.
   let fileLinks = '';
   if (request.Clearance) {
-    fileLinks += `<p><strong>Clearance:</strong> 
-      <a href="${request.Clearance.file_path}" target="_blank">View</a>
-      &nbsp;|&nbsp;
-      <a href="${request.Clearance.file_path}" download>Download (${request.Clearance.file_name})</a>
-    </p>`;
+    fileLinks += buildFileLink(request.Clearance, "Clearance Form");
   }
   if (request.RequestLetter) {
-    fileLinks += `<p><strong>Request Letter:</strong> 
-      <a href="${request.RequestLetter.file_path}" target="_blank">View</a>
-      &nbsp;|&nbsp;
-      <a href="${request.RequestLetter.file_path}" download>Download (${request.RequestLetter.file_name})</a>
-    </p>`;
+    fileLinks += buildFileLink(request.RequestLetter, "Request Letter");
   }
   if (fileLinks) {
-    modalBodyContent += `<h3>Attached Files</h3>` + fileLinks;
+    modalBodyContent += `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`;
   }
   
-  // Set the current request ID for later use
   currentRequestId = request.request_id;
   
   const modalTitleEl = document.getElementById('ticketModalLabel');
@@ -303,7 +312,6 @@ function viewRequest(requestId) {
   if (modalTitleEl && modalBodyEl) {
     modalTitleEl.innerHTML = modalTitle;
     modalBodyEl.innerHTML = modalBodyContent;
-    // Optionally, set the select value to the current status if it exists among the options
     const statusSelectEl = document.getElementById('statusSelect');
     if (statusSelectEl && ['approved', 'in_progress', 'completed', 'rejected'].includes(request.status)) {
       statusSelectEl.value = request.status;
@@ -312,6 +320,7 @@ function viewRequest(requestId) {
   } else {
     console.error("Modal elements not found.");
   }
+  hideLoading();
 }
 
 /**
@@ -394,12 +403,10 @@ window.auth = {
   }
 };
 
-// Initialize on DOM load.
 document.addEventListener('DOMContentLoaded', () => {
   displayUserName();
   loadRequestsUsingPagination();
 
-  // Attach search functionality.
   const searchInput = document.getElementById("searchInput");
   if (searchInput) {
     searchInput.addEventListener("input", function() {
@@ -424,7 +431,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Attach event listener for the update status button.
   const updateStatusBtn = document.getElementById("updateStatusBtn");
   if (updateStatusBtn) {
     updateStatusBtn.addEventListener("click", function() {

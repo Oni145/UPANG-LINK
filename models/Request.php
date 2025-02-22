@@ -64,24 +64,33 @@ class Request {
             }
             $this->request_id = $this->conn->lastInsertId();
 
-            // Define the physical upload directory
-            $upload_dir = "../uploads/documents/";  // Physical directory on the server
+            // Define the base upload directory
+            $base_upload_dir = "../uploads/documents/";
 
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
+            // Ensure the base directory exists
+            if (!is_dir($base_upload_dir)) {
+                mkdir($base_upload_dir, 0755, true);
             }
             
             // Process each uploaded file
             foreach ($files as $key => $file) {
-                $target_file = $upload_dir . basename($file['name']);
+                // Use the key as the document type folder (e.g., "passport", "invoice", etc.)
+                $document_type = $key;
+                $target_folder = $base_upload_dir . $document_type . "/";
+                
+                // Create the subfolder if it doesn't exist
+                if (!is_dir($target_folder)) {
+                    mkdir($target_folder, 0755, true);
+                }
+                
+                $target_file = $target_folder . basename($file['name']);
                 if (move_uploaded_file($file['tmp_name'], $target_file)) {
-                    // Hard-code the file path rather than dynamically generating it
-                    $file_path_to_store = "_BALITANG_KASAYSAYAN.pdf";
+                    // Dynamically generate the file path to store (relative to your uploads directory)
+                    $file_path_to_store = $document_type . "/" . basename($file['name']);
                     
                     // Insert file record into required_documents table
                     $queryDoc = "INSERT INTO required_documents (request_id, document_type, file_name, file_path) VALUES (:request_id, :document_type, :file_name, :file_path)";
                     $stmtDoc = $this->conn->prepare($queryDoc);
-                    $document_type = $key; // key corresponds to the file input name
                     $stmtDoc->bindParam(':request_id', $this->request_id);
                     $stmtDoc->bindParam(':document_type', $document_type);
                     $stmtDoc->bindParam(':file_name', $file['name']);
@@ -91,7 +100,7 @@ class Request {
                         return false;
                     }
                 } else {
-                    error_log("Failed to move uploaded file for key: $key");
+                    error_log("Failed to move uploaded file for document type: $document_type");
                     return false;
                 }
             }
