@@ -319,9 +319,9 @@ table td:nth-child(4) {
 /* Status Badges */
 .badge {
   display: inline-block;
-  padding: 5px 10px;
+  padding: 8px 12px;
   border-radius: 3px;
-  font-size: 0.75rem;
+  font-size: 1rem;
   color: #fff;
 }
 
@@ -331,11 +331,6 @@ table td:nth-child(4) {
 .status-in_progress { background: #17a2b8; }
 .status-completed { background: #007bff; }
 .status-secondary { background: #6c757d; }
-
-.modal .status-completed {
-  font-size: 1rem;
-  padding: 8px 12px;
-}
 
 /* Attached Files Styling */
 .attached-files {
