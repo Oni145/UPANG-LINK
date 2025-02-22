@@ -19,7 +19,9 @@ if (!class_exists('RequestController')) {
         
         /**
          * Authenticate the incoming request.
-         * Expects "Authorization: Bearer YOUR_VALID_TOKEN".
+         * Expects the header "Authorization: Bearer YOUR_VALID_TOKEN".
+         * Checks admin_tokens, then staff_tokens, then auth_tokens (student).
+         * Applies sliding expiration if a token is found.
          */
         private function authenticate() {
             $headers = function_exists('apache_request_headers') ? apache_request_headers() : getallheaders();
@@ -40,7 +42,7 @@ if (!class_exists('RequestController')) {
                 exit;
             }
             
-            // Check admin_tokens table
+            // Check admin_tokens table first
             $stmtAdmin = $this->db->prepare("SELECT admin_id, expires_at FROM admin_tokens WHERE token = ?");
             $stmtAdmin->execute([$token]);
             $adminRow = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
@@ -56,10 +58,10 @@ if (!class_exists('RequestController')) {
                 $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
                 $updateStmt = $this->db->prepare("UPDATE admin_tokens SET expires_at = ? WHERE token = ?");
                 $updateStmt->execute([$newExpiresAt, $token]);
-                return;
+                return; // Authenticated as admin.
             }
             
-            // Check staff_tokens table
+            // Check staff_tokens table next
             $stmtStaff = $this->db->prepare("SELECT staff_id, expires_at FROM staff_tokens WHERE token = ?");
             $stmtStaff->execute([$token]);
             $staffRow = $stmtStaff->fetch(PDO::FETCH_ASSOC);
@@ -75,10 +77,10 @@ if (!class_exists('RequestController')) {
                 $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
                 $updateStmt = $this->db->prepare("UPDATE staff_tokens SET expires_at = ? WHERE token = ?");
                 $updateStmt->execute([$newExpiresAt, $token]);
-                return;
+                return; // Authenticated as staff.
             }
             
-            // Check auth_tokens table (for student tokens)
+            // Finally, check auth_tokens (student tokens)
             $stmtStudent = $this->db->prepare("SELECT user_id, expires_at FROM auth_tokens WHERE token = ?");
             $stmtStudent->execute([$token]);
             $studentRow = $stmtStudent->fetch(PDO::FETCH_ASSOC);
@@ -94,7 +96,7 @@ if (!class_exists('RequestController')) {
                 $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
                 $updateStmt = $this->db->prepare("UPDATE auth_tokens SET expires_at = ? WHERE token = ?");
                 $updateStmt->execute([$newExpiresAt, $token]);
-                return;
+                return; // Authenticated as student.
             }
             
             $this->sendError("Access Denied: Invalid or expired token", 401);
@@ -152,7 +154,7 @@ if (!class_exists('RequestController')) {
             }
         }
         
-        // GET FUNCTIONS
+        // GET functions
         
         private function getAllRequests() {
             $stmt = $this->request->read();
@@ -162,6 +164,7 @@ if (!class_exists('RequestController')) {
                     if (isset($row['requirements'])) {
                         unset($row['requirements']);
                     }
+                    // Merge in associated documents (all file types).
                     $docs = $this->getRequiredDocuments($row['request_id']);
                     $row = array_merge($row, $docs);
                     $requests_arr[] = $row;
@@ -183,6 +186,7 @@ if (!class_exists('RequestController')) {
                 if (isset($result['requirements'])) {
                     unset($result['requirements']);
                 }
+                // Merge in all associated documents.
                 $docs = $this->getRequiredDocuments($result['request_id']);
                 $result = array_merge($result, $docs);
                 http_response_code(200);
@@ -203,6 +207,7 @@ if (!class_exists('RequestController')) {
                     if (isset($row['requirements'])) {
                         unset($row['requirements']);
                     }
+                    // Merge in all associated documents.
                     $docs = $this->getRequiredDocuments($row['request_id']);
                     $row = array_merge($row, $docs);
                     $requests_arr[] = $row;
@@ -225,6 +230,7 @@ if (!class_exists('RequestController')) {
                     if (isset($row['requirements'])) {
                         unset($row['requirements']);
                     }
+                    // Merge in all associated documents.
                     $docs = $this->getRequiredDocuments($row['request_id']);
                     $row = array_merge($row, $docs);
                     $requests_arr[] = $row;
@@ -279,33 +285,46 @@ if (!class_exists('RequestController')) {
             }
         }
         
+        /**
+         * Updated getRequiredDocuments:
+         * Retrieves all file documents for a request, applies a mapping for display keys,
+         * and groups files by their (mapped) document_type.
+         */
         private function getRequiredDocuments($request_id) {
             $query = "SELECT document_type, file_name, file_path FROM required_documents WHERE request_id = ?";
             $stmt = $this->db->prepare($query);
             $stmt->execute([$request_id]);
             $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $result = [];
+            
+            // Mapping from stored document_type to desired display keys.
+            $mapping = [
+                'clearance_form'    => 'Clearance',
+                'request_letter'    => 'RequestLetter',
+                'valid_id'          => 'StudentID',  // Adjust as needed.
+                'valid_student_id'  => 'StudentID',
+                'registration_form' => 'RegistrationForm',
+                'affidavit_of_loss' => 'AffidavitOfLoss',
+                'id_picture'        => 'IDPicture',
+                'professor_approval'=> 'ProfessorApproval'
+            ];
+            
             foreach ($documents as $doc) {
-                // Get the file path from the database
-                $filePath = $doc['file_path'];
-                // Remove duplicate "uploads" if it exists
-                $filePath = str_replace('uploads/uploads', 'uploads', $filePath);
+                // Prepend the base directory to file_path.
+                $filePath = "../uploads/documents/" . str_replace('uploads/uploads', 'uploads', $doc['file_path']);
+                $docType = $doc['document_type'];
+                $displayKey = isset($mapping[$docType]) ? $mapping[$docType] : ucfirst($docType);
                 
-                if ($doc['document_type'] === 'clearance_form') {
-                    $result['Clearance'] = [
-                        'file_name' => $doc['file_name'],
-                        'file_path' => $filePath
-                    ];
-                } elseif ($doc['document_type'] === 'request_letter') {
-                    $result['RequestLetter'] = [
-                        'file_name' => $doc['file_name'],
-                        'file_path' => $filePath
-                    ];
+                if (!isset($result[$displayKey])) {
+                    $result[$displayKey] = [];
                 }
+                $result[$displayKey][] = [
+                    'file_name' => $doc['file_name'],
+                    'file_path' => $filePath
+                ];
             }
             return $result;
         }
-        
         
         private function createRequest() {
             $data = json_decode(file_get_contents("php://input"));
@@ -410,7 +429,8 @@ if (!class_exists('RequestController')) {
             }
         }
         
-        // Helper functions
+        // Helper functions.
+        
         private function checkMissingFields($data, array $fields) {
             $missing = [];
             foreach ($fields as $field) {
