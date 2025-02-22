@@ -158,7 +158,7 @@ class Dashboard {
     }
     const stats = this.requestsData.reduce((acc, request) => {
       if (request.status === 'pending') acc.pending++;
-      if (request.status === 'approved') acc.completed++;
+      if (request.status === 'completed') acc.completed++;
       return acc;
     }, { pending: 0, completed: 0 });
     const totalRequests = this.requestsData.length;

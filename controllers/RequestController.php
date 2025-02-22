@@ -164,8 +164,9 @@ if (!class_exists('RequestController')) {
                     if (isset($row['requirements'])) {
                         unset($row['requirements']);
                     }
-                    // Merge in associated documents (all file types).
-                    $docs = $this->getRequiredDocuments($row['request_id']);
+                    // Get allowed file keys based on the request's type_id.
+                    $allowedFields = $this->getAllowedFileKeys($row['type_id']);
+                    $docs = $this->getRequiredDocuments($row['request_id'], $allowedFields);
                     $row = array_merge($row, $docs);
                     $requests_arr[] = $row;
                 }
@@ -186,8 +187,8 @@ if (!class_exists('RequestController')) {
                 if (isset($result['requirements'])) {
                     unset($result['requirements']);
                 }
-                // Merge in all associated documents.
-                $docs = $this->getRequiredDocuments($result['request_id']);
+                $allowedFields = $this->getAllowedFileKeys($result['type_id']);
+                $docs = $this->getRequiredDocuments($result['request_id'], $allowedFields);
                 $result = array_merge($result, $docs);
                 http_response_code(200);
                 echo json_encode([
@@ -207,8 +208,8 @@ if (!class_exists('RequestController')) {
                     if (isset($row['requirements'])) {
                         unset($row['requirements']);
                     }
-                    // Merge in all associated documents.
-                    $docs = $this->getRequiredDocuments($row['request_id']);
+                    $allowedFields = $this->getAllowedFileKeys($row['type_id']);
+                    $docs = $this->getRequiredDocuments($row['request_id'], $allowedFields);
                     $row = array_merge($row, $docs);
                     $requests_arr[] = $row;
                 }
@@ -230,8 +231,8 @@ if (!class_exists('RequestController')) {
                     if (isset($row['requirements'])) {
                         unset($row['requirements']);
                     }
-                    // Merge in all associated documents.
-                    $docs = $this->getRequiredDocuments($row['request_id']);
+                    $allowedFields = $this->getAllowedFileKeys($row['type_id']);
+                    $docs = $this->getRequiredDocuments($row['request_id'], $allowedFields);
                     $row = array_merge($row, $docs);
                     $requests_arr[] = $row;
                 }
@@ -286,11 +287,41 @@ if (!class_exists('RequestController')) {
         }
         
         /**
-         * Updated getRequiredDocuments:
-         * Retrieves all file documents for a request, applies a mapping for display keys,
-         * and groups files by their (mapped) document_type.
+         * getAllowedFileKeys:
+         * Uses the form template to fetch allowed file field names for a given type_id.
          */
-        private function getRequiredDocuments($request_id) {
+        private function getAllowedFileKeys($type_id) {
+            $allowed = [];
+            if (!class_exists('FormGenerator')) {
+                return $allowed;
+            }
+            $formGenerator = new FormGenerator($this->db);
+            $form = $formGenerator->getRequestForm($type_id);
+            if (!empty($form['form_data'])) {
+                if (!empty($form['form_data']['required_fields'])) {
+                    foreach ($form['form_data']['required_fields'] as $field) {
+                        if ($field['type'] === 'file') {
+                            $allowed[] = $field['name'];
+                        }
+                    }
+                }
+                if (!empty($form['form_data']['optional_fields'])) {
+                    foreach ($form['form_data']['optional_fields'] as $field) {
+                        if ($field['type'] === 'file') {
+                            $allowed[] = $field['name'];
+                        }
+                    }
+                }
+            }
+            return $allowed;
+        }
+        
+        /**
+         * getRequiredDocuments:
+         * Retrieves all file documents for a request and groups them by a mapped document_type.
+         * Filters out any document not in the allowed list unless it's clearance_form or request_letter.
+         */
+        private function getRequiredDocuments($request_id, $allowedFields = null) {
             $query = "SELECT document_type, file_name, file_path FROM required_documents WHERE request_id = ?";
             $stmt = $this->db->prepare($query);
             $stmt->execute([$request_id]);
@@ -301,7 +332,7 @@ if (!class_exists('RequestController')) {
             $mapping = [
                 'clearance_form'    => 'Clearance',
                 'request_letter'    => 'RequestLetter',
-                'valid_id'          => 'StudentID',  // Adjust as needed.
+                'valid_id'          => 'StudentID',
                 'valid_student_id'  => 'StudentID',
                 'registration_form' => 'RegistrationForm',
                 'affidavit_of_loss' => 'AffidavitOfLoss',
@@ -310,7 +341,13 @@ if (!class_exists('RequestController')) {
             ];
             
             foreach ($documents as $doc) {
-                // Prepend the base directory to file_path.
+                // Filter: always include clearance_form and request_letter.
+                if (is_array($allowedFields) && 
+                    !in_array($doc['document_type'], $allowedFields) && 
+                    $doc['document_type'] !== 'clearance_form' && 
+                    $doc['document_type'] !== 'request_letter') {
+                    continue;
+                }
                 $filePath = "../uploads/documents/" . str_replace('uploads/uploads', 'uploads', $doc['file_path']);
                 $docType = $doc['document_type'];
                 $displayKey = isset($mapping[$docType]) ? $mapping[$docType] : ucfirst($docType);

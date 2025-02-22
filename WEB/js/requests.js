@@ -6,8 +6,10 @@ const requestTypeNames = {
   1: 'TOR',
   2: 'ID',
   3: 'Certificate',
-  4: 'Others'
+  4: 'Others',
+  7: 'Course Module Request'
 };
+
 
 /**
  * Returns common headers for authenticated requests.
@@ -252,7 +254,7 @@ function updatePaginationControls(currentPage) {
  * Helper function to build a styled attached file element.
  * The "View" button is styled with a blue background and the "Download" button uses a green outline.
  * A custom label is used instead of the actual file name.
- * Inline onclick handlers call showLoading() and hideLoading() after a short delay.
+ * Inline onclick handlers call showLoading() and then hide it after a short delay.
  */
 function buildFileLink(file, label) {
   const displayText = label || file.file_name;
@@ -272,8 +274,8 @@ function buildFileLink(file, label) {
 
 /**
  * Opens the ticket details modal and populates it with request data.
- * The status is now rendered with the same badge styling as in the table.
- * The function shows the spinner while loading and hides it after updating the modal.
+ * The status is rendered with the same badge styling as in the table.
+ * This function loops over a mapping of file keys to labels to render all attached files.
  */
 function viewRequest(requestId) {
   showLoading();
@@ -294,12 +296,25 @@ function viewRequest(requestId) {
     <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
     <p><strong>Additional Information:</strong> ${request.details || 'No additional details available.'}</p>`;
   
+  // Mapping of file keys to display labels
+  const fileLabels = {
+    "Clearance": "Clearance Form",
+    "RequestLetter": "Request Letter",
+    "StudentID": "Student ID",
+    "1x1_id_picture_(white_background,_formal_attire)": "1x1 ID Picture",
+    "RegistrationForm": "Registration Form",
+    "IDPicture": "ID Picture",
+    "ProfessorApproval": "Professor Approval"
+  };
+
   let fileLinks = '';
-  if (request.Clearance) {
-    fileLinks += buildFileLink(request.Clearance, "Clearance Form");
-  }
-  if (request.RequestLetter) {
-    fileLinks += buildFileLink(request.RequestLetter, "Request Letter");
+  // Loop over each defined file key and display its files if available
+  for (const key in fileLabels) {
+    if (request[key] && Array.isArray(request[key]) && request[key].length > 0) {
+      request[key].forEach(file => {
+        fileLinks += buildFileLink(file, fileLabels[key]);
+      });
+    }
   }
   if (fileLinks) {
     modalBodyContent += `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`;
