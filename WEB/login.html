@@ -13,7 +13,7 @@
       <div class="login-header">
         <img src="../WEB/assets/upang-logo.png" alt="UPANG LINK Logo" class="logo">
         <h1>UPANG LINK</h1>
-        <p>Admin & Staff Dashboard</p>
+        <p>Admin Dashboard</p>
       </div>
       <form id="loginForm" class="login-form">
         <div class="form-group">
@@ -30,16 +30,9 @@
           </label>
           <input type="password" id="password" name="password" required>
         </div>
-        <!-- New Account Type Selector -->
+        <!-- Forgot Password Link -->
         <div class="form-group">
-          <label for="accountType">
-            <i class="fas fa-user-circle" style="color:green;"></i>
-            Account Type
-          </label>
-          <select id="accountType" name="accountType" required>
-            <option value="admin">Admin</option>
-            <option value="staff">Staff</option>
-          </select>
+          <a href="forgot-password.html" class="forgot-password">Forgot Password?</a>
         </div>
         <div class="error-message" id="errorMessage"></div>
         <button type="submit" class="login-btn">
@@ -49,7 +42,6 @@
       </form>
     </div>
   </div>
-
   <script src="js/auth.js"></script>
 </body>
 </html>

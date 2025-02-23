@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UPANG LINK Admin </title>
+  <title>UPANG LINK Admin</title>
   <!-- Font Awesome CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="../WEB/css/users.css">
@@ -48,7 +48,7 @@
             <div id="paginationContainer"></div>
           </div>
           <div class="card-body">
-            <input type="text" id="searchInput" placeholder="Search by student number, name, email, role, course, etc...">
+            <input type="text" id="searchInput" placeholder="Search by student number, name, email, course, etc...">
             <div class="table-responsive">
               <table>
                 <thead>
@@ -57,7 +57,6 @@
                     <th>Student No.</th>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Role</th>
                     <th>Course</th>
                     <th>Year Level</th>
                     <th>Block</th>
@@ -88,7 +87,6 @@
       const menuLinks = document.querySelectorAll('#sidebar .sidebar-menu li a');
       menuLinks.forEach(link => {
         if (link.getAttribute('href') === currentPage) {
-          // Add active class to both the link and its parent li
           link.classList.add('active');
           link.parentElement.classList.add('active');
         } else {

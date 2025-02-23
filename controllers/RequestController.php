@@ -20,7 +20,7 @@ if (!class_exists('RequestController')) {
         /**
          * Authenticate the incoming request.
          * Expects the header "Authorization: Bearer YOUR_VALID_TOKEN".
-         * Checks admin_tokens, then staff_tokens, then auth_tokens (student).
+         * Checks admin_tokens, then auth_tokens (student).
          * Applies sliding expiration if a token is found.
          */
         private function authenticate() {
@@ -59,25 +59,6 @@ if (!class_exists('RequestController')) {
                 $updateStmt = $this->db->prepare("UPDATE admin_tokens SET expires_at = ? WHERE token = ?");
                 $updateStmt->execute([$newExpiresAt, $token]);
                 return; // Authenticated as admin.
-            }
-            
-            // Check staff_tokens table next
-            $stmtStaff = $this->db->prepare("SELECT staff_id, expires_at FROM staff_tokens WHERE token = ?");
-            $stmtStaff->execute([$token]);
-            $staffRow = $stmtStaff->fetch(PDO::FETCH_ASSOC);
-            if ($staffRow) {
-                $currentTime = new DateTime();
-                $expiresAt = new DateTime($staffRow['expires_at']);
-                if ($currentTime > $expiresAt) {
-                    $delStmt = $this->db->prepare("DELETE FROM staff_tokens WHERE token = ?");
-                    $delStmt->execute([$token]);
-                    $this->sendError("Access Denied: Staff token expired", 401);
-                    exit;
-                }
-                $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
-                $updateStmt = $this->db->prepare("UPDATE staff_tokens SET expires_at = ? WHERE token = ?");
-                $updateStmt->execute([$newExpiresAt, $token]);
-                return; // Authenticated as staff.
             }
             
             // Finally, check auth_tokens (student tokens)
@@ -154,8 +135,114 @@ if (!class_exists('RequestController')) {
             }
         }
         
-        // GET functions
+        /**
+         * createRequest:
+         * Processes the POST request to create a new request.
+         * Implements a rate limit counter (maximum 1000 posts per hour) using the "rate_limits" table.
+         * If more than an hour has passed since the stored start_time, the counter is reset.
+         */
+        private function createRequest() {
+            // Parse incoming data.
+            $data = json_decode(file_get_contents("php://input"));
+            if (!$data) {
+                $data = (object) $_POST;
+            }
+            
+            // Rate limit check using the "rate_limits" table.
+            $userId = $data->user_id;
+            $currentTime = time();
+            
+            // Retrieve the user's rate limit record.
+            $stmt = $this->db->prepare("SELECT counter, start_time FROM rate_limits WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            $rateLimit = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$rateLimit) {
+                // No record exists; create one.
+                $insertStmt = $this->db->prepare("INSERT INTO rate_limits (user_id, counter, start_time) VALUES (?, ?, ?)");
+                $insertStmt->execute([$userId, 0, date('Y-m-d H:i:s', $currentTime)]);
+                $counter = 0;
+                $startTime = $currentTime;
+            } else {
+                $counter = (int)$rateLimit['counter'];
+                $startTime = strtotime($rateLimit['start_time']);
+            }
+            
+            // Reset the counter if an hour has passed.
+            if (($currentTime - $startTime) >= 3600) {
+                $resetStmt = $this->db->prepare("UPDATE rate_limits SET counter = 0, start_time = ? WHERE user_id = ?");
+                $resetStmt->execute([date('Y-m-d H:i:s', $currentTime), $userId]);
+                $counter = 0;
+            }
+            
+            // Deny the request if the limit has been reached.
+            if ($counter >= 1000) {
+                $this->sendError('Rate limit exceeded. Maximum 1000 posts per hour allowed.', 429);
+                return;
+            }
+            
+            // Increment the counter.
+            $incStmt = $this->db->prepare("UPDATE rate_limits SET counter = counter + 1 WHERE user_id = ?");
+            $incStmt->execute([$userId]);
+            
+            // Check for missing required text fields.
+            $missing = $this->checkMissingFields($data, ['user_id', 'type_id', 'purpose']);
+            if (!empty($missing)) {
+                $this->sendError('Missing parameters: ' . implode(', ', $missing));
+                return;
+            }
+            
+            // Check for missing required file fields.
+            $missingFiles = $this->checkMissingFiles(['clearance_form', 'request_letter']);
+            if (!empty($missingFiles)) {
+                $this->sendError('Missing file(s): ' . implode(', ', $missingFiles));
+                return;
+            }
+            
+            if (!class_exists('FormGenerator')) {
+                $this->sendError("Required class 'FormGenerator' is missing.", 500);
+                return;
+            }
+            
+            $formGenerator = new FormGenerator($this->db);
+            $validation = $formGenerator->validateSubmission($data->type_id, (array)$data, $_FILES);
+            
+            if ($validation === false || (isset($validation['is_valid']) && $validation['is_valid'] === false)) {
+                $errors = isset($validation['errors']) ? $validation['errors'] : 'Validation failed: Submission is invalid. Please check your input data.';
+                $this->sendError('Validation failed', 400, $errors);
+                return;
+            }
+            
+            $this->request->user_id = $data->user_id;
+            $this->request->type_id = $data->type_id;
+            $this->request->status = "pending";
+                
+            $files = [];
+            if (!empty($_FILES)) {
+                foreach ($_FILES as $key => $file) {
+                    if ($file['error'] === UPLOAD_ERR_OK) {
+                        $files[$key] = $file;
+                    }
+                }
+            }
+                
+            if ($this->request->createWithRequirements($files)) {
+                $response = [
+                    'status' => 'success',
+                    'message' => 'Request created successfully',
+                    'request_id' => $this->request->request_id
+                ];
+                if (!empty($validation['warnings'])) {
+                    $response['warnings'] = $validation['warnings'];
+                }
+                http_response_code(201);
+                echo json_encode($response);
+            } else {
+                $this->sendError('Unable to create request');
+            }
+        }
         
+        // GET functions.
         private function getAllRequests() {
             $stmt = $this->request->read();
             if ($stmt->rowCount() > 0) {
@@ -164,7 +251,6 @@ if (!class_exists('RequestController')) {
                     if (isset($row['requirements'])) {
                         unset($row['requirements']);
                     }
-                    // Get allowed file keys based on the request's type_id.
                     $allowedFields = $this->getAllowedFileKeys($row['type_id']);
                     $docs = $this->getRequiredDocuments($row['request_id'], $allowedFields);
                     $row = array_merge($row, $docs);
@@ -319,7 +405,6 @@ if (!class_exists('RequestController')) {
         /**
          * getRequiredDocuments:
          * Retrieves all file documents for a request and groups them by a mapped document_type.
-         * Filters out any document not in the allowed list unless it's clearance_form or request_letter.
          */
         private function getRequiredDocuments($request_id, $allowedFields = null) {
             $query = "SELECT document_type, file_name, file_path FROM required_documents WHERE request_id = ?";
@@ -361,69 +446,6 @@ if (!class_exists('RequestController')) {
                 ];
             }
             return $result;
-        }
-        
-        private function createRequest() {
-            $data = json_decode(file_get_contents("php://input"));
-            if (!$data) {
-                $data = (object) $_POST;
-            }
-            
-            // Check for missing required text fields
-            $missing = $this->checkMissingFields($data, ['user_id', 'type_id', 'purpose']);
-            if (!empty($missing)) {
-                $this->sendError('Missing parameters: ' . implode(', ', $missing));
-                return;
-            }
-            
-            // Check for missing required file fields
-            $missingFiles = $this->checkMissingFiles(['clearance_form', 'request_letter']);
-            if (!empty($missingFiles)) {
-                $this->sendError('Missing file(s): ' . implode(', ', $missingFiles));
-                return;
-            }
-            
-            if (!class_exists('FormGenerator')) {
-                $this->sendError("Required class 'FormGenerator' is missing.", 500);
-                return;
-            }
-            
-            $formGenerator = new FormGenerator($this->db);
-            $validation = $formGenerator->validateSubmission($data->type_id, (array)$data, $_FILES);
-            
-            if ($validation === false || (isset($validation['is_valid']) && $validation['is_valid'] === false)) {
-                $errors = isset($validation['errors']) ? $validation['errors'] : 'Validation failed: Submission is invalid. Please check your input data.';
-                $this->sendError('Validation failed', 400, $errors);
-                return;
-            }
-            
-            $this->request->user_id = $data->user_id;
-            $this->request->type_id = $data->type_id;
-            $this->request->status = "pending";
-                
-            $files = [];
-            if (!empty($_FILES)) {
-                foreach ($_FILES as $key => $file) {
-                    if ($file['error'] === UPLOAD_ERR_OK) {
-                        $files[$key] = $file;
-                    }
-                }
-            }
-                
-            if ($this->request->createWithRequirements($files)) {
-                $response = [
-                    'status' => 'success',
-                    'message' => 'Request created successfully',
-                    'request_id' => $this->request->request_id
-                ];
-                if (!empty($validation['warnings'])) {
-                    $response['warnings'] = $validation['warnings'];
-                }
-                http_response_code(201);
-                echo json_encode($response);
-            } else {
-                $this->sendError('Unable to create request');
-            }
         }
         
         private function updateRequest($id) {

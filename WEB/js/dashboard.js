@@ -1,5 +1,5 @@
 // Base URL for the API without a trailing slash
-const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/api';
+const API_BASE_URL = 'http://localhost:8000';
 
 // Mapping for request type IDs to names
 const requestTypeNames = {
@@ -59,14 +59,7 @@ async function displayUserName() {
     if (response.ok && result.status === 'success') {
       window.currentUserRole = 'admin';
     } else {
-      endpoint = `${API_BASE_URL}/staff/`;
-      response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
-      result = await response.json();
-      if (response.ok && result.status === 'success') {
-        window.currentUserRole = 'staff';
-      } else {
-        throw new Error("Unable to fetch user details from either endpoint.");
-      }
+      throw new Error("Unable to fetch admin user details.");
     }
     const currentUser = result.data[0];
     const userFullNameEl = document.getElementById('userFullName');
@@ -383,7 +376,7 @@ async function updateTicketStatus(requestId, newStatus) {
 }
 
 /**
- * Dynamic logout function based on user role.
+ * Dynamic logout function always using the admin endpoint.
  */
 window.auth = {
   logout: async function() {
@@ -395,10 +388,7 @@ window.auth = {
       return;
     }
     try {
-      const role = window.currentUserRole || 'admin';
-      const logoutEndpoint = (role === 'staff')
-        ? `${API_BASE_URL}/staff/logout`
-        : `${API_BASE_URL}/admin/logout`;
+      const logoutEndpoint = `${API_BASE_URL}/admin/logout`;
       const response = await fetch(logoutEndpoint, {
         method: 'POST',
         headers: getAuthHeaders(token)
@@ -467,15 +457,7 @@ class Dashboard {
         window.currentUserRole = 'admin';
         console.log("Admin endpoint successful. Detected role: admin.");
       } else {
-        endpoint = `${API_BASE_URL}/staff/`;
-        response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(this.token) });
-        result = await response.json();
-        if (response.ok && result.status === 'success') {
-          window.currentUserRole = 'staff';
-          console.log("Staff endpoint successful. Detected role: staff.");
-        } else {
-          throw new Error("Unable to fetch user details from either endpoint.");
-        }
+        throw new Error("Unable to fetch admin user details.");
       }
       const currentUser = result.data[0];
       const nameEl = document.getElementById('userFullName');
@@ -759,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Dynamic logout function based on user role.
+ * Dynamic logout function always using the admin endpoint.
  */
 window.auth = {
   logout: async function() {
@@ -771,10 +753,7 @@ window.auth = {
       return;
     }
     try {
-      const role = window.currentUserRole || 'admin';
-      const logoutEndpoint = (role === 'staff')
-        ? `${API_BASE_URL}/staff/logout`
-        : `${API_BASE_URL}/admin/logout`;
+      const logoutEndpoint = `${API_BASE_URL}/admin/logout`;
       const response = await fetch(logoutEndpoint, {
         method: 'POST',
         headers: getAuthHeaders(token)

@@ -1,5 +1,5 @@
 // ----- COMMON CONSTANTS AND HELPER FUNCTIONS -----
-const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/api/';
+const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/';
 
 /**
  * Returns common headers for authenticated requests using the provided token.
@@ -21,10 +21,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     // Get the form values
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    const accountType = document.getElementById('accountType').value; // New account selector value
 
-    // Set the API endpoint based on the selected account type
-    let apiUrl = API_BASE_URL + (accountType === 'staff' ? 'staff/login' : 'admin/login');
+    // Set the API endpoint to admin login only
+    let apiUrl = API_BASE_URL + 'admin/login';
 
     try {
         const response = await fetch(apiUrl, {
@@ -47,11 +46,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
         // Store the token (adjust property name if different)
         localStorage.setItem('token', data.token);
-        // Store user details (admin or staff) if provided by the API.
+        // Store admin details if provided by the API.
         if (data.admin) {
             localStorage.setItem('admin', JSON.stringify(data.admin));
-        } else if (data.staff) {
-            localStorage.setItem('staff', JSON.stringify(data.staff));
         }
         
         // Redirect to index.html after successful login
@@ -77,4 +74,4 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
       
       // Handle login logic here, such as redirecting the user or showing an error
     }, 3000); // Simulate 3 seconds delay
-  });
+});

@@ -9,7 +9,7 @@ class User {
     public $password;
     public $first_name;
     public $last_name;
-    public $role;
+    // Removed role property
     public $course;
     public $year_level;
     public $block;
@@ -50,8 +50,8 @@ class User {
         }
 
         $query = "INSERT INTO " . $this->table_name . "
-                (student_number, email, password, first_name, last_name, role, course, year_level, block, admission_year)
-                VALUES (:student_number, :email, :password, :first_name, :last_name, :role, :course, :year_level, :block, :admission_year)";
+                (student_number, email, password, first_name, last_name, course, year_level, block, admission_year)
+                VALUES (:student_number, :email, :password, :first_name, :last_name, :course, :year_level, :block, :admission_year)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -60,7 +60,7 @@ class User {
         $stmt->bindParam(":password", $this->password);
         $stmt->bindParam(":first_name", $this->first_name);
         $stmt->bindParam(":last_name", $this->last_name);
-        $stmt->bindParam(":role", $this->role);
+        // Removed role binding
         $stmt->bindParam(":course", $this->course);
         $stmt->bindParam(":year_level", $this->year_level);
         $stmt->bindParam(":block", $this->block);
@@ -88,33 +88,29 @@ class User {
     }
 
     public function update() {
-        // Prepare fields that are always updated, now including email
-        $fields = [
-            'first_name'     => $this->first_name,
-            'last_name'      => $this->last_name,
-            'email'          => $this->email,
-            'course'         => $this->course,
-            'year_level'     => $this->year_level,
-            'block'          => $this->block,
-            'admission_year' => $this->admission_year
-        ];
-        
-        // Build the SET clause; include role if it's provided (not empty)
-        $setClause = "first_name = :first_name, last_name = :last_name, email = :email, course = :course, year_level = :year_level, block = :block, admission_year = :admission_year, updated_at = NOW()";
-        if (!empty($this->role)) {
-            $setClause = "first_name = :first_name, last_name = :last_name, role = :role, email = :email, course = :course, year_level = :year_level, block = :block, admission_year = :admission_year, updated_at = NOW()";
-            $fields['role'] = $this->role;
-        }
-        
-        $query = "UPDATE " . $this->table_name . " SET " . $setClause . " WHERE user_id = :user_id";
-        $fields['user_id'] = $this->user_id;
-        
+        // Build the SET clause without role
+        $query = "UPDATE " . $this->table_name . " SET 
+                  first_name = :first_name, 
+                  last_name = :last_name, 
+                  email = :email, 
+                  course = :course, 
+                  year_level = :year_level, 
+                  block = :block, 
+                  admission_year = :admission_year, 
+                  updated_at = NOW() 
+                  WHERE user_id = :user_id";
+
         $stmt = $this->conn->prepare($query);
-        
-        foreach ($fields as $key => $value) {
-            $stmt->bindValue(":" . $key, $value);
-        }
-        
+
+        $stmt->bindValue(":first_name", $this->first_name);
+        $stmt->bindValue(":last_name", $this->last_name);
+        $stmt->bindValue(":email", $this->email);
+        $stmt->bindValue(":course", $this->course);
+        $stmt->bindValue(":year_level", $this->year_level);
+        $stmt->bindValue(":block", $this->block);
+        $stmt->bindValue(":admission_year", $this->admission_year);
+        $stmt->bindValue(":user_id", $this->user_id);
+
         return $stmt->execute();
     }
 }

@@ -1,5 +1,5 @@
 // Base URL for the API without a trailing slash
-const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/api';
+const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/';
 
 // Mapping for request type IDs to names
 const requestTypeNames = {

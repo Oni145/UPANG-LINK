@@ -2,40 +2,51 @@
 CREATE DATABASE IF NOT EXISTS upang_link;
 USE upang_link;
 
--- Users table updated to include an email column
+-- Users table updated to remove the role column and add email verification and password reset fields
 CREATE TABLE users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
     student_number VARCHAR(50) UNIQUE,
-    email VARCHAR(255) UNIQUE NOT NULL,  -- New email column added with UNIQUE constraint
+    email VARCHAR(255) UNIQUE NOT NULL,  -- Email column with UNIQUE constraint
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    role ENUM('student', 'admin', 'staff') NOT NULL,
     course VARCHAR(100),
     year_level INT,
     block VARCHAR(10),
     admission_year VARCHAR(4),
+    is_verified TINYINT(1) DEFAULT 0,  -- 0 = not verified, 1 = verified
+    email_verification_token VARCHAR(64) DEFAULT NULL,
+    password_reset_token VARCHAR(64) DEFAULT NULL,
+    password_reset_expires DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Admins table
+-- Admins table updated with email, password, first_name, and last_name
 CREATE TABLE admins (
     admin_id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) UNIQUE NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    password_reset_token VARCHAR(64) DEFAULT NULL,
+    password_reset_expires DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Admin tokens table
-CREATE TABLE admin_tokens (
-    token CHAR(64) PRIMARY KEY,
-    admin_id INT NOT NULL,
-    login_time DATETIME NOT NULL,
-    expires_at DATETIME NOT NULL,
-    FOREIGN KEY (admin_id) REFERENCES admins(admin_id)
+CREATE TABLE admins (
+    admin_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
 
 -- Auth tokens table
 CREATE TABLE auth_tokens (
@@ -112,6 +123,14 @@ CREATE TABLE notifications (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+-- Rate Limits table for API rate limiting (max 1000 requests per day per IP)
+CREATE TABLE IF NOT EXISTS rate_limits (
+    user_id INT PRIMARY KEY,
+    counter INT NOT NULL DEFAULT 0,
+    start_time DATETIME NOT NULL
+);
+
+
 -- Requirement templates table
 CREATE TABLE requirement_templates (
     template_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -123,7 +142,7 @@ CREATE TABLE requirement_templates (
     FOREIGN KEY (type_id) REFERENCES request_types(type_id)
 );
 
--- Request requirement notes table
+-- Request requirement notes table updated to reference the admins table
 CREATE TABLE request_requirement_notes (
     note_id INT PRIMARY KEY AUTO_INCREMENT,
     request_id INT NOT NULL,
@@ -132,28 +151,7 @@ CREATE TABLE request_requirement_notes (
     note TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (request_id) REFERENCES requests(request_id),
-    FOREIGN KEY (admin_id) REFERENCES users(user_id)
-);
-
--- Staffs table (extracted from the original schema)
-CREATE TABLE staffs (
-    staff_id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(100),
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Staff tokensf table
-CREATE TABLE staff_tokens (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    token VARCHAR(64) NOT NULL,
-    staff_id INT NOT NULL,
-    login_time DATETIME NOT NULL,
-    expires_at DATETIME NOT NULL,
-    FOREIGN KEY (staff_id) REFERENCES staffs(staff_id)
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id)
 );
 
 -- Insert default categories
@@ -173,19 +171,7 @@ INSERT INTO request_types (category_id, name, description, requirements, process
 (3, 'School Uniform Request', 'Regular school uniform set', JSON_ARRAY('Valid student ID'), '3-5 working days'),
 (4, 'Course Module Request', 'Subject-specific learning materials', JSON_ARRAY('Valid student ID', 'Professor approval'), '1-2 working days');
 
--- Insert default admin user into the users table with email
-INSERT INTO users (student_number, email, password, first_name, last_name, role) VALUES
-('admin', 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin');
-
--- Insert sample student account with email
-INSERT INTO users (student_number, email, password, first_name, last_name, role, course, year_level, block, admission_year) VALUES
-('0001-2021-00123', 'matthew.estrada@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Matthew Cymon', 'Estrada', 'student', 'BSIT', 3, 'BN', '2021');
-
--- Insert sample staff account extracted from the previous table
-INSERT INTO staffs (username, name, email, password)
-VALUES ('matthew', 'matthew', 'test@gmail.com', '$2y$10$5aRF6Ix2fkBcho75IBfS4uwfCvvQNtappWMpPkncFydoAzJFeZqja');
-
--- Sample update query for inserting/updating an email:
+-- Sample update query for inserting/updating an email in users:
 UPDATE users SET email = 'new.email@example.com' WHERE user_id = 2;
 
 -- Ensure the requirements column is JSON type (if not already)
