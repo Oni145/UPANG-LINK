@@ -30,7 +30,6 @@ body {
 #loadingLogo {
   animation: spin 2s linear infinite;
 }
-
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -51,51 +50,37 @@ body {
   flex-shrink: 0;
   overflow-y: auto;
 }
-
 #sidebar.active {
   left: 0;
 }
-
 .sidebar-header {
   padding: 20px;
   background: #fafafa;
   text-align: center;
   color: #28a745;
 }
-
 .sidebar-header .logo {
   max-width: 100%;
   height: auto;
   margin-bottom: 10px;
   background-color: #fafafa;
 }
-
 .sidebar-header h3 {
   margin-bottom: 5px;
   font-size: 1.5rem;
 }
-
 .sidebar-header .subtitle {
   font-size: 0.9rem;
   color: #777;
-}
-
-.sidebar-menu li a.active,
-.sidebar-menu li.active a {
-  background: #28a745;
-  color: #fff;
-  border-left: 4px solid #fff;
 }
 
 .sidebar-menu {
   list-style: none;
   padding: 0;
 }
-
 .sidebar-menu li {
   border-bottom: 1px solid #ddd;
 }
-
 .sidebar-menu li a {
   display: block;
   padding: 15px 20px;
@@ -103,16 +88,16 @@ body {
   text-decoration: none;
   transition: background 0.3s, color 0.3s;
 }
-
 .sidebar-menu li a:hover {
   background: #e6e6e6;
   color: #000;
 }
-
-.sidebar-menu li a.active {
-  background: #e6e6e6;
-  color: #000;
-  border-left: 4px solid #28a745;
+/* Active Sidebar Item */
+.sidebar-menu li a.active,
+.sidebar-menu li.active a {
+  background-color: #28a745 !important;
+  color: #fff !important;
+  border-left: 4px solid #fff;
 }
 
 /* Menu Icon */
@@ -135,7 +120,6 @@ body {
   border-bottom: 1px solid #ddd;
   margin-bottom: 20px;
 }
-
 .top-navbar #toggleSidebar {
   display: none;
   font-size: 1.5rem;
@@ -143,18 +127,15 @@ body {
   border: none;
   cursor: pointer;
 }
-
 .user-info {
   margin-left: auto;
   display: flex;
   align-items: center;
 }
-
 .user-info span {
   margin-right: 15px;
   font-weight: bold;
 }
-
 .user-info button {
   padding: 5px 10px;
   background: #e74c3c;
@@ -172,7 +153,6 @@ body {
   overflow: hidden;
   margin-bottom: 20px;
 }
-
 .card-header {
   padding: 15px;
   background: #f7f7f7;
@@ -181,11 +161,9 @@ body {
   align-items: center;
   border-bottom: 1px solid #ddd;
 }
-
 .card-body {
   padding: 15px;
 }
-
 .card-body input[type="text"] {
   width: 100%;
   padding: 10px;
@@ -198,21 +176,17 @@ body {
 .table-responsive {
   overflow-x: auto;
 }
-
 table {
   width: 100%;
   border-collapse: collapse;
 }
-
 table th, table td {
   padding: 10px;
   border: 1px solid #ddd;
 }
-
 table th {
   background: #f2f2f2;
 }
-
 table td:nth-child(4) {
   text-align: center;
   font-size: 0.9rem;
@@ -231,11 +205,9 @@ table td:nth-child(4) {
   align-items: center;
   z-index: 1000;
 }
-
 .modal.active {
   display: flex;
 }
-
 .modal-content {
   background: #fff;
   width: 90%;
@@ -243,7 +215,6 @@ table td:nth-child(4) {
   border-radius: 5px;
   overflow: hidden;
 }
-
 .modal-header, .modal-footer {
   padding: 10px 15px;
   background: #f7f7f7;
@@ -251,11 +222,9 @@ table td:nth-child(4) {
   justify-content: space-between;
   align-items: center;
 }
-
 .modal-header h5 {
   font-size: 1.25rem;
 }
-
 .modal-body {
   padding: 15px;
   font-size: 1.2rem;
@@ -272,7 +241,6 @@ table td:nth-child(4) {
   justify-content: center;
   font-size: 1.2rem;
 }
-
 .btn-primary {
   background: green;
   color: #fff;
@@ -281,19 +249,16 @@ table td:nth-child(4) {
   display: block;
   margin: 0 auto;
 }
-
 .modal-footer .btn-primary {
   display: inline-flex;
   margin: 0;
 }
-
 .btn-secondary {
   background: #95a5a6;
   color: #fff;
   padding: 10px 20px;
   font-size: 1.2rem;
 }
-
 .btn-close {
   background: none;
   border: none;
@@ -308,7 +273,6 @@ table td:nth-child(4) {
   gap: 10px;
   justify-content: center;
 }
-
 #statusSelect,
 .modal-footer .btn {
   height: 50px;
@@ -324,7 +288,6 @@ table td:nth-child(4) {
   font-size: 1rem;
   color: #fff;
 }
-
 .status-pending { background: #ffc107; }
 .status-approved { background: #28a745; }
 .status-rejected { background: #dc3545; }
@@ -338,12 +301,10 @@ table td:nth-child(4) {
   padding-top: 10px;
   border-top: 1px solid #ddd;
 }
-
 .attached-files h3 {
   font-size: 1.2rem;
   margin-bottom: 10px;
 }
-
 .attached-file {
   display: flex;
   align-items: center;
@@ -354,18 +315,15 @@ table td:nth-child(4) {
   padding: 10px;
   margin-bottom: 10px;
 }
-
 .attached-file .file-info {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
 .attached-file .file-info i {
   font-size: 1.5rem;
   color: #28a745;
 }
-
 /* New styles for View and Download buttons */
 .attached-file .file-actions a.btn-view {
   background: #007bff;
@@ -377,11 +335,9 @@ table td:nth-child(4) {
   margin-right: 5px;
   transition: background 0.3s;
 }
-
 .attached-file .file-actions a.btn-view:hover {
   background: #0069d9;
 }
-
 .attached-file .file-actions a.btn-download {
   background: transparent;
   color: #28a745;
@@ -393,7 +349,6 @@ table td:nth-child(4) {
   margin-right: 5px;
   transition: background 0.3s, color 0.3s;
 }
-
 .attached-file .file-actions a.btn-download:hover {
   background: #28a745;
   color: #fff;
@@ -419,10 +374,92 @@ table td:nth-child(4) {
   }
 }
 
-/* Sidebar active link override */
-.sidebar-menu li a.active,
-.sidebar-menu li.active a {
-  background: #28a745;
+/* Import Roboto font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+/* Modern Admin Comments Styling - Green Theme with Roboto Font */
+.admin-comment-container {
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+  border-left: 5px solid #2e7d32;
+  padding: 20px 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin: 20px 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.admin-comment-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+/* Optional Header for Admin Details */
+.admin-comment-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.admin-comment-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 15px;
+  border: 2px solid #2e7d32;
+}
+
+.admin-comment-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-comment-header h3 {
+  font-size: 1.4rem;
+  color: #2e7d32;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Comment Body */
+.admin-comment-body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #424242;
+}
+
+/* Optional Footer for Metadata */
+.admin-comment-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #777;
+}
+
+/* Note Below Admin Comments - Green Theme with Roboto Font */
+.admin-comment-note {
+  font-family: 'Roboto', sans-serif;
+  background: #f1f8e9;
+  border-left: 5px solid #2e7d32;
+  padding: 15px 20px;
+  border-radius: 5px;
+  font-size: 1rem;
+  color: #2e7d32;
+  margin-top: 20px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.btn-danger {
+  background: red;
   color: #fff;
-  border-left: 4px solid #fff;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 3px;
+  display: block;
+  margin: 0 auto;
 }

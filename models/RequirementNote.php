@@ -14,9 +14,14 @@ class RequirementNote {
         $this->conn = $db;
     }
     
+    // Getter for the table name
+    public function getTableName() {
+        return $this->table_name;
+    }
+    
     // Add requirement note
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . "
+        $query = "INSERT INTO " . $this->table_name . " 
                 (request_id, admin_id, requirement_name, note)
                 VALUES (:request_id, :admin_id, :requirement_name, :note)";
                 
@@ -44,4 +49,18 @@ class RequirementNote {
         
         return $stmt;
     }
-} 
+    
+    // Update requirement note
+    public function update() {
+        $query = "UPDATE " . $this->table_name . " 
+                  SET requirement_name = :requirement_name, note = :note 
+                  WHERE note_id = :note_id AND admin_id = :admin_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":requirement_name", $this->requirement_name);
+        $stmt->bindParam(":note", $this->note);
+        $stmt->bindParam(":note_id", $this->note_id);
+        $stmt->bindParam(":admin_id", $this->admin_id);
+        return $stmt->execute();
+    }
+}
+?>

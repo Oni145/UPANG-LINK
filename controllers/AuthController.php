@@ -38,11 +38,31 @@ class AuthController {
                         case 'resend_verification':
                             $this->resendVerification();
                             break;
+                        case 'request_change_password':
+                            $this->requestChangePassword();
+                            break;
                         default:
                             $this->sendError('Invalid endpoint');
                     }
                 } else {
                     $this->sendError('Invalid endpoint');
+                }
+                break;
+            case 'PUT':
+                if (isset($uri[0])) {
+                    if ($uri[0] === 'users') {
+                        if (isset($uri[1]) && !empty($uri[1])) {
+                            $this->updateUser($uri[1]);
+                        } else {
+                            $this->sendError("User ID required for update", 400);
+                        }
+                    } elseif ($uri[0] === 'change_password') {
+                        $this->changePassword();
+                    } else {
+                        $this->sendError("Invalid endpoint", 400);
+                    }
+                } else {
+                    $this->sendError("Invalid endpoint", 400);
                 }
                 break;
             case 'GET':
@@ -52,7 +72,6 @@ class AuthController {
                     } elseif ($uri[0] === 'users') {
                         // Require a valid token for fetching user data.
                         $this->requireToken();
-                        // If a user ID is provided, fetch that specific user; otherwise, fetch all users.
                         if (isset($uri[1]) && !empty($uri[1])) {
                             $this->getUser($uri[1]);
                         } else {
@@ -86,7 +105,9 @@ class AuthController {
                 $this->sendError('Email not verified. Please verify your email before logging in.', 403);
                 return;
             }
-            unset($user['password']);
+            // Remove sensitive fields.
+            unset($user['password'], $user['email_verification_token'], $user['password_reset_token'], $user['password_reset_expires']);
+            
             // Invalidate existing tokens and generate a new one.
             $stmt = $this->db->prepare("DELETE FROM auth_tokens WHERE user_id = ?");
             $stmt->execute([$user['user_id']]);
@@ -138,7 +159,7 @@ class AuthController {
             return;
         }
         
-        // Set user properties (is_verified defaults to 0 in DB).
+        // Set user properties.
         $this->user->student_number = $data->student_number;
         $this->user->email = $data->email;
         $this->user->password = password_hash($data->password, PASSWORD_DEFAULT);
@@ -156,7 +177,7 @@ class AuthController {
             $stmt = $this->db->prepare("UPDATE users SET email_verification_token = ? WHERE student_number = ?");
             $stmt->execute([$verifyToken, $data->student_number]);
             
-            // Prepare verification email that simply sends the token.
+            // Prepare verification email.
             $subject = "Verify Your Email Address";
             $body = "Your verification token is: " . $verifyToken . "\n\n" .
                     "Use this token in Postman to verify your email by sending a GET request to: \n" .
@@ -173,7 +194,7 @@ class AuthController {
                 $mail->Port       = 587;
                 $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
                 $mail->addAddress($data->email, $data->first_name . ' ' . $data->last_name);
-                $mail->isHTML(false); // plain text email
+                $mail->isHTML(false);
                 $mail->Subject  = $subject;
                 $mail->Body     = $body;
                 $mail->send();
@@ -207,7 +228,6 @@ class AuthController {
             $this->sendError("Email is already verified", 400);
             return;
         }
-        // Use existing token or generate a new one.
         if (empty($user['email_verification_token'])) {
             $verifyToken = $this->generateToken(16);
             $stmt = $this->db->prepare("UPDATE users SET email_verification_token = ? WHERE user_id = ?");
@@ -273,7 +293,6 @@ class AuthController {
     
     // ----- FORGOT PASSWORD FUNCTIONALITY -----
     private function forgotPassword() {
-        // Expect JSON input.
         $data = json_decode(file_get_contents("php://input"));
         if (empty($data->email)) {
             $this->sendError("Email is required", 400);
@@ -284,13 +303,11 @@ class AuthController {
             $this->sendError("No user found with that email", 404);
             return;
         }
-        // Generate reset token and expiry (1 hour valid).
         $resetToken = $this->generateToken(16);
         $expiresAt = date('Y-m-d H:i:s', time() + 3600);
         $stmt = $this->db->prepare("UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE user_id = ?");
         $stmt->execute([$resetToken, $expiresAt, $user['user_id']]);
         
-        // Build a plain text email body that just sends the token.
         $subject = "Password Reset Request";
         $body = "Password Reset Request\n\n" .
                 "Please use the token below to reset your password. This token is valid for one hour.\n\n" .
@@ -308,7 +325,7 @@ class AuthController {
             $mail->Port       = 587;
             $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
             $mail->addAddress($data->email);
-            $mail->isHTML(false); // send as plain text
+            $mail->isHTML(false);
             $mail->Subject  = $subject;
             $mail->Body     = $body;
             $mail->send();
@@ -324,7 +341,6 @@ class AuthController {
     
     // ----- RESET PASSWORD FUNCTIONALITY (POST) -----
     private function resetPassword() {
-        // Expect JSON input.
         $data = json_decode(file_get_contents("php://input"));
         if (empty($data->token) || empty($data->new_password)) {
             $this->sendError("Token and new password are required", 400);
@@ -353,65 +369,96 @@ class AuthController {
         }
     }
     
-    private function logout() {
-        $headers = apache_request_headers();
-        $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : null);
-        if (!$authHeader) {
-            $this->sendError('Authorization token not provided', 401);
+    // ----- CHANGE PASSWORD FUNCTIONALITY (PUT) -----
+    // This endpoint allows a user to change their password using a token sent via email.
+    private function changePassword() {
+        $data = json_decode(file_get_contents("php://input"));
+        if (empty($data->token) || empty($data->new_password)) {
+            $this->sendError("Token and new password are required", 400);
             return;
         }
-        if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $token = $matches[1];
-        } else {
-            $this->sendError('Invalid Authorization header format', 400);
+        $stmt = $this->db->prepare("SELECT user_id, password_reset_expires FROM users WHERE password_reset_token = ?");
+        $stmt->execute([$data->token]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$user) {
+            $this->sendError("Invalid token", 400);
             return;
         }
-        $stmt = $this->db->prepare("DELETE FROM auth_tokens WHERE token = ?");
-        if ($stmt->execute([$token])) {
-            http_response_code(200);
+        if (new DateTime() > new DateTime($user['password_reset_expires'])) {
+            $this->sendError("Token has expired", 400);
+            return;
+        }
+        $newPasswordHashed = password_hash($data->new_password, PASSWORD_DEFAULT);
+        $stmt = $this->db->prepare("UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE user_id = ?");
+        if ($stmt->execute([$newPasswordHashed, $user['user_id']])) {
             echo json_encode([
                 'status'  => 'success',
-                'message' => 'Logout successful'
+                'message' => 'Password changed successfully.'
             ]);
         } else {
-            $this->sendError('Unable to logout');
+            $this->sendError("Unable to change password", 500);
         }
     }
     
-    private function getAllUsers() {
-        $stmt = $this->user->read();
-        $num = $stmt->rowCount();
-        if ($num > 0) {
-            $users_arr = [];
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                unset($row['password']);
-                array_push($users_arr, $row);
-            }
-            http_response_code(200);
-            echo json_encode([
-                'status' => 'success',
-                'data'   => $users_arr
-            ]);
-        } else {
-            $this->sendError('No users found');
-        }
-    }
-    
-    private function getUser($id) {
-        $this->user->user_id = $id;
+    // ----- REQUEST CHANGE PASSWORD TOKEN FUNCTIONALITY (POST) -----
+    // This endpoint allows an authenticated user to request a change password token via email.
+    private function requestChangePassword() {
+        // Require an authentication token.
+        $tokenData = $this->requireToken();
+        $userId = $tokenData['id'];
+        
+        // Retrieve current user details.
+        $this->user->user_id = $userId;
         $user = $this->user->readOne();
-        if ($user) {
-            unset($user['password']);
-            http_response_code(200);
+        if (!$user) {
+            $this->sendError("User not found", 404);
+            return;
+        }
+        
+        // Generate a change password token.
+        $changeToken = $this->generateToken(16);
+        $expiresAt = date('Y-m-d H:i:s', time() + 3600); // valid for 1 hour
+        
+        // Store the token (using the same fields as password reset).
+        $stmt = $this->db->prepare("UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE user_id = ?");
+        if (!$stmt->execute([$changeToken, $expiresAt, $userId])) {
+            $this->sendError("Unable to generate change password token", 500);
+            return;
+        }
+        
+        // Prepare the email.
+        $subject = "Change Your Password";
+        $body = "You requested to change your password.\n\n" .
+                "Use the following token to change your password:\n\n" .
+                $changeToken . "\n\n" .
+                "This token is valid for one hour.";
+        
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'librariansystem1@gmail.com';
+            $mail->Password   = 'fyii qywz sobr wfks';
+            $mail->SMTPSecure = 'TLS';
+            $mail->Port       = 587;
+            $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
+            $mail->addAddress($user['email'], $user['first_name'] . ' ' . $user['last_name']);
+            $mail->isHTML(false);
+            $mail->Subject  = $subject;
+            $mail->Body     = $body;
+            $mail->send();
             echo json_encode([
-                'status' => 'success',
-                'data'   => $user
+                'status'  => 'success',
+                'message' => 'Change password token sent to your email.'
             ]);
-        } else {
-            $this->sendError('User not found');
+        } catch (Exception $e) {
+            error_log("PHPMailer Error: " . $mail->ErrorInfo);
+            $this->sendError("Failed to send change password token", 500);
         }
     }
     
+    // ----- UPDATE USER FUNCTIONALITY (PUT) -----
     private function updateUser($id) {
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
@@ -446,6 +493,7 @@ class AuthController {
         }
     }
     
+    // ----- DELETE USER FUNCTIONALITY -----
     private function deleteUser($id) {
         $this->user->user_id = $id;
         if ($this->user->delete()) {
@@ -456,6 +504,43 @@ class AuthController {
             ]);
         } else {
             $this->sendError('Unable to delete user');
+        }
+    }
+    
+    // ----- GET ALL USERS -----
+    private function getAllUsers() {
+        $stmt = $this->user->read();
+        $num = $stmt->rowCount();
+        if ($num > 0) {
+            $users_arr = [];
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                // Remove sensitive fields.
+                unset($row['password'], $row['email_verification_token'], $row['password_reset_token'], $row['password_reset_expires']);
+                array_push($users_arr, $row);
+            }
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'data'   => $users_arr
+            ]);
+        } else {
+            $this->sendError('No users found');
+        }
+    }
+    
+    // ----- GET SPECIFIC USER -----
+    private function getUser($id) {
+        $this->user->user_id = $id;
+        $user = $this->user->readOne();
+        if ($user) {
+            unset($user['password'], $user['email_verification_token'], $user['password_reset_token'], $user['password_reset_expires']);
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'data'   => $user
+            ]);
+        } else {
+            $this->sendError('User not found');
         }
     }
     

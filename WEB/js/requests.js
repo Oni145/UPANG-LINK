@@ -10,7 +10,6 @@ const requestTypeNames = {
   7: 'Course Module Request'
 };
 
-
 /**
  * Returns common headers for authenticated requests.
  */
@@ -115,6 +114,7 @@ async function loadRequestsUsingPagination() {
       return;
     }
 
+    // Sort requests by submitted_at descending.
     allRequests = [...requestsData.data].sort(
       (a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)
     );
@@ -192,11 +192,12 @@ function displayRequests(requests, usersData) {
           </span>
         </td>
         <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
-        <td>
-          <button class="btn btn-primary" onclick="viewRequest(${request.request_id})">
-            View
-          </button>
-        </td>
+       <td>
+  <button class="btn btn-primary" onclick="viewRequest(${request.request_id})">View</button>
+  <br>
+<button class="btn btn-danger" onclick="commentRequest(${request.request_id})">Comment</button>
+</td>
+
       </tr>
     `;
   }).join('');
@@ -252,9 +253,6 @@ function updatePaginationControls(currentPage) {
 
 /**
  * Helper function to build a styled attached file element.
- * The "View" button is styled with a blue background and the "Download" button uses a green outline.
- * A custom label is used instead of the actual file name.
- * Inline onclick handlers call showLoading() and then hide it after a short delay.
  */
 function buildFileLink(file, label) {
   const displayText = label || file.file_name;
@@ -274,8 +272,7 @@ function buildFileLink(file, label) {
 
 /**
  * Opens the ticket details modal and populates it with request data.
- * The status is rendered with the same badge styling as in the table.
- * This function loops over a mapping of file keys to labels to render all attached files.
+ * The "Admin's Comment" section now displays the note (if available) fetched from the API.
  */
 function viewRequest(requestId) {
   showLoading();
@@ -288,15 +285,35 @@ function viewRequest(requestId) {
   const user = allUsersData.find(u => u.user_id == request.user_id);
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
+  // Build main ticket details.
   let modalBodyContent = `
-    <p><strong>Student Number:</strong> ${user ? user.student_number : 'N/A'}</p>
-    <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-    <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-    <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
-    <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-    <p><strong>Additional Information:</strong> ${request.details || 'No additional details available.'}</p>`;
+    <div class="ticket-details">
+      <p><strong>Student Number:</strong> ${user ? user.student_number : 'N/A'}</p>
+      <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+      <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+      <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
+  `;
   
-  // Mapping of file keys to display labels
+  // Build the Admin's Comment section.
+  // It uses the simplified note from the request object.
+  let adminCommentHTML = '';
+  if (request.note && request.note.trim() !== "") {
+    adminCommentHTML = `<p>${request.note}</p>`;
+  } else {
+    adminCommentHTML = `<p>No comment available.</p>`;
+  }
+  
+  // Insert Admin's Comment immediately after Status.
+  modalBodyContent += `
+      <div class="admin-comment-container">
+        <h3>Admin's Comment</h3>
+        ${adminCommentHTML}
+      </div>
+      <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+    </div>
+  `;
+  
+  // Build attached files section.
   const fileLabels = {
     "Clearance": "Clearance Form",
     "RequestLetter": "Request Letter",
@@ -308,7 +325,6 @@ function viewRequest(requestId) {
   };
 
   let fileLinks = '';
-  // Loop over each defined file key and display its files if available
   for (const key in fileLabels) {
     if (request[key] && Array.isArray(request[key]) && request[key].length > 0) {
       request[key].forEach(file => {

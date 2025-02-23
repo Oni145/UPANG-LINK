@@ -136,113 +136,11 @@ if (!class_exists('RequestController')) {
         }
         
         /**
-         * createRequest:
-         * Processes the POST request to create a new request.
-         * Implements a rate limit counter (maximum 1000 posts per hour) using the "rate_limits" table.
-         * If more than an hour has passed since the stored start_time, the counter is reset.
+         * getAllRequests:
+         * Retrieves all requests and their associated documents.
+         * If notes exist for a request, it adds a simplified "note" key (displaying only the note text)
+         * immediately after the "status" key.
          */
-        private function createRequest() {
-            // Parse incoming data.
-            $data = json_decode(file_get_contents("php://input"));
-            if (!$data) {
-                $data = (object) $_POST;
-            }
-            
-            // Rate limit check using the "rate_limits" table.
-            $userId = $data->user_id;
-            $currentTime = time();
-            
-            // Retrieve the user's rate limit record.
-            $stmt = $this->db->prepare("SELECT counter, start_time FROM rate_limits WHERE user_id = ?");
-            $stmt->execute([$userId]);
-            $rateLimit = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$rateLimit) {
-                // No record exists; create one.
-                $insertStmt = $this->db->prepare("INSERT INTO rate_limits (user_id, counter, start_time) VALUES (?, ?, ?)");
-                $insertStmt->execute([$userId, 0, date('Y-m-d H:i:s', $currentTime)]);
-                $counter = 0;
-                $startTime = $currentTime;
-            } else {
-                $counter = (int)$rateLimit['counter'];
-                $startTime = strtotime($rateLimit['start_time']);
-            }
-            
-            // Reset the counter if an hour has passed.
-            if (($currentTime - $startTime) >= 3600) {
-                $resetStmt = $this->db->prepare("UPDATE rate_limits SET counter = 0, start_time = ? WHERE user_id = ?");
-                $resetStmt->execute([date('Y-m-d H:i:s', $currentTime), $userId]);
-                $counter = 0;
-            }
-            
-            // Deny the request if the limit has been reached.
-            if ($counter >= 1000) {
-                $this->sendError('Rate limit exceeded. Maximum 1000 posts per hour allowed.', 429);
-                return;
-            }
-            
-            // Increment the counter.
-            $incStmt = $this->db->prepare("UPDATE rate_limits SET counter = counter + 1 WHERE user_id = ?");
-            $incStmt->execute([$userId]);
-            
-            // Check for missing required text fields.
-            $missing = $this->checkMissingFields($data, ['user_id', 'type_id', 'purpose']);
-            if (!empty($missing)) {
-                $this->sendError('Missing parameters: ' . implode(', ', $missing));
-                return;
-            }
-            
-            // Check for missing required file fields.
-            $missingFiles = $this->checkMissingFiles(['clearance_form', 'request_letter']);
-            if (!empty($missingFiles)) {
-                $this->sendError('Missing file(s): ' . implode(', ', $missingFiles));
-                return;
-            }
-            
-            if (!class_exists('FormGenerator')) {
-                $this->sendError("Required class 'FormGenerator' is missing.", 500);
-                return;
-            }
-            
-            $formGenerator = new FormGenerator($this->db);
-            $validation = $formGenerator->validateSubmission($data->type_id, (array)$data, $_FILES);
-            
-            if ($validation === false || (isset($validation['is_valid']) && $validation['is_valid'] === false)) {
-                $errors = isset($validation['errors']) ? $validation['errors'] : 'Validation failed: Submission is invalid. Please check your input data.';
-                $this->sendError('Validation failed', 400, $errors);
-                return;
-            }
-            
-            $this->request->user_id = $data->user_id;
-            $this->request->type_id = $data->type_id;
-            $this->request->status = "pending";
-                
-            $files = [];
-            if (!empty($_FILES)) {
-                foreach ($_FILES as $key => $file) {
-                    if ($file['error'] === UPLOAD_ERR_OK) {
-                        $files[$key] = $file;
-                    }
-                }
-            }
-                
-            if ($this->request->createWithRequirements($files)) {
-                $response = [
-                    'status' => 'success',
-                    'message' => 'Request created successfully',
-                    'request_id' => $this->request->request_id
-                ];
-                if (!empty($validation['warnings'])) {
-                    $response['warnings'] = $validation['warnings'];
-                }
-                http_response_code(201);
-                echo json_encode($response);
-            } else {
-                $this->sendError('Unable to create request');
-            }
-        }
-        
-        // GET functions.
         private function getAllRequests() {
             $stmt = $this->request->read();
             if ($stmt->rowCount() > 0) {
@@ -254,18 +152,50 @@ if (!class_exists('RequestController')) {
                     $allowedFields = $this->getAllowedFileKeys($row['type_id']);
                     $docs = $this->getRequiredDocuments($row['request_id'], $allowedFields);
                     $row = array_merge($row, $docs);
-                    $requests_arr[] = $row;
+                    
+                    // Fetch notes for this request
+                    $note = new RequirementNote($this->db);
+                    $noteQuery = "SELECT * FROM " . $note->getTableName() . " WHERE request_id = ? ORDER BY created_at DESC";
+                    $stmtNotes = $this->db->prepare($noteQuery);
+                    $stmtNotes->execute([$row['request_id']]);
+                    $notes = $stmtNotes->fetchAll(PDO::FETCH_ASSOC);
+                    if (!empty($notes)) {
+                        // Only display the note text from the first note
+                        $row['note'] = $notes[0]['note'];
+                    }
+                    
+                    // Reorder keys: place 'note' (if exists) right after 'status'
+                    $orderedRow = [];
+                    $orderedRow['request_id'] = $row['request_id'];
+                    $orderedRow['user_id'] = $row['user_id'];
+                    $orderedRow['type_id'] = $row['type_id'];
+                    $orderedRow['status'] = $row['status'];
+                    if (isset($row['note'])) {
+                        $orderedRow['note'] = $row['note'];
+                    }
+                    foreach ($row as $key => $value) {
+                        if (!isset($orderedRow[$key])) {
+                            $orderedRow[$key] = $value;
+                        }
+                    }
+                    
+                    $requests_arr[] = $orderedRow;
                 }
                 http_response_code(200);
                 echo json_encode([
                     'status' => 'success',
-                    'data' => $requests_arr
+                    'data'   => $requests_arr
                 ]);
             } else {
                 $this->sendError('No requests found', 404);
             }
         }
         
+        /**
+         * getRequest:
+         * Retrieves a specific request by its ID and its associated documents.
+         * If notes exist for the request, a simplified "note" key is added immediately after "status".
+         */
         private function getRequest($id) {
             $this->request->request_id = $id;
             $result = $this->request->readOne();
@@ -276,10 +206,36 @@ if (!class_exists('RequestController')) {
                 $allowedFields = $this->getAllowedFileKeys($result['type_id']);
                 $docs = $this->getRequiredDocuments($result['request_id'], $allowedFields);
                 $result = array_merge($result, $docs);
+                
+                // Fetch notes for this request
+                $note = new RequirementNote($this->db);
+                $noteQuery = "SELECT * FROM " . $note->getTableName() . " WHERE request_id = ? ORDER BY created_at DESC";
+                $stmtNotes = $this->db->prepare($noteQuery);
+                $stmtNotes->execute([$result['request_id']]);
+                $notes = $stmtNotes->fetchAll(PDO::FETCH_ASSOC);
+                if (!empty($notes)) {
+                    $result['note'] = $notes[0]['note'];
+                }
+                
+                // Reorder keys: place 'note' right after 'status'
+                $orderedResult = [];
+                $orderedResult['request_id'] = $result['request_id'];
+                $orderedResult['user_id'] = $result['user_id'];
+                $orderedResult['type_id'] = $result['type_id'];
+                $orderedResult['status'] = $result['status'];
+                if (isset($result['note'])) {
+                    $orderedResult['note'] = $result['note'];
+                }
+                foreach ($result as $key => $value) {
+                    if (!isset($orderedResult[$key])) {
+                        $orderedResult[$key] = $value;
+                    }
+                }
+                
                 http_response_code(200);
                 echo json_encode([
                     'status' => 'success',
-                    'data' => $result
+                    'data'   => $orderedResult
                 ]);
             } else {
                 $this->sendError('Request not found', 404);
@@ -297,7 +253,33 @@ if (!class_exists('RequestController')) {
                     $allowedFields = $this->getAllowedFileKeys($row['type_id']);
                     $docs = $this->getRequiredDocuments($row['request_id'], $allowedFields);
                     $row = array_merge($row, $docs);
-                    $requests_arr[] = $row;
+                    
+                    // Fetch and simplify note data
+                    $note = new RequirementNote($this->db);
+                    $noteQuery = "SELECT * FROM " . $note->getTableName() . " WHERE request_id = ? ORDER BY created_at DESC";
+                    $stmtNotes = $this->db->prepare($noteQuery);
+                    $stmtNotes->execute([$row['request_id']]);
+                    $notes = $stmtNotes->fetchAll(PDO::FETCH_ASSOC);
+                    if (!empty($notes)) {
+                        $row['note'] = $notes[0]['note'];
+                    }
+                    
+                    // Reorder keys to place 'note' after 'status'
+                    $orderedRow = [];
+                    $orderedRow['request_id'] = $row['request_id'];
+                    $orderedRow['user_id'] = $row['user_id'];
+                    $orderedRow['type_id'] = $row['type_id'];
+                    $orderedRow['status'] = $row['status'];
+                    if (isset($row['note'])) {
+                        $orderedRow['note'] = $row['note'];
+                    }
+                    foreach ($row as $key => $value) {
+                        if (!isset($orderedRow[$key])) {
+                            $orderedRow[$key] = $value;
+                        }
+                    }
+                    
+                    $requests_arr[] = $orderedRow;
                 }
                 http_response_code(200);
                 echo json_encode([
@@ -320,7 +302,33 @@ if (!class_exists('RequestController')) {
                     $allowedFields = $this->getAllowedFileKeys($row['type_id']);
                     $docs = $this->getRequiredDocuments($row['request_id'], $allowedFields);
                     $row = array_merge($row, $docs);
-                    $requests_arr[] = $row;
+                    
+                    // Fetch and simplify note data
+                    $note = new RequirementNote($this->db);
+                    $noteQuery = "SELECT * FROM " . $note->getTableName() . " WHERE request_id = ? ORDER BY created_at DESC";
+                    $stmtNotes = $this->db->prepare($noteQuery);
+                    $stmtNotes->execute([$row['request_id']]);
+                    $notes = $stmtNotes->fetchAll(PDO::FETCH_ASSOC);
+                    if (!empty($notes)) {
+                        $row['note'] = $notes[0]['note'];
+                    }
+                    
+                    // Reorder keys
+                    $orderedRow = [];
+                    $orderedRow['request_id'] = $row['request_id'];
+                    $orderedRow['user_id'] = $row['user_id'];
+                    $orderedRow['type_id'] = $row['type_id'];
+                    $orderedRow['status'] = $row['status'];
+                    if (isset($row['note'])) {
+                        $orderedRow['note'] = $row['note'];
+                    }
+                    foreach ($row as $key => $value) {
+                        if (!isset($orderedRow[$key])) {
+                            $orderedRow[$key] = $value;
+                        }
+                    }
+                    
+                    $requests_arr[] = $orderedRow;
                 }
                 http_response_code(200);
                 echo json_encode([

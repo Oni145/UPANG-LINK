@@ -24,6 +24,7 @@ include_once __DIR__ . '/../models/Notification.php';
 include_once __DIR__ . '/../controllers/AdminController.php';
 include_once __DIR__ . '/../controllers/AuthController.php';
 include_once __DIR__ . '/../controllers/RequestController.php';
+include_once __DIR__ . '/../controllers/RequirementNoteController.php';
 
 // Include the middleware pipeline class
 include_once __DIR__ . '/../middleware/MiddlewarePipeline.php';
@@ -75,13 +76,14 @@ $base_path   = '/UPANG LINK';
 $endpoint    = str_replace($base_path, '', $path);
 $uri         = explode('/', trim($endpoint, '/'));
 
+// Debug logging
 error_log("Request URI: " . $request_uri);
 error_log("Path: " . $path);
 error_log("Endpoint: " . $endpoint);
 error_log("URI: " . print_r($uri, true));
 
 // If no endpoint is provided, return API info
-if (empty($uri[0])) {
+if (!isset($uri[0]) || empty($uri[0])) {
     echo json_encode([
         'status'    => 'success',
         'message'   => 'Welcome to UPANG LINK API',
@@ -89,7 +91,8 @@ if (empty($uri[0])) {
             'auth'     => '/auth',
             'admin'    => '/admin',
             'requests' => '/requests',
-            'users'    => '/users'
+            'users'    => '/users',
+            'notes'    => '/notes or /requests/notes'
         ]
     ]);
     exit();
@@ -98,6 +101,7 @@ if (empty($uri[0])) {
 // Determine which controller to use based on the first URI segment
 $requestMethod = $_SERVER["REQUEST_METHOD"];
 $controller    = null;
+
 switch ($uri[0]) {
     case 'admin':
         $controller = new AdminController($db);
@@ -110,7 +114,20 @@ switch ($uri[0]) {
         break;
 
     case 'requests':
-        $controller = new RequestController($db);
+        // Check if it's a nested notes route: /requests/notes
+        if (isset($uri[1]) && strtolower($uri[1]) === 'notes') {
+            $controller = new RequirementNoteController($db);
+            array_shift($uri); // Remove 'requests'
+            array_shift($uri); // Remove 'notes'
+        } else {
+            $controller = new RequestController($db);
+        }
+        break;
+    
+    case 'notes':
+        // Dedicated route for notes: /notes
+        $controller = new RequirementNoteController($db);
+        array_shift($uri); // Remove 'notes'
         break;
 
     default:
@@ -138,13 +155,16 @@ $pipeline = new MiddlewarePipeline($finalHandler);
 
 // Middleware 1: Log the request endpoint.
 $pipeline->add(function($request, $next) {
-    error_log("Middleware Log: Processing endpoint " . implode('/', $request['endpoint']));
+    // Check if 'endpoint' and its first element are set to avoid warnings.
+    if (isset($request['endpoint'][0])) {
+        error_log("Middleware Log: Processing endpoint " . implode('/', $request['endpoint']));
+    }
     return $next($request);
 });
 
 // Middleware 2: Check for an Authorization header on protected endpoints (users and requests).
 $pipeline->add(function($request, $next) {
-    if (in_array($request['endpoint'][0], ['users', 'requests'])) {
+    if (isset($request['endpoint'][0]) && in_array($request['endpoint'][0], ['users', 'requests'])) {
         $headers = function_exists('apache_request_headers') ? apache_request_headers() : getallheaders();
         if (!isset($headers['Authorization']) && !isset($headers['authorization'])) {
             http_response_code(401);
@@ -160,11 +180,8 @@ $pipeline->add(function($request, $next) {
 
 // Middleware 3: Rate/Count only POST requests for creating a request (excluding posting notes).
 $pipeline->add(function($request, $next) {
-    // Only apply if the first segment is 'requests' and the HTTP method is POST.
-    // Also, check that there's no secondary segment indicating a "notes" action.
-    if ($request['endpoint'][0] === 'requests' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($request['endpoint'][0]) && $request['endpoint'][0] === 'requests' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!isset($request['endpoint'][1]) || strtolower($request['endpoint'][1]) !== 'notes') {
-            // Check and increment the counter; if the limit is reached, return a 429 error.
             if (!RequestCounter::checkAndIncrement()) {
                 http_response_code(429);
                 echo json_encode([
