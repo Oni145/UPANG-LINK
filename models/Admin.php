@@ -19,7 +19,7 @@ class Admin {
     }
 
     // Create a new admin record
-    public function creategit () {
+    public function create() {
         $query = "INSERT INTO " . $this->table_name . " (username, email, first_name, last_name, password)
                   VALUES (:username, :email, :first_name, :last_name, :password)";
         $stmt = $this->conn->prepare($query);

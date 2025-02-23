@@ -110,6 +110,7 @@ class AdminController {
 
     /**
      * Register: Validates required fields and registers a new admin.
+     * Now requires: username, password, first_name, last_name, and email.
      */
     private function register() {
         $data = json_decode(file_get_contents("php://input"));
@@ -118,7 +119,9 @@ class AdminController {
             return;
         }
         
-        $missing = $this->checkMissingFields($data, ['username', 'password']);
+        // Check for required fields
+        $requiredFields = ['username', 'password', 'first_name', 'last_name', 'email'];
+        $missing = $this->checkMissingFields($data, $requiredFields);
         if (!empty($missing)) {
             $this->sendError("Missing field(s): " . implode(", ", $missing), 400);
             return;
@@ -131,9 +134,9 @@ class AdminController {
             return;
         }
         $this->adminModel->username = $data->username;
-        $this->adminModel->email = $data->email ?? '';
-        $this->adminModel->first_name = $data->first_name ?? '';
-        $this->adminModel->last_name = $data->last_name ?? '';
+        $this->adminModel->email = $data->email;
+        $this->adminModel->first_name = $data->first_name;
+        $this->adminModel->last_name = $data->last_name;
         $this->adminModel->password = password_hash($data->password, PASSWORD_DEFAULT);
 
         if ($this->adminModel->create()) {
