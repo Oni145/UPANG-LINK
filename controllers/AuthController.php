@@ -112,20 +112,6 @@ class AuthController {
     
     // ----- REGISTRATION FUNCTIONALITY -----
     private function register() {
-        // Optionally block registration if a staff token is provided.
-        $headers = apache_request_headers();
-        if (isset($headers['Authorization']) || isset($headers['authorization'])) {
-            $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : $headers['authorization'];
-            if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-                $token = $matches[1];
-                $tokenData = $this->validateToken($token);
-                if ($tokenData && $tokenData['type'] === 'staff') {
-                    $this->sendError('Staff tokens are only allowed for fetching users', 403);
-                    return;
-                }
-            }
-        }
-        
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
         if (empty($data->student_number)) { $missing[] = "student_number"; }
@@ -474,6 +460,7 @@ class AuthController {
     }
     
     public function validateToken($token) {
+        // Check for admin tokens.
         $stmt = $this->db->prepare("SELECT admin_id AS id, expires_at FROM admin_tokens WHERE token = ?");
         $stmt->execute([$token]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -491,23 +478,7 @@ class AuthController {
             return ['id' => $row['id'], 'type' => 'admin'];
         }
         
-        $stmt = $this->db->prepare("SELECT staff_id AS id, expires_at FROM staff_tokens WHERE token = ?");
-        $stmt->execute([$token]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($row) {
-            $currentTime = new DateTime();
-            $expiresAt = new DateTime($row['expires_at']);
-            if ($currentTime > $expiresAt) {
-                $del = $this->db->prepare("DELETE FROM staff_tokens WHERE token = ?");
-                $del->execute([$token]);
-                return false;
-            }
-            $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
-            $updateStmt = $this->db->prepare("UPDATE staff_tokens SET expires_at = ? WHERE token = ?");
-            $updateStmt->execute([$newExpiresAt, $token]);
-            return ['id' => $row['id'], 'type' => 'staff'];
-        }
-        
+        // Check for user tokens.
         $stmt = $this->db->prepare("SELECT user_id AS id, expires_at FROM auth_tokens WHERE token = ?");
         $stmt->execute([$token]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);

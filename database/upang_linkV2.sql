@@ -30,31 +30,26 @@ CREATE TABLE admins (
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    password_reset_token VARCHAR(64) DEFAULT NULL,
-    password_reset_expires DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE admins (
-    admin_id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-
--- Auth tokens table
+-- Auth tokens table for users
 CREATE TABLE auth_tokens (
     token CHAR(64) PRIMARY KEY,
     user_id INT NOT NULL,
     login_time DATETIME NOT NULL,
     expires_at DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- Admin tokens table for admins
+CREATE TABLE admin_tokens (
+    token CHAR(64) PRIMARY KEY,
+    admin_id INT NOT NULL,
+    login_time DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id)
 );
 
 -- Categories table
@@ -129,7 +124,6 @@ CREATE TABLE IF NOT EXISTS rate_limits (
     counter INT NOT NULL DEFAULT 0,
     start_time DATETIME NOT NULL
 );
-
 
 -- Requirement templates table
 CREATE TABLE requirement_templates (
