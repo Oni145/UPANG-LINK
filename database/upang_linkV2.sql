@@ -2,17 +2,14 @@
 CREATE DATABASE IF NOT EXISTS upang_link;
 USE upang_link;
 
--- Users table updated to remove the role column and add email verification and password reset fields
+-- Users table updated to remove the student_number, course, and block columns, and add email verification and password reset fields
 CREATE TABLE users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
-    student_number VARCHAR(50) UNIQUE,
     email VARCHAR(255) UNIQUE NOT NULL,  -- Email column with UNIQUE constraint
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    course VARCHAR(100),
     year_level INT,
-    block VARCHAR(10),
     admission_year VARCHAR(4),
     is_verified TINYINT(1) DEFAULT 0,  -- 0 = not verified, 1 = verified
     email_verification_token VARCHAR(64) DEFAULT NULL,
@@ -127,23 +124,21 @@ CREATE TABLE IF NOT EXISTS rate_limits (
     start_time DATETIME NOT NULL
 );
 
--- Requirement templates table
+-- Requirement templates table (removed requirement_name column)
 CREATE TABLE requirement_templates (
     template_id INT PRIMARY KEY AUTO_INCREMENT,
     type_id INT NOT NULL,
-    requirement_name VARCHAR(100) NOT NULL,
     description TEXT,
     file_types VARCHAR(255), -- Allowed file types (e.g., "pdf,jpg,png")
     is_required BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (type_id) REFERENCES request_types(type_id)
 );
 
--- Request requirement notes table updated to reference the admins table
+-- Request requirement notes table updated to reference the admins table (removed requirement_name column)
 CREATE TABLE request_requirement_notes (
     note_id INT PRIMARY KEY AUTO_INCREMENT,
     request_id INT NOT NULL,
     admin_id INT NOT NULL,
-    requirement_name VARCHAR(100) NOT NULL,
     note TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (request_id) REFERENCES requests(request_id),

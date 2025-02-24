@@ -4,11 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UPANG LINK Admin</title>
-  <!-- Font Awesome CSS (same version as your login page) -->
+  <!-- Font Awesome CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <link rel="stylesheet" href="../WEB/css/requests.css" />
   <style>
     /* Additional inline styles if needed */
+    /* Style for the toggle header with arrow icon */
+    .toggle-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+    .toggle-header h3 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+    .toggle-header i {
+      font-size: 1.2rem;
+      transition: transform 0.3s ease;
+    }
+    /* Rotate the arrow when expanded */
+    .expanded .toggle-header i {
+      transform: rotate(180deg);
+    }
+    /* Optional: Adjust padding when collapsed */
+    .admin-comment-container.collapsed {
+      max-height: 100px;
+      overflow: hidden;
+      position: relative;
+      padding-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -51,12 +80,11 @@
             <div id="paginationContainer"></div>
           </div>
           <div class="card-body">
-            <input type="text" id="searchInput" placeholder="Search by status, date, student number, request type..." />
+            <input type="text" id="searchInput" placeholder="Search by status, date, request type..." />
             <div class="table-responsive">
               <table>
                 <thead>
                   <tr>
-                    <th>Student No.</th>
                     <th>Name</th>
                     <th>Request Type</th>
                     <th>Status</th>
@@ -73,14 +101,34 @@
     </div>
   </div>
 
-  <!-- Ticket Modal -->
+  <!-- Ticket Modal (with inline comment editing) -->
   <div class="modal" id="ticketModal">
     <div class="modal-content">
       <div class="modal-header">
         <h5 id="ticketModalLabel">Ticket Details</h5>
         <button type="button" class="btn-close" onclick="closeModal()">×</button>
       </div>
-      <div class="modal-body" id="ticketModalBody"></div>
+      <div class="modal-body">
+        <!-- Ticket details -->
+        <div id="ticketDetails"></div>
+        <!-- Inline Comment Editing Container -->
+        <div class="admin-comment-container collapsed" id="commentContainer">
+          <div class="toggle-header" id="toggleCommentHeader">
+            <h3>Admin Comment</h3>
+            <i class="fas fa-chevron-down" id="toggleCommentIcon"></i>
+          </div>
+          <p id="displayCommentText">No comment available.</p>
+          <textarea id="editCommentTextarea" placeholder="Enter your comment here..." style="display: none;"></textarea>
+          <div id="commentActions">
+            <button id="editCommentBtn" class="btn btn-secondary">Edit Comment</button>
+            <button id="saveTicketCommentBtn" class="btn btn-primary" style="display: none;">Save Comment</button>
+            <button id="updateTicketCommentBtn" class="btn btn-primary" style="display: none;">Update Comment</button>
+            <button id="cancelEditCommentBtn" class="btn btn-secondary" style="display: none;">Cancel</button>
+          </div>
+        </div>
+        <!-- Attached Files Section -->
+        <div id="ticketFiles"></div>
+      </div>
       <div class="modal-footer">
         <select id="statusSelect">
           <option value="approved">Approved</option>
@@ -94,25 +142,8 @@
     </div>
   </div>
 
-  <!-- Comment Modal -->
-  <div class="modal" id="commentModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5>Admin Comment</h5>
-        <button type="button" class="btn-close" onclick="closeCommentModal()">×</button>
-      </div>
-      <div class="modal-body">
-        <textarea id="commentTextarea" placeholder="Enter your comment here..."></textarea>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="saveCommentBtn" class="btn">Save Comment</button>
-        <button type="button" id="updateCommentBtn" class="btn">Update Comment</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // Ensure sidebar highlighting
+    // Sidebar active highlighting
     document.addEventListener('DOMContentLoaded', () => {
       const currentPage = window.location.pathname.split('/').pop();
       const menuLinks = document.querySelectorAll('#sidebar .sidebar-menu li a');
@@ -125,6 +156,23 @@
           link.parentElement.classList.remove('active');
         }
       });
+    });
+    
+    // Toggle Admin Comment Expand/Collapse using arrow icon at the top
+    document.getElementById('toggleCommentHeader').addEventListener('click', function() {
+      const container = document.getElementById('commentContainer');
+      const icon = document.getElementById('toggleCommentIcon');
+      if (container.classList.contains('collapsed')) {
+        container.classList.remove('collapsed');
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+        container.classList.add('expanded');
+      } else {
+        container.classList.add('collapsed');
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+        container.classList.remove('expanded');
+      }
     });
   </script>
   <!-- Include the external JavaScript file -->

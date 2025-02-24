@@ -63,7 +63,6 @@ body {
   max-width: 100%;
   height: auto;
   margin-bottom: 10px;
-  background-color: #fafafa;
 }
 .sidebar-header h3 {
   margin-bottom: 5px;
@@ -91,17 +90,11 @@ body {
   background: #e6e6e6;
   color: #000;
 }
-/* Active Sidebar Item */
 .sidebar-menu li a.active,
 .sidebar-menu li.active a {
   background-color: #28a745 !important;
   color: #fff !important;
   border-left: 4px solid #fff;
-}
-
-/* Menu Icon */
-.menu-icon {
-  margin-right: 10px;
 }
 
 /* Page Content */
@@ -186,9 +179,33 @@ table th, table td {
 table th {
   background: #f2f2f2;
 }
+/* Center the Status (3rd column) and Action (5th column) cells and headers */
+table th:nth-child(3),
+table th:nth-child(5),
+table td:nth-child(3),
+table td:nth-child(5)
+table td:nth-child(2) {
+  text-align: center;
+}
+
+table td:nth-child(1) {
+  text-align: center;
+  font-size: 0.9rem;
+}
+table td:nth-child(2) {
+  text-align: center;
+  font-size: 0.9rem;
+}
+
 table td:nth-child(4) {
   text-align: center;
   font-size: 0.9rem;
+}
+
+/* Ensure the inner div in the Action column centers its content */
+table td:nth-child(5) div {
+  display: flex;
+  justify-content: center;
 }
 
 /* Modal */
@@ -228,6 +245,9 @@ table td:nth-child(4) {
   padding: 15px;
   font-size: 1.2rem;
   line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 /* Buttons */
@@ -245,11 +265,8 @@ table td:nth-child(4) {
   color: #fff;
   padding: 10px 20px;
   font-size: 0.9rem;
-  display: block;
-  margin: 0 auto;
 }
 .modal-footer .btn-primary {
-  display: inline-flex;
   margin: 0;
 }
 .btn-secondary {
@@ -323,7 +340,6 @@ table td:nth-child(4) {
   font-size: 1.5rem;
   color: #28a745;
 }
-/* New styles for View and Download buttons */
 .attached-file .file-actions a.btn-view {
   background: #007bff;
   color: #fff;
@@ -353,39 +369,30 @@ table td:nth-child(4) {
   color: #fff;
 }
 
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .top-navbar #toggleSidebar {
-    display: block;
-  }
-  #sidebar {
-    position: fixed;
-    left: -250px;
-    top: 0;
-    height: 100%;
-    z-index: 1100;
-  }
-  #sidebar.active {
-    left: 0;
-  }
-  #content {
-    padding: 20px 10px;
-  }
+/* Inline Comment Editing Styles */
+#commentContainer textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 1rem;
+  resize: vertical;
 }
-/* Sidebar active link override */
-.sidebar-menu li a.active,
-.sidebar-menu li.active a {
-  background: #28a745;
-  color: #fff;
-  border-left: 4px solid #fff;
+#commentActions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
 }
 
-/* Modern Admin Comments Styling - Green Theme with Roboto */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+/* Admin Comment Display Styles */
+#displayCommentText {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 
-/* Modern Admin Comments Styling - Green Theme with Roboto */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-
+/* Expand/Collapse Admin Comment Section */
 .admin-comment-container {
   font-family: 'Roboto', sans-serif;
   background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
@@ -412,102 +419,69 @@ table td:nth-child(4) {
   line-height: 1.6;
   color: #2e7d32;
   margin-bottom: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-/* Comment Modal Styles */
-#commentModal {
-  position: fixed;
-  top: 0;
+/* Collapsed state: restrict height and add fade effect */
+.admin-comment-container.collapsed {
+  max-height: 100px;
+  overflow: hidden;
+  position: relative;
+}
+.admin-comment-container.collapsed::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 1100;
-}
-#commentModal.active {
-  display: flex;
-}
-#commentModal .modal-content {
-  background: #fff;
-  width: 90%;
-  max-width: 500px;
-  border-radius: 5px;
-  overflow: hidden;
-  padding: 20px;
-}
-#commentModal .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-#commentModal .modal-header h5 {
-  font-size: 1.25rem;
-  color: #2e7d32;
-}
-#commentModal .modal-body {
-  margin-bottom: 15px;
-}
-#commentModal textarea {
-  width: 100%;
-  padding: 10px;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  resize: vertical;
-  min-height: 80px;
-}
-#commentModal .modal-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-}
-/* Comment Modal Buttons */
-#saveCommentBtn, #updateCommentBtn {
-  flex: 1;
-  padding: 10px;
-  font-size: 0.9rem;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-#saveCommentBtn {
-  background: #28a745;
-  color: #fff;
-}
-#saveCommentBtn:hover {
-  background: #218838;
-}
-#updateCommentBtn {
-  background: #007bff;
-  color: #fff;
-}
-#updateCommentBtn:hover {
-  background: #0069d9;
+  height: 30px;
+  background: linear-gradient(to top, white, transparent);
 }
 
-/* Override .btn-danger for the Comment button in the table (make it green) */
-.btn.btn-danger {
-  background: #28a745;
-  color: #fff;
+/* Toggle Button Styling */
+#toggleCommentBtn {
+  display: block;
+  margin: 10px auto 0 auto;
   padding: 8px 16px;
-  font-size: 0.9rem;
+  background: #28a745;
+  color: #fff;
   border: none;
   border-radius: 3px;
   cursor: pointer;
-  transition: background 0.3s;
-}
-.btn.btn-danger:hover {
-  background: #218838;
+  font-size: 1rem;
 }
 
+/* Status In Progress */
 .status_in_progress {
   background: #17a2b8;
-  color: #fff; /* Optional: ensures the text is readable */
+  color: #fff;
   padding: 0.2rem 0.5rem;
   border-radius: 0.25rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .top-navbar #toggleSidebar {
+    display: block;
+  }
+  #sidebar {
+    position: fixed;
+    left: -250px;
+    top: 0;
+    height: 100%;
+    z-index: 1100;
+  }
+  #sidebar.active {
+    left: 0;
+  }
+  #content {
+    padding: 20px 10px;
+  }
+}
+.sidebar-menu li a.active,
+.sidebar-menu li.active a {
+  background: #28a745;
+  color: #fff;
+  border-left: 4px solid #fff;
 }

@@ -155,24 +155,20 @@ function displayRequests(requests, usersData) {
     return;
   }
   tbody.innerHTML = requests.map(request => {
-    const user = userMap[request.user_id] || { student_number: "N/A", first_name: "Unknown", last_name: "" };
-    return `
-      <tr>
-        <td>${user.student_number}</td>
-        <td>${user.first_name} ${user.last_name}</td>
-        <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
-        <td>
-          <span class="badge ${getStatusClass(request.status)}">${request.status}</span>
-        </td>
-        <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
-        <td>
-          <div style="display: flex; gap: 5px;">
-            <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">View</button>
-            <button type="button" class="btn btn-danger" onclick="commentRequest(${request.request_id})">Comment</button>
-          </div>
-        </td>
-      </tr>
-    `;
+    const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+    return `<tr>
+          <td>${user.first_name} ${user.last_name}</td>
+          <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
+          <td>
+            <span class="badge ${getStatusClass(request.status)}">${request.status}</span>
+          </td>
+          <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
+          <td>
+            <div style="display: flex; gap: 5px;">
+              <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">View</button>
+            </div>
+          </td>
+        </tr>`;
   }).join('');
 }
 
@@ -220,47 +216,43 @@ function updatePaginationControls(currentPage) {
  */
 function buildFileLink(file, label) {
   const displayText = label || file.file_name;
-  return `
-    <div class="attached-file">
-      <div class="file-info">
-        <i class="fas fa-file"></i>
-        <span>${displayText}</span>
-      </div>
-      <div class="file-actions">
-        <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
-        <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
-      </div>
-    </div>
-  `;
+  return `<div class="attached-file">
+        <div class="file-info">
+          <i class="fas fa-file"></i>
+          <span>${displayText}</span>
+        </div>
+        <div class="file-actions">
+          <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
+          <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
+        </div>
+      </div>`;
 }
 
 /**
- * Opens the ticket details modal and populates it with request data.
+ * Opens the ticket modal with inline comment editing.
  */
 function viewRequest(requestId) {
   showLoading();
   const request = allRequests.find(r => r.request_id == requestId);
-  if (!request) return console.error("Request not found!"), hideLoading();
+  if (!request) {
+    console.error("Request not found!");
+    hideLoading();
+    return;
+  }
   const user = allUsersData.find(u => u.user_id == request.user_id);
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
-  let modalBodyContent = `
-    <div class="ticket-details">
-      <p><strong>Student Number:</strong> ${user ? user.student_number : 'N/A'}</p>
-      <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-      <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-      <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
-      <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-    </div>
-  `;
-  let adminCommentHTML = request.note && request.note.trim() !== ""
-    ? `<p>${request.note}</p>`
-    : `<p>No comment available.</p>`;
-  modalBodyContent += `
-      <div class="admin-comment-container">
-        <h3>Admin's Comment</h3>
-        ${adminCommentHTML}
-      </div>
-  `;
+  
+  // Ticket Details Section
+  let ticketDetailsHTML = `<div class="ticket-details">
+        <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+        <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+        <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
+        <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+      </div>`;
+  document.getElementById('ticketModalLabel').innerHTML = modalTitle;
+  document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+  
+  // Attached Files Section
   const fileLabels = {
     "Clearance": "Clearance Form",
     "RequestLetter": "Request Letter",
@@ -278,232 +270,118 @@ function viewRequest(requestId) {
       });
     }
   }
+  const ticketFilesEl = document.getElementById('ticketFiles');
   if (fileLinks) {
-    modalBodyContent += `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`;
-  }
-  currentRequestId = request.request_id;
-  const modalTitleEl = document.getElementById('ticketModalLabel');
-  const modalBodyEl = document.getElementById('ticketModalBody');
-  if (modalTitleEl && modalBodyEl) {
-    modalTitleEl.innerHTML = modalTitle;
-    modalBodyEl.innerHTML = modalBodyContent;
-    const statusSelectEl = document.getElementById('statusSelect');
-    if (statusSelectEl && ['approved', 'in_progress', 'completed', 'rejected'].includes(request.status)) {
-      statusSelectEl.value = request.status;
-    }
-    openModal();
+    ticketFilesEl.innerHTML = `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`;
   } else {
-    console.error("Modal elements not found.");
+    ticketFilesEl.innerHTML = '';
   }
+  
+  // Inline Comment Editing Section
+  const displayCommentTextEl = document.getElementById('displayCommentText');
+  const editCommentTextarea = document.getElementById('editCommentTextarea');
+  const editCommentBtn = document.getElementById('editCommentBtn');
+  const saveTicketCommentBtn = document.getElementById('saveTicketCommentBtn');
+  const updateTicketCommentBtn = document.getElementById('updateTicketCommentBtn');
+  const cancelEditCommentBtn = document.getElementById('cancelEditCommentBtn');
+  
+  // Set the comment display based on whether a comment exists.
+  if (request.note && request.note.trim() !== "") {
+    displayCommentTextEl.textContent = request.note;
+  } else {
+    displayCommentTextEl.textContent = "No comment available.";
+  }
+  editCommentTextarea.value = request.note || '';
+  
+  // Initially show only the comment display and the "Edit Comment" button.
+  displayCommentTextEl.style.display = 'block';
+  editCommentTextarea.style.display = 'none';
+  saveTicketCommentBtn.style.display = 'none';
+  updateTicketCommentBtn.style.display = 'none';
+  cancelEditCommentBtn.style.display = 'none';
+  
+  // Replace buttons to avoid duplicate bindings.
+  const newEditBtn = editCommentBtn.cloneNode(true);
+  editCommentBtn.parentNode.replaceChild(newEditBtn, editCommentBtn);
+  const newSaveBtn = saveTicketCommentBtn.cloneNode(true);
+  saveTicketCommentBtn.parentNode.replaceChild(newSaveBtn, saveTicketCommentBtn);
+  const newUpdateBtn = updateTicketCommentBtn.cloneNode(true);
+  updateTicketCommentBtn.parentNode.replaceChild(newUpdateBtn, updateTicketCommentBtn);
+  const newCancelBtn = cancelEditCommentBtn.cloneNode(true);
+  cancelEditCommentBtn.parentNode.replaceChild(newCancelBtn, cancelEditCommentBtn);
+  
+  // When "Edit Comment" is clicked, switch to edit mode.
+  newEditBtn.addEventListener('click', () => {
+    editCommentTextarea.value = (displayCommentTextEl.textContent.trim() === "No comment available.") ? "" : displayCommentTextEl.textContent;
+    displayCommentTextEl.style.display = 'none';
+    editCommentTextarea.style.display = 'block';
+    newCancelBtn.style.display = 'inline-block';
+    newEditBtn.style.display = 'none';
+    // Show "Update" button if a comment exists, otherwise "Save".
+    if (request.note && request.note.trim() !== "") {
+      newUpdateBtn.style.display = 'inline-block';
+      newSaveBtn.style.display = 'none';
+    } else {
+      newSaveBtn.style.display = 'inline-block';
+      newUpdateBtn.style.display = 'none';
+    }
+  });
+  
+  // When "Cancel" is clicked, revert back to display mode.
+  newCancelBtn.addEventListener('click', () => {
+    editCommentTextarea.style.display = 'none';
+    newSaveBtn.style.display = 'none';
+    newUpdateBtn.style.display = 'none';
+    newCancelBtn.style.display = 'none';
+    displayCommentTextEl.style.display = 'block';
+    newEditBtn.style.display = 'inline-block';
+  });
+  
+  // When "Save Comment" is clicked (for new comments)
+  newSaveBtn.addEventListener('click', async () => {
+    const commentText = editCommentTextarea.value.trim();
+    if (commentText === "") {
+      alert("Comment cannot be empty.");
+      return;
+    }
+    if (countSentences(commentText) > 2) {
+      alert("Please limit your comment to 2 sentences.");
+      return;
+    }
+    await createTicketComment(currentRequestId, commentText);
+    displayCommentTextEl.textContent = commentText;
+    // After saving, we revert to display mode but keep the buttons visible for further editing.
+    displayCommentTextEl.style.display = 'block';
+    editCommentTextarea.style.display = 'none';
+    // newSaveBtn and newCancelBtn remain visible for further editing.
+  });
+  
+  // When "Update Comment" is clicked (for existing comments)
+  newUpdateBtn.addEventListener('click', async () => {
+    const commentText = editCommentTextarea.value.trim();
+    if (commentText === "") {
+      alert("Comment cannot be empty.");
+      return;
+    }
+    if (countSentences(commentText) > 2) {
+      alert("Please limit your comment to 2 sentences.");
+      return;
+    }
+    await updateTicketComment(currentRequestId, commentText);
+    displayCommentTextEl.textContent = commentText;
+    // Instead of hiding the update buttons after updating, we leave them visible.
+    displayCommentTextEl.style.display = 'block';
+    editCommentTextarea.style.display = 'block';
+    // The "Update Comment" and "Cancel" buttons remain visible for additional edits.
+  });
+  
+  currentRequestId = request.request_id;
+  openModal();
   hideLoading();
 }
 
 /**
- * Opens the comment modal for a specific request.
- * It fetches the current comment from the "/notes" endpoint.
- * Both the Save and Update buttons are always enabled.
- */
-function commentRequest(requestId) {
-  showLoading();
-  const request = allRequests.find(r => r.request_id == requestId);
-  if (!request) return console.error("Request not found!"), hideLoading();
-  currentRequestId = requestId;
-  fetch(`${API_BASE_URL}/notes?request_id=${requestId}`, {
-    headers: getAuthHeaders(localStorage.getItem('token')),
-    cache: 'no-store'
-  })
-    .then(response => response.json())
-    .then(result => {
-      let commentText = "";
-      let noteData = result.data ? result.data : result;
-      if (Array.isArray(noteData)) {
-        if (noteData.length > 0) {
-          commentText = noteData[0].note;
-          request.note_id = noteData[0].note_id;
-        }
-      } else if (noteData && noteData.note) {
-        commentText = noteData.note;
-        request.note_id = noteData.note_id;
-      }
-      const commentTextarea = document.getElementById('commentTextarea');
-      if (commentTextarea) commentTextarea.value = commentText;
-      const saveCommentBtn = document.getElementById('saveCommentBtn');
-      const updateCommentBtn = document.getElementById('updateCommentBtn');
-      if (saveCommentBtn && updateCommentBtn) {
-        saveCommentBtn.disabled = false;
-        updateCommentBtn.disabled = false;
-      }
-      openCommentModal();
-      hideLoading();
-    })
-    .catch(error => {
-      console.error("Error fetching comment:", error);
-      hideLoading();
-    });
-}
-
-/**
- * Opens the comment modal.
- */
-function openCommentModal() {
-  const modal = document.getElementById('commentModal');
-  if (modal) modal.classList.add('active');
-}
-
-/**
- * Closes the comment modal and resets the comment textarea.
- */
-function closeCommentModal() {
-  const modal = document.getElementById('commentModal');
-  if (modal) modal.classList.remove('active');
-  const commentTextarea = document.getElementById('commentTextarea');
-  if (commentTextarea) commentTextarea.value = "";
-}
-
-/**
- * Creates a new comment using the "/notes" endpoint.
- * Uses the POST method to create the comment.
- */
-async function createComment() {
-  const token = localStorage.getItem('token');
-  if (!token) return console.error("No token found in localStorage.");
-  const commentTextarea = document.getElementById('commentTextarea');
-  if (!commentTextarea) return console.error("Comment textarea not found.");
-  const commentText = commentTextarea.value.trim();
-  if (commentText === "") {
-    alert("Comment cannot be empty.");
-    return;
-  }
-  if (countSentences(commentText) > 2) {
-    alert("Please limit your comment to 2 sentences.");
-    return;
-  }
-  const request = allRequests.find(r => r.request_id == currentRequestId);
-  if (!request) return console.error("Request not found.");
-  showLoading();
-  try {
-    const response = await fetch(`${API_BASE_URL}/notes`, {
-      method: 'POST',
-      headers: getAuthHeaders(token),
-      body: JSON.stringify({
-        request_id: currentRequestId,
-        requirement_name: "Admin Comment",
-        note: commentText
-      })
-    });
-    const result = await response.json();
-    if (result.status === "success" || result.message.indexOf("created") !== -1) {
-      alert("Comment saved successfully.");
-      request.note = commentText;
-      if (result.data && result.data.note_id) request.note_id = result.data.note_id;
-      closeCommentModal();
-      if (document.getElementById('ticketModal').classList.contains('active')) {
-        viewRequest(currentRequestId);
-      }
-    } else {
-      alert("Error saving comment: " + result.message);
-    }
-  } catch (error) {
-    console.error("Error saving comment:", error);
-    alert("Error saving comment.");
-  } finally {
-    hideLoading();
-  }
-}
-
-/**
- * Updates an existing comment using the "/notes" endpoint.
- * This function always uses the PUT method to update an existing comment.
- * It first fetches the latest note details (with no-cache) for the current request,
- * then sends a raw JSON payload with the note_id (converted to a string) and updated note.
- */
-async function updateComment() {
-  console.log("Update Comment button event triggered");
-  const token = localStorage.getItem('token');
-  if (!token) return console.error("No token found in localStorage.");
-  const commentTextarea = document.getElementById('commentTextarea');
-  if (!commentTextarea) return console.error("Comment textarea not found.");
-  const commentText = commentTextarea.value.trim();
-  if (commentText === "") {
-    alert("Comment cannot be empty.");
-    return;
-  }
-  if (countSentences(commentText) > 2) {
-    alert("Please limit your comment to 2 sentences.");
-    return;
-  }
-  const request = allRequests.find(r => r.request_id == currentRequestId);
-  if (!request) return console.error("Request not found.");
-
-  // Always fetch the latest note details with no caching.
-  showLoading();
-  try {
-    const noteFetchResponse = await fetch(`${API_BASE_URL}/notes?request_id=${currentRequestId}`, {
-      headers: getAuthHeaders(token),
-      cache: 'no-store'
-    });
-    const noteFetchResult = await noteFetchResponse.json();
-    console.log("Fetched note details:", noteFetchResult);
-    let noteData = noteFetchResult.data ? noteFetchResult.data : noteFetchResult;
-    if (Array.isArray(noteData)) {
-      if (noteData.length > 0) {
-        request.note_id = noteData[0].note_id;
-      } else {
-        alert("No existing comment found. Please use 'Save Comment' to create a new comment.");
-        hideLoading();
-        return;
-      }
-    } else if (noteData && noteData.note_id) {
-      request.note_id = noteData.note_id;
-    } else {
-      alert("No existing comment found. Please use 'Save Comment' to create a new comment.");
-      hideLoading();
-      return;
-    }
-  } catch (error) {
-    console.error("Error fetching note details:", error);
-    alert("Error fetching existing comment details.");
-    hideLoading();
-    return;
-  }
-  
-  // Prepare payload with note_id as a string.
-  const payload = {
-    note_id: String(request.note_id),
-    note: commentText
-  };
-  console.log("Sending update payload:", payload);
-
-  // Proceed with updating using the PUT method.
-  try {
-    const response = await fetch(`${API_BASE_URL}/notes`, {
-      method: 'PUT',
-      headers: getAuthHeaders(token),
-      body: JSON.stringify(payload)
-    });
-    const result = await response.json();
-    console.log("Update response:", result);
-    if (result.status === "success") {
-      alert("Comment updated successfully.");
-      request.note = commentText;
-      commentTextarea.value = "";
-      closeCommentModal();
-      if (document.getElementById('ticketModal').classList.contains('active')) {
-        viewRequest(currentRequestId);
-      }
-    } else {
-      alert(result.message);
-    }
-  } catch (error) {
-    console.error("Error updating comment:", error);
-    alert("Error updating comment.");
-  } finally {
-    hideLoading();
-  }
-}
-
-/**
- * Opens the ticket details modal.
+ * Opens the ticket modal.
  */
 function openModal() {
   const modal = document.getElementById('ticketModal');
@@ -511,7 +389,7 @@ function openModal() {
 }
 
 /**
- * Closes the ticket details modal.
+ * Closes the ticket modal.
  */
 function closeModal() {
   const modal = document.getElementById('ticketModal');
@@ -549,8 +427,151 @@ async function updateTicketStatus(requestId, newStatus) {
 }
 
 /**
- * Dynamic logout function using the admin endpoint.
+ * Integrated comment creation function.
  */
+async function createTicketComment(requestId, commentText) {
+  const token = localStorage.getItem('token');
+  if (!token) return console.error("No token found in localStorage.");
+  showLoading();
+  try {
+    const response = await fetch(`${API_BASE_URL}/notes`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({
+        request_id: requestId,
+        requirement_name: "Admin Comment",
+        note: commentText
+      })
+    });
+    const result = await response.json();
+    if (result.status === "success" || result.message.indexOf("created") !== -1) {
+      alert("Comment saved successfully.");
+      const requestObj = allRequests.find(r => r.request_id == requestId);
+      if (requestObj) {
+        requestObj.note = commentText;
+        if (result.data && result.data.note_id) requestObj.note_id = result.data.note_id;
+      }
+    } else {
+      alert("Error saving comment: " + result.message);
+    }
+  } catch (error) {
+    console.error("Error saving comment:", error);
+    alert("Error saving comment.");
+  } finally {
+    hideLoading();
+  }
+}
+
+/**
+ * Integrated comment update function.
+ * This function first fetches the latest note details and then sends a PUT request.
+ */
+async function updateTicketComment(requestId, commentText) {
+  const token = localStorage.getItem('token');
+  if (!token) return console.error("No token found in localStorage.");
+  showLoading();
+  try {
+    const noteFetchResponse = await fetch(`${API_BASE_URL}/notes?request_id=${requestId}`, {
+      headers: getAuthHeaders(token),
+      cache: 'no-store'
+    });
+    const noteFetchResult = await noteFetchResponse.json();
+    let noteData = noteFetchResult.data ? noteFetchResult.data : noteFetchResult;
+    const requestObj = allRequests.find(r => r.request_id == requestId);
+    if (Array.isArray(noteData)) {
+      if (noteData.length > 0) {
+        requestObj.note_id = noteData[0].note_id;
+      } else {
+        alert("No existing comment found. Please use 'Save Comment' to create a new comment.");
+        hideLoading();
+        return;
+      }
+    } else if (noteData && noteData.note_id) {
+      requestObj.note_id = noteData.note_id;
+    } else {
+      alert("No existing comment found. Please use 'Save Comment' to create a new comment.");
+      hideLoading();
+      return;
+    }
+    const payload = {
+      note_id: String(requestObj.note_id),
+      note: commentText
+    };
+    const response = await fetch(`${API_BASE_URL}/notes`, {
+      method: 'PUT',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (result.status === "success") {
+      alert("Comment updated successfully.");
+      requestObj.note = commentText;
+    } else {
+      alert(result.message);
+    }
+  } catch (error) {
+    console.error("Error updating comment:", error);
+    alert("Error updating comment.");
+  } finally {
+    hideLoading();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  displayUserName();
+  loadRequestsUsingPagination();
+  
+  // Bind the search input event
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.addEventListener("input", function() {
+      const query = this.value.trim().toLowerCase();
+      if (query === "") {
+        displayData = allRequests;
+      } else {
+        displayData = allRequests.filter(request => {
+          const status = (request.status || "").toLowerCase();
+          const date = new Date(request.submitted_at).toLocaleDateString().toLowerCase();
+          const type = (requestTypeNames[request.type_id] || "").toLowerCase();
+          const user = allUsersData.find(u => u.user_id === request.user_id);
+          const name = user ? ((user.first_name || "") + " " + (user.last_name || "")).toLowerCase() : "";
+          return status.includes(query) || date.includes(query) || type.includes(query) || name.includes(query);
+        });
+      }
+      currentPage = 1;
+      totalPages = Math.ceil(displayData.length / itemsPerPage);
+      displayRequestsPage(currentPage);
+      updatePaginationControls(currentPage);
+    });
+  }
+  
+  // Bind the update status button
+  const updateStatusBtn = document.getElementById("updateStatusBtn");
+  if (updateStatusBtn) {
+    updateStatusBtn.addEventListener("click", function() {
+      const newStatus = document.getElementById("statusSelect").value;
+      if (currentRequestId) {
+        updateTicketStatus(currentRequestId, newStatus);
+      } else {
+        console.error("No current request selected for update.");
+      }
+    });
+  }
+  
+  // Sidebar active highlighting
+  const currentPagePath = window.location.pathname.split('/').pop();
+  const menuLinks = document.querySelectorAll('#sidebar .sidebar-menu li a');
+  menuLinks.forEach(link => {
+    if (link.getAttribute('href') === currentPagePath) {
+      link.classList.add('active');
+      link.parentElement.classList.add('active');
+    } else {
+      link.classList.remove('active');
+      link.parentElement.classList.remove('active');
+    }
+  });
+});
+
 window.auth = {
   logout: async function() {
     showLoading();
@@ -579,60 +600,3 @@ window.auth = {
     hideLoading();
   }
 };
-
-document.addEventListener('DOMContentLoaded', () => {
-  displayUserName();
-  loadRequestsUsingPagination();
-  
-  const searchInput = document.getElementById("searchInput");
-  if (searchInput) {
-    searchInput.addEventListener("input", function() {
-      const query = this.value.trim().toLowerCase();
-      if (query === "") {
-        displayData = allRequests;
-      } else {
-        displayData = allRequests.filter(request => {
-          const status = (request.status || "").toLowerCase();
-          const date = new Date(request.submitted_at).toLocaleDateString().toLowerCase();
-          const type = (requestTypeNames[request.type_id] || "").toLowerCase();
-          const user = allUsersData.find(u => u.user_id === request.user_id);
-          const studentNumber = user ? (user.student_number || user.admin_id || "").toLowerCase() : "";
-          const name = user ? ((user.first_name || "") + " " + (user.last_name || "")).toLowerCase() : "";
-          return status.includes(query) || date.includes(query) || type.includes(query) || studentNumber.includes(query) || name.includes(query);
-        });
-      }
-      currentPage = 1;
-      totalPages = Math.ceil(displayData.length / itemsPerPage);
-      displayRequestsPage(currentPage);
-      updatePaginationControls(currentPage);
-    });
-  }
-  
-  const updateStatusBtn = document.getElementById("updateStatusBtn");
-  if (updateStatusBtn) {
-    updateStatusBtn.addEventListener("click", function() {
-      const newStatus = document.getElementById("statusSelect").value;
-      if (currentRequestId) {
-        updateTicketStatus(currentRequestId, newStatus);
-      } else {
-        console.error("No current request selected for update.");
-      }
-    });
-  }
-  
-  // Bind comment modal save button
-  const saveCommentBtn = document.getElementById("saveCommentBtn");
-  if (saveCommentBtn) {
-    saveCommentBtn.addEventListener("click", function() {
-      createComment();
-    });
-  }
-});
-
-// Use event delegation to bind the update comment button click event.
-document.addEventListener("click", function(e) {
-  if (e.target && e.target.id === "updateCommentBtn") {
-    console.log("Update Comment button event triggered");
-    updateComment();
-  }
-});

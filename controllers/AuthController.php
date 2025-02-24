@@ -93,13 +93,13 @@ class AuthController {
     private function login() {
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
-        if (empty($data->student_number)) { $missing[] = "student_number"; }
+        if (empty($data->email)) { $missing[] = "email"; }
         if (empty($data->password)) { $missing[] = "password"; }
         if (!empty($missing)) {
             $this->sendError("Missing fields: " . implode(', ', $missing), 400);
             return;
         }
-        $user = $this->user->getByStudentNumber($data->student_number);
+        $user = $this->user->getByEmail($data->email);
         if ($user && password_verify($data->password, $user['password'])) {
             if (!$user['is_verified']) {
                 $this->sendError('Email not verified. Please verify your email before logging in.', 403);
@@ -135,14 +135,11 @@ class AuthController {
     private function register() {
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
-        if (empty($data->student_number)) { $missing[] = "student_number"; }
         if (empty($data->email)) { $missing[] = "email"; }
         if (empty($data->password)) { $missing[] = "password"; }
         if (empty($data->first_name)) { $missing[] = "first_name"; }
         if (empty($data->last_name)) { $missing[] = "last_name"; }
-        if (empty($data->course)) { $missing[] = "course"; }
         if (empty($data->year_level)) { $missing[] = "year_level"; }
-        if (empty($data->block)) { $missing[] = "block"; }
         if (empty($data->admission_year)) { $missing[] = "admission_year"; }
         if (!empty($missing)) {
             $this->sendError("Missing fields: " . implode(', ', $missing), 400);
@@ -150,32 +147,26 @@ class AuthController {
         }
         
         // Duplicate check.
-        if ($this->user->getByStudentNumber($data->student_number)) {
-            $this->sendError("Student number already exists", 409);
-            return;
-        }
         if ($this->user->getByEmail($data->email)) {
             $this->sendError("Email already exists", 409);
             return;
         }
         
         // Set user properties.
-        $this->user->student_number = $data->student_number;
         $this->user->email = $data->email;
         $this->user->password = password_hash($data->password, PASSWORD_DEFAULT);
         $this->user->first_name = $data->first_name;
         $this->user->last_name = $data->last_name;
-        $this->user->course = $data->course;
+        // Removed: $this->user->course = $data->course;
         $this->user->year_level = $data->year_level;
-        $this->user->block = $data->block;
         $this->user->admission_year = $data->admission_year;
         
         if ($this->user->create()) {
             // Generate a verification token.
             $verifyToken = $this->generateToken(16);
             // Update the user record with the verification token.
-            $stmt = $this->db->prepare("UPDATE users SET email_verification_token = ? WHERE student_number = ?");
-            $stmt->execute([$verifyToken, $data->student_number]);
+            $stmt = $this->db->prepare("UPDATE users SET email_verification_token = ? WHERE email = ?");
+            $stmt->execute([$verifyToken, $data->email]);
             
             // Prepare verification email.
             $subject = "Verify Your Email Address";
@@ -465,9 +456,7 @@ class AuthController {
         if (empty($data->email)) { $missing[] = "email"; }
         if (empty($data->first_name)) { $missing[] = "first_name"; }
         if (empty($data->last_name)) { $missing[] = "last_name"; }
-        if (empty($data->course)) { $missing[] = "course"; }
         if (empty($data->year_level)) { $missing[] = "year_level"; }
-        if (empty($data->block)) { $missing[] = "block"; }
         if (empty($data->admission_year)) { $missing[] = "admission_year"; }
         if (!empty($missing)) {
             $this->sendError("Missing fields for update: " . implode(', ', $missing), 400);
@@ -477,9 +466,8 @@ class AuthController {
         $this->user->email = $data->email;
         $this->user->first_name = $data->first_name;
         $this->user->last_name = $data->last_name;
-        $this->user->course = $data->course;
+        // Removed: $this->user->course = $data->course;
         $this->user->year_level = $data->year_level;
-        $this->user->block = $data->block;
         $this->user->admission_year = $data->admission_year;
     
         if ($this->user->update()) {

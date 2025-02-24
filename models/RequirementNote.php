@@ -6,7 +6,6 @@ class RequirementNote {
     public $note_id;
     public $request_id;
     public $admin_id;
-    public $requirement_name;
     public $note;
     public $created_at;
     
@@ -22,14 +21,13 @@ class RequirementNote {
     // Add requirement note
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " 
-                (request_id, admin_id, requirement_name, note)
-                VALUES (:request_id, :admin_id, :requirement_name, :note)";
+                (request_id, admin_id, note)
+                VALUES (:request_id, :admin_id, :note)";
                 
         $stmt = $this->conn->prepare($query);
         
         $stmt->bindParam(":request_id", $this->request_id);
         $stmt->bindParam(":admin_id", $this->admin_id);
-        $stmt->bindParam(":requirement_name", $this->requirement_name);
         $stmt->bindParam(":note", $this->note);
         
         return $stmt->execute();
@@ -53,10 +51,9 @@ class RequirementNote {
     // Update requirement note
     public function update() {
         $query = "UPDATE " . $this->table_name . " 
-                  SET requirement_name = :requirement_name, note = :note 
+                  SET note = :note 
                   WHERE note_id = :note_id AND admin_id = :admin_id";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":requirement_name", $this->requirement_name);
         $stmt->bindParam(":note", $this->note);
         $stmt->bindParam(":note_id", $this->note_id);
         $stmt->bindParam(":admin_id", $this->admin_id);

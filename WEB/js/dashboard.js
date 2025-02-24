@@ -170,14 +170,13 @@ function displayRequests(requests, usersData) {
     return;
   }
   if (!requests || requests.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No requests to display</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No requests to display</td></tr>`;
     return;
   }
   tbody.innerHTML = requests.map(request => {
-    const user = userMap[request.user_id] || { student_number: "N/A", first_name: "Unknown", last_name: "" };
+    const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
     return `
       <tr>
-        <td>${user.student_number}</td>
         <td>${user.first_name} ${user.last_name}</td>
         <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
         <td>
@@ -278,7 +277,6 @@ function viewRequest(requestId) {
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
   let modalBodyContent = `
-    <p><strong>Student Number:</strong> ${user ? user.student_number : 'N/A'}</p>
     <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
     <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
     <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
@@ -697,15 +695,14 @@ class Dashboard {
       return;
     }
     if (!requests || requests.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center">No recent requests</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center">No recent requests</td></tr>`;
       console.log("No recent requests to display.");
       return;
     }
     tbody.innerHTML = requests.map(request => {
-      const user = userMap[request.user_id] || { student_number: "N/A", first_name: "Unknown", last_name: "" };
+      const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
       return `
         <tr>
-          <td>${user.student_number}</td>
           <td>${user.first_name} ${user.last_name}</td>
           <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
           <td>

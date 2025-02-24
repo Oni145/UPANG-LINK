@@ -208,11 +208,33 @@
     background: #f2f2f2;
   }
   
-  /* Target only the Status data cells (4th column) */
+  table td:nth-child(1) {
+    text-align: center;
+    font-size: 0.9rem;
+  }
+  
+  table td:nth-child(2) {
+    text-align: center;
+    font-size: 0.9rem;
+  }
+  
+
+  table td:nth-child(3) {
+    text-align: center;
+    font-size: 0.9rem;
+  }
+  
   table td:nth-child(4) {
     text-align: center;
     font-size: 0.9rem;
   }
+  
+  table td:nth-child(5) {
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  
   
   /* Buttons */
   .btn {

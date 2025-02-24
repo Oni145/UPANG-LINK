@@ -256,9 +256,23 @@ body {
 }
 
 /* Center the data in the Status column (4th column) */
+#recentRequests table td:nth-child(1) {
+  text-align: center;
+}
+
+#recentRequests table td:nth-child(2) {
+  text-align: center;
+}
+
+#recentRequests table td:nth-child(3) {
+  text-align: center;
+}
+
 #recentRequests table td:nth-child(4) {
   text-align: center;
 }
+
+
 
 /* Custom Modal */
 .modal {

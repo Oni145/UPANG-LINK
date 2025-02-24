@@ -94,8 +94,8 @@
         const nameEl = document.getElementById('userFullName');
         if (nameEl) {
           // Prefer username if available.
-          const displayName = currentUser.username || 
-                              `${currentUser.first_name || ''}`.trim();
+          // Note: Removed course and block. Only first name is used now.
+          const displayName = currentUser.username || `${currentUser.first_name || ''}`.trim();
           nameEl.textContent = displayName;
         }
       } else {
@@ -150,22 +150,22 @@
 
   /**
    * Renders users into the table body (using the existing <tbody id="usersTableBody">).
+   * Only the following columns are displayed:
+   * User ID, Name, Email, Year Level, Admission Year.
    */
   function renderUsers(users) {
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
     if (!users || users.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" class="text-center">No users to display</td></tr>`;
+      // Now there are 5 columns
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center">No users to display</td></tr>`;
     } else {
       tbody.innerHTML = users.map(user => `
         <tr>
           <td>${user.user_id || 'N/A'}</td>
-          <td>${user.student_number || 'N/A'}</td>
           <td>${user.first_name || 'N/A'} ${user.last_name || ''}</td>
           <td>${user.email || 'N/A'}</td>
-          <td>${user.course || 'N/A'}</td>
           <td>${user.year_level || 'N/A'}</td>
-          <td>${user.block || 'N/A'}</td>
           <td>${user.admission_year || 'N/A'}</td>
         </tr>
       `).join('');
@@ -207,31 +207,35 @@
   /**
    * Logout functionality using /auth/logout.
    */
-  const auth = {
+  window.auth = {
     logout: async function() {
-      const token = getToken();
-      if (token) {
-        try {
-          const logoutEndpoint = `${API_BASE_URL}/auth/logout`;
-          const response = await fetch(logoutEndpoint, {
-            method: 'POST',
-            headers: getAuthHeaders(token)
-          });
-          const result = await response.json();
-          if (result.status !== 'success') {
-            throw new Error("Logout failed: " + result.message);
-          }
-        } catch (error) {
-          console.error("Logout error:", error);
-          showErrorAlert(error.message);
+      showLoading();
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error("No token found in localStorage.");
+        window.location.href = 'login.html';
+        return;
+      }
+      try {
+        const logoutEndpoint = `${API_BASE_URL}/admin/logout`;
+        const response = await fetch(logoutEndpoint, {
+          method: 'POST',
+          headers: getAuthHeaders(token)
+        });
+        const result = await response.json();
+        if (result.status !== 'success') {
+          throw new Error("Logout failed: " + result.message);
         }
+      } catch (error) {
+        console.error("Logout error:", error);
       }
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = 'login.html';
+      hideLoading();
     }
   };
-
+  
   window.auth = auth;
 
   document.addEventListener('DOMContentLoaded', async () => {
@@ -241,14 +245,12 @@
     if (searchInput) {
       searchInput.addEventListener("input", function() {
         const query = this.value.trim().toLowerCase();
+        // Updated search: only first name, last name, email, year level, and admission year are checked.
         displayData = query ? allUsersData.filter(user =>
-          (user.student_number && user.student_number.toLowerCase().includes(query)) ||
           (user.first_name && user.first_name.toLowerCase().includes(query)) ||
           (user.last_name && user.last_name.toLowerCase().includes(query)) ||
           (user.email && user.email.toLowerCase().includes(query)) ||
-          (user.course && user.course.toLowerCase().includes(query)) ||
           (user.year_level && user.year_level.toString().toLowerCase().includes(query)) ||
-          (user.block && user.block.toLowerCase().includes(query)) ||
           (user.admission_year && user.admission_year.toLowerCase().includes(query))
         ) : allUsersData;
         currentPage = 1;
