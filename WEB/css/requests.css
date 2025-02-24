@@ -504,3 +504,10 @@ table td:nth-child(4) {
 .btn.btn-danger:hover {
   background: #218838;
 }
+
+.status_in_progress {
+  background: #17a2b8;
+  color: #fff; /* Optional: ensures the text is readable */
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+}

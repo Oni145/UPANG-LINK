@@ -136,7 +136,7 @@ function getStatusClass(status) {
     'pending': 'status-pending',
     'approved': 'status-approved',
     'rejected': 'status-rejected',
-    'in_progress': 'status-in_progress',
+    'in_progress': 'status_in_progress',
     'completed': 'status-completed'
   };
   return classes[status] || 'status-secondary';
@@ -301,34 +301,37 @@ function viewRequest(requestId) {
 /**
  * Opens the comment modal for a specific request.
  * It fetches the current comment from the "/notes" endpoint.
- * If a comment exists, the textarea is pre-filled and the Update Comment button is enabled;
- * otherwise, the Save Comment button is enabled.
+ * Both the Save and Update buttons are always enabled.
  */
 function commentRequest(requestId) {
   showLoading();
   const request = allRequests.find(r => r.request_id == requestId);
   if (!request) return console.error("Request not found!"), hideLoading();
   currentRequestId = requestId;
-  fetch(`${API_BASE_URL}/notes?request_id=${requestId}`, { headers: getAuthHeaders(localStorage.getItem('token')) })
+  fetch(`${API_BASE_URL}/notes?request_id=${requestId}`, {
+    headers: getAuthHeaders(localStorage.getItem('token')),
+    cache: 'no-store'
+  })
     .then(response => response.json())
     .then(result => {
       let commentText = "";
-      if (result.status === "success" && Array.isArray(result.data) && result.data.length > 0) {
-        commentText = result.data[0].note;
-        request.note_id = result.data[0].note_id;
+      let noteData = result.data ? result.data : result;
+      if (Array.isArray(noteData)) {
+        if (noteData.length > 0) {
+          commentText = noteData[0].note;
+          request.note_id = noteData[0].note_id;
+        }
+      } else if (noteData && noteData.note) {
+        commentText = noteData.note;
+        request.note_id = noteData.note_id;
       }
       const commentTextarea = document.getElementById('commentTextarea');
       if (commentTextarea) commentTextarea.value = commentText;
       const saveCommentBtn = document.getElementById('saveCommentBtn');
       const updateCommentBtn = document.getElementById('updateCommentBtn');
       if (saveCommentBtn && updateCommentBtn) {
-        if (commentText) {
-          saveCommentBtn.disabled = true;
-          updateCommentBtn.disabled = false;
-        } else {
-          saveCommentBtn.disabled = false;
-          updateCommentBtn.disabled = true;
-        }
+        saveCommentBtn.disabled = false;
+        updateCommentBtn.disabled = false;
       }
       openCommentModal();
       hideLoading();
@@ -359,7 +362,7 @@ function closeCommentModal() {
 
 /**
  * Creates a new comment using the "/notes" endpoint.
- * Uses the loading indicator during the save process.
+ * Uses the POST method to create the comment.
  */
 async function createComment() {
   const token = localStorage.getItem('token');
@@ -389,7 +392,6 @@ async function createComment() {
       })
     });
     const result = await response.json();
-    // Treat response as success if status is "success" or message contains "created"
     if (result.status === "success" || result.message.indexOf("created") !== -1) {
       alert("Comment saved successfully.");
       request.note = commentText;
@@ -411,17 +413,17 @@ async function createComment() {
 
 /**
  * Updates an existing comment using the "/notes" endpoint.
- * It checks that a valid note_id exists and the textarea is not empty.
- * Uses the loading indicator during the update process.
+ * This function always uses the PUT method to update an existing comment.
+ * It first fetches the latest note details (with no-cache) for the current request,
+ * then sends a raw JSON payload with the note_id (converted to a string) and updated note.
  */
 async function updateComment() {
-  console.log("Update Comment button clicked");
+  console.log("Update Comment button event triggered");
   const token = localStorage.getItem('token');
   if (!token) return console.error("No token found in localStorage.");
   const commentTextarea = document.getElementById('commentTextarea');
   if (!commentTextarea) return console.error("Comment textarea not found.");
   const commentText = commentTextarea.value.trim();
-  console.log("Comment text:", commentText);
   if (commentText === "") {
     alert("Comment cannot be empty.");
     return;
@@ -432,24 +434,55 @@ async function updateComment() {
   }
   const request = allRequests.find(r => r.request_id == currentRequestId);
   if (!request) return console.error("Request not found.");
-  console.log("Request note_id:", request.note_id);
-  if (!request.note_id) {
-    alert("No existing comment found. Please create a comment first.");
+
+  // Always fetch the latest note details with no caching.
+  showLoading();
+  try {
+    const noteFetchResponse = await fetch(`${API_BASE_URL}/notes?request_id=${currentRequestId}`, {
+      headers: getAuthHeaders(token),
+      cache: 'no-store'
+    });
+    const noteFetchResult = await noteFetchResponse.json();
+    console.log("Fetched note details:", noteFetchResult);
+    let noteData = noteFetchResult.data ? noteFetchResult.data : noteFetchResult;
+    if (Array.isArray(noteData)) {
+      if (noteData.length > 0) {
+        request.note_id = noteData[0].note_id;
+      } else {
+        alert("No existing comment found. Please use 'Save Comment' to create a new comment.");
+        hideLoading();
+        return;
+      }
+    } else if (noteData && noteData.note_id) {
+      request.note_id = noteData.note_id;
+    } else {
+      alert("No existing comment found. Please use 'Save Comment' to create a new comment.");
+      hideLoading();
+      return;
+    }
+  } catch (error) {
+    console.error("Error fetching note details:", error);
+    alert("Error fetching existing comment details.");
+    hideLoading();
     return;
   }
-  showLoading();
+  
+  // Prepare payload with note_id as a string.
+  const payload = {
+    note_id: String(request.note_id),
+    note: commentText
+  };
+  console.log("Sending update payload:", payload);
+
+  // Proceed with updating using the PUT method.
   try {
     const response = await fetch(`${API_BASE_URL}/notes`, {
       method: 'PUT',
       headers: getAuthHeaders(token),
-      body: JSON.stringify({
-        note_id: request.note_id,
-        note: commentText,
-        update: true
-      })
+      body: JSON.stringify(payload)
     });
     const result = await response.json();
-    console.log("Update comment response:", result);
+    console.log("Update response:", result);
     if (result.status === "success") {
       alert("Comment updated successfully.");
       request.note = commentText;
@@ -459,7 +492,7 @@ async function updateComment() {
         viewRequest(currentRequestId);
       }
     } else {
-      alert("Error updating comment: " + result.message);
+      alert(result.message);
     }
   } catch (error) {
     console.error("Error updating comment:", error);
@@ -587,19 +620,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Bind comment modal buttons
+  // Bind comment modal save button
   const saveCommentBtn = document.getElementById("saveCommentBtn");
   if (saveCommentBtn) {
     saveCommentBtn.addEventListener("click", function() {
       createComment();
     });
   }
-  const updateCommentBtn = document.getElementById("updateCommentBtn");
-  console.log("updateCommentBtn element:", updateCommentBtn);
-  if (updateCommentBtn) {
-    updateCommentBtn.addEventListener("click", function() {
-      console.log("Update Comment button event triggered");
-      updateComment();
-    });
+});
+
+// Use event delegation to bind the update comment button click event.
+document.addEventListener("click", function(e) {
+  if (e.target && e.target.id === "updateCommentBtn") {
+    console.log("Update Comment button event triggered");
+    updateComment();
   }
 });
