@@ -1,5 +1,5 @@
 // Base URL for the API without a trailing slash
-const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/';
+const API_BASE_URL = 'http://localhost:8000';
 
 // Mapping for request type IDs to names
 const requestTypeNames = {
@@ -26,9 +26,7 @@ function getAuthHeaders(token) {
  */
 function showLoading() {
   const loadingEl = document.getElementById('loadingIndicator');
-  if (loadingEl) {
-    loadingEl.style.display = 'flex';
-  }
+  if (loadingEl) loadingEl.style.display = 'flex';
 }
 
 /**
@@ -36,35 +34,23 @@ function showLoading() {
  */
 function hideLoading() {
   const loadingEl = document.getElementById('loadingIndicator');
-  if (loadingEl) {
-    loadingEl.style.display = 'none';
-  }
+  if (loadingEl) loadingEl.style.display = 'none';
 }
 
 /**
- * Fetches and displays the logged-in user's name.
+ * Fetches and displays the logged-in admin's name.
  */
 async function displayUserName() {
   const token = localStorage.getItem('token');
-  if (!token) {
-    console.error("No token found in localStorage.");
-    return;
-  }
+  if (!token) return console.error("No token found in localStorage.");
   try {
-    let endpoint = `${API_BASE_URL}/admin/users`;
-    let response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
-    let result = await response.json();
+    const endpoint = `${API_BASE_URL}/admin/users`;
+    const response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
+    const result = await response.json();
     if (response.ok && result.status === 'success') {
       window.currentUserRole = 'admin';
     } else {
-      endpoint = `${API_BASE_URL}/staff/`;
-      response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
-      result = await response.json();
-      if (response.ok && result.status === 'success') {
-        window.currentUserRole = 'staff';
-      } else {
-        throw new Error("Unable to fetch user details from either endpoint.");
-      }
+      throw new Error("Unable to fetch admin user details.");
     }
     const currentUser = result.data[0];
     const userFullNameEl = document.getElementById('userFullName');
@@ -86,38 +72,32 @@ let totalPages = 1;
 let currentRequestId = null;
 
 /**
- * Fetches requests and users data, sorts them, and initializes pagination.
+ * Helper function to count sentences in a text.
+ */
+function countSentences(text) {
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  return sentences.filter(sentence => sentence.trim().length > 0).length;
+}
+
+/**
+ * Fetches requests and admin users data, sorts them, and initializes pagination.
  */
 async function loadRequestsUsingPagination() {
   const token = localStorage.getItem('token');
-  if (!token) {
-    console.error("No token found in localStorage.");
-    return;
-  }
+  if (!token) return console.error("No token found in localStorage.");
   try {
     showLoading();
     const [requestsResponse, usersResponse] = await Promise.all([
       fetch(`${API_BASE_URL}/requests/`, { headers: getAuthHeaders(token) }),
       fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(token) })
     ]);
-
-    if (!requestsResponse.ok || !usersResponse.ok) {
-      console.error("Error fetching data from the API.");
-      return;
-    }
-
+    if (!requestsResponse.ok || !usersResponse.ok)
+      return console.error("Error fetching data from the API.");
     const requestsData = await requestsResponse.json();
     const usersData = await usersResponse.json();
-
-    if (requestsData.status !== 'success' || usersData.status !== 'success') {
-      console.error("Error in data response");
-      return;
-    }
-
-    // Sort requests by submitted_at descending.
-    allRequests = [...requestsData.data].sort(
-      (a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)
-    );
+    if (requestsData.status !== 'success' || usersData.status !== 'success')
+      return console.error("Error in data response");
+    allRequests = [...requestsData.data].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
     allUsersData = usersData.data;
     displayData = allRequests;
     totalPages = Math.ceil(displayData.length / itemsPerPage);
@@ -167,14 +147,9 @@ function getStatusClass(status) {
  */
 function displayRequests(requests, usersData) {
   const userMap = {};
-  usersData.forEach(user => {
-    userMap[user.user_id] = user;
-  });
+  usersData.forEach(user => { userMap[user.user_id] = user; });
   const tbody = document.getElementById('requestsTableBody');
-  if (!tbody) {
-    console.error("requestsTableBody element not found.");
-    return;
-  }
+  if (!tbody) return console.error("requestsTableBody element not found.");
   if (!requests || requests.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No requests to display</td></tr>`;
     return;
@@ -187,17 +162,15 @@ function displayRequests(requests, usersData) {
         <td>${user.first_name} ${user.last_name}</td>
         <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
         <td>
-          <span class="badge ${getStatusClass(request.status)}">
-            ${request.status}
-          </span>
+          <span class="badge ${getStatusClass(request.status)}">${request.status}</span>
         </td>
         <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
-       <td>
-  <button class="btn btn-primary" onclick="viewRequest(${request.request_id})">View</button>
-  <br>
-<button class="btn btn-danger" onclick="commentRequest(${request.request_id})">Comment</button>
-</td>
-
+        <td>
+          <div style="display: flex; gap: 5px;">
+            <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">View</button>
+            <button type="button" class="btn btn-danger" onclick="commentRequest(${request.request_id})">Comment</button>
+          </div>
+        </td>
       </tr>
     `;
   }).join('');
@@ -210,21 +183,12 @@ function updatePaginationControls(currentPage) {
   const dataToDisplay = getDisplayData();
   totalPages = Math.ceil(dataToDisplay.length / itemsPerPage);
   const paginationContainer = document.getElementById('paginationContainer');
-  if (!paginationContainer) {
-    console.error("paginationContainer element not found.");
-    return;
-  }
-  
+  if (!paginationContainer) return console.error("paginationContainer element not found.");
   let controlsHtml = '';
-  if (currentPage > 1) {
-    controlsHtml += `<button id="prevPage" class="btn btn-secondary">Previous</button>`;
-  }
+  if (currentPage > 1) controlsHtml += `<button id="prevPage" class="btn btn-secondary">Previous</button>`;
   controlsHtml += `<span style="margin: 0 10px;">Page ${currentPage} of ${totalPages}</span>`;
-  if (currentPage < totalPages) {
-    controlsHtml += `<button id="nextPage" class="btn btn-secondary">Next</button>`;
-  }
+  if (currentPage < totalPages) controlsHtml += `<button id="nextPage" class="btn btn-secondary">Next</button>`;
   paginationContainer.innerHTML = controlsHtml;
-  
   const prevPageButton = document.getElementById('prevPage');
   if (prevPageButton) {
     prevPageButton.addEventListener('click', () => {
@@ -272,48 +236,31 @@ function buildFileLink(file, label) {
 
 /**
  * Opens the ticket details modal and populates it with request data.
- * The "Admin's Comment" section now displays the note (if available) fetched from the API.
  */
 function viewRequest(requestId) {
   showLoading();
   const request = allRequests.find(r => r.request_id == requestId);
-  if (!request) {
-    console.error("Request not found!");
-    hideLoading();
-    return;
-  }
+  if (!request) return console.error("Request not found!"), hideLoading();
   const user = allUsersData.find(u => u.user_id == request.user_id);
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
-  
-  // Build main ticket details.
   let modalBodyContent = `
     <div class="ticket-details">
       <p><strong>Student Number:</strong> ${user ? user.student_number : 'N/A'}</p>
       <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
       <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
       <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
+      <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+    </div>
   `;
-  
-  // Build the Admin's Comment section.
-  // It uses the simplified note from the request object.
-  let adminCommentHTML = '';
-  if (request.note && request.note.trim() !== "") {
-    adminCommentHTML = `<p>${request.note}</p>`;
-  } else {
-    adminCommentHTML = `<p>No comment available.</p>`;
-  }
-  
-  // Insert Admin's Comment immediately after Status.
+  let adminCommentHTML = request.note && request.note.trim() !== ""
+    ? `<p>${request.note}</p>`
+    : `<p>No comment available.</p>`;
   modalBodyContent += `
       <div class="admin-comment-container">
         <h3>Admin's Comment</h3>
         ${adminCommentHTML}
       </div>
-      <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-    </div>
   `;
-  
-  // Build attached files section.
   const fileLabels = {
     "Clearance": "Clearance Form",
     "RequestLetter": "Request Letter",
@@ -323,7 +270,6 @@ function viewRequest(requestId) {
     "IDPicture": "ID Picture",
     "ProfessorApproval": "Professor Approval"
   };
-
   let fileLinks = '';
   for (const key in fileLabels) {
     if (request[key] && Array.isArray(request[key]) && request[key].length > 0) {
@@ -335,9 +281,7 @@ function viewRequest(requestId) {
   if (fileLinks) {
     modalBodyContent += `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`;
   }
-  
   currentRequestId = request.request_id;
-  
   const modalTitleEl = document.getElementById('ticketModalLabel');
   const modalBodyEl = document.getElementById('ticketModalBody');
   if (modalTitleEl && modalBodyEl) {
@@ -355,23 +299,190 @@ function viewRequest(requestId) {
 }
 
 /**
- * Opens the custom modal.
+ * Opens the comment modal for a specific request.
+ * It fetches the current comment from the "/notes" endpoint.
+ * If a comment exists, the textarea is pre-filled and the Update Comment button is enabled;
+ * otherwise, the Save Comment button is enabled.
  */
-function openModal() {
-  const modal = document.getElementById('ticketModal');
-  if (modal) {
-    modal.classList.add('active');
+function commentRequest(requestId) {
+  showLoading();
+  const request = allRequests.find(r => r.request_id == requestId);
+  if (!request) return console.error("Request not found!"), hideLoading();
+  currentRequestId = requestId;
+  fetch(`${API_BASE_URL}/notes?request_id=${requestId}`, { headers: getAuthHeaders(localStorage.getItem('token')) })
+    .then(response => response.json())
+    .then(result => {
+      let commentText = "";
+      if (result.status === "success" && Array.isArray(result.data) && result.data.length > 0) {
+        commentText = result.data[0].note;
+        request.note_id = result.data[0].note_id;
+      }
+      const commentTextarea = document.getElementById('commentTextarea');
+      if (commentTextarea) commentTextarea.value = commentText;
+      const saveCommentBtn = document.getElementById('saveCommentBtn');
+      const updateCommentBtn = document.getElementById('updateCommentBtn');
+      if (saveCommentBtn && updateCommentBtn) {
+        if (commentText) {
+          saveCommentBtn.disabled = true;
+          updateCommentBtn.disabled = false;
+        } else {
+          saveCommentBtn.disabled = false;
+          updateCommentBtn.disabled = true;
+        }
+      }
+      openCommentModal();
+      hideLoading();
+    })
+    .catch(error => {
+      console.error("Error fetching comment:", error);
+      hideLoading();
+    });
+}
+
+/**
+ * Opens the comment modal.
+ */
+function openCommentModal() {
+  const modal = document.getElementById('commentModal');
+  if (modal) modal.classList.add('active');
+}
+
+/**
+ * Closes the comment modal and resets the comment textarea.
+ */
+function closeCommentModal() {
+  const modal = document.getElementById('commentModal');
+  if (modal) modal.classList.remove('active');
+  const commentTextarea = document.getElementById('commentTextarea');
+  if (commentTextarea) commentTextarea.value = "";
+}
+
+/**
+ * Creates a new comment using the "/notes" endpoint.
+ * Uses the loading indicator during the save process.
+ */
+async function createComment() {
+  const token = localStorage.getItem('token');
+  if (!token) return console.error("No token found in localStorage.");
+  const commentTextarea = document.getElementById('commentTextarea');
+  if (!commentTextarea) return console.error("Comment textarea not found.");
+  const commentText = commentTextarea.value.trim();
+  if (commentText === "") {
+    alert("Comment cannot be empty.");
+    return;
+  }
+  if (countSentences(commentText) > 2) {
+    alert("Please limit your comment to 2 sentences.");
+    return;
+  }
+  const request = allRequests.find(r => r.request_id == currentRequestId);
+  if (!request) return console.error("Request not found.");
+  showLoading();
+  try {
+    const response = await fetch(`${API_BASE_URL}/notes`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({
+        request_id: currentRequestId,
+        requirement_name: "Admin Comment",
+        note: commentText
+      })
+    });
+    const result = await response.json();
+    // Treat response as success if status is "success" or message contains "created"
+    if (result.status === "success" || result.message.indexOf("created") !== -1) {
+      alert("Comment saved successfully.");
+      request.note = commentText;
+      if (result.data && result.data.note_id) request.note_id = result.data.note_id;
+      closeCommentModal();
+      if (document.getElementById('ticketModal').classList.contains('active')) {
+        viewRequest(currentRequestId);
+      }
+    } else {
+      alert("Error saving comment: " + result.message);
+    }
+  } catch (error) {
+    console.error("Error saving comment:", error);
+    alert("Error saving comment.");
+  } finally {
+    hideLoading();
   }
 }
 
 /**
- * Closes the custom modal.
+ * Updates an existing comment using the "/notes" endpoint.
+ * It checks that a valid note_id exists and the textarea is not empty.
+ * Uses the loading indicator during the update process.
+ */
+async function updateComment() {
+  console.log("Update Comment button clicked");
+  const token = localStorage.getItem('token');
+  if (!token) return console.error("No token found in localStorage.");
+  const commentTextarea = document.getElementById('commentTextarea');
+  if (!commentTextarea) return console.error("Comment textarea not found.");
+  const commentText = commentTextarea.value.trim();
+  console.log("Comment text:", commentText);
+  if (commentText === "") {
+    alert("Comment cannot be empty.");
+    return;
+  }
+  if (countSentences(commentText) > 2) {
+    alert("Please limit your comment to 2 sentences.");
+    return;
+  }
+  const request = allRequests.find(r => r.request_id == currentRequestId);
+  if (!request) return console.error("Request not found.");
+  console.log("Request note_id:", request.note_id);
+  if (!request.note_id) {
+    alert("No existing comment found. Please create a comment first.");
+    return;
+  }
+  showLoading();
+  try {
+    const response = await fetch(`${API_BASE_URL}/notes`, {
+      method: 'PUT',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({
+        note_id: request.note_id,
+        note: commentText,
+        update: true
+      })
+    });
+    const result = await response.json();
+    console.log("Update comment response:", result);
+    if (result.status === "success") {
+      alert("Comment updated successfully.");
+      request.note = commentText;
+      commentTextarea.value = "";
+      closeCommentModal();
+      if (document.getElementById('ticketModal').classList.contains('active')) {
+        viewRequest(currentRequestId);
+      }
+    } else {
+      alert("Error updating comment: " + result.message);
+    }
+  } catch (error) {
+    console.error("Error updating comment:", error);
+    alert("Error updating comment.");
+  } finally {
+    hideLoading();
+  }
+}
+
+/**
+ * Opens the ticket details modal.
+ */
+function openModal() {
+  const modal = document.getElementById('ticketModal');
+  if (modal) modal.classList.add('active');
+}
+
+/**
+ * Closes the ticket details modal.
  */
 function closeModal() {
   const modal = document.getElementById('ticketModal');
-  if (modal) {
-    modal.classList.remove('active');
-  }
+  if (modal) modal.classList.remove('active');
 }
 
 /**
@@ -379,10 +490,7 @@ function closeModal() {
  */
 async function updateTicketStatus(requestId, newStatus) {
   const token = localStorage.getItem('token');
-  if (!token) {
-    console.error("No token found in localStorage.");
-    return;
-  }
+  if (!token) return console.error("No token found in localStorage.");
   showLoading();
   try {
     const response = await fetch(`${API_BASE_URL}/requests/${requestId}`, {
@@ -392,6 +500,10 @@ async function updateTicketStatus(requestId, newStatus) {
     });
     const result = await response.json();
     if (result.status === 'success') {
+      if (document.getElementById('ticketModal').classList.contains('active')) {
+        viewRequest(requestId);
+        closeModal();
+      }
       loadRequestsUsingPagination();
     } else {
       console.error("Failed to update ticket status:", result.message);
@@ -404,40 +516,41 @@ async function updateTicketStatus(requestId, newStatus) {
 }
 
 /**
- * Dynamic logout function based on user role.
+ * Dynamic logout function using the admin endpoint.
  */
 window.auth = {
   logout: async function() {
     showLoading();
     const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const role = window.currentUserRole || 'admin';
-        const logoutEndpoint = (role === 'staff')
-          ? `${API_BASE_URL}/staff/logout`
-          : `${API_BASE_URL}/admin/logout`;
-        const response = await fetch(logoutEndpoint, {
-          method: 'POST',
-          headers: getAuthHeaders(token)
-        });
-        const result = await response.json();
-        if (result.status !== 'success') {
-          throw new Error("Logout failed: " + result.message);
-        }
-      } catch (error) {
-        console.error("Logout error:", error);
+    if (!token) {
+      console.error("No token found in localStorage.");
+      window.location.href = 'login.html';
+      return;
+    }
+    try {
+      const logoutEndpoint = `${API_BASE_URL}/admin/logout`;
+      const response = await fetch(logoutEndpoint, {
+        method: 'POST',
+        headers: getAuthHeaders(token)
+      });
+      const result = await response.json();
+      if (result.status !== 'success') {
+        throw new Error("Logout failed: " + result.message);
       }
+    } catch (error) {
+      console.error("Logout error:", error);
     }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = 'login.html';
+    hideLoading();
   }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
   displayUserName();
   loadRequestsUsingPagination();
-
+  
   const searchInput = document.getElementById("searchInput");
   if (searchInput) {
     searchInput.addEventListener("input", function() {
@@ -450,8 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const date = new Date(request.submitted_at).toLocaleDateString().toLowerCase();
           const type = (requestTypeNames[request.type_id] || "").toLowerCase();
           const user = allUsersData.find(u => u.user_id === request.user_id);
-          const studentNumber = user && user.student_number ? user.student_number.toLowerCase() : "";
-          const name = user ? (user.first_name + " " + user.last_name).toLowerCase() : "";
+          const studentNumber = user ? (user.student_number || user.admin_id || "").toLowerCase() : "";
+          const name = user ? ((user.first_name || "") + " " + (user.last_name || "")).toLowerCase() : "";
           return status.includes(query) || date.includes(query) || type.includes(query) || studentNumber.includes(query) || name.includes(query);
         });
       }
@@ -461,17 +574,32 @@ document.addEventListener('DOMContentLoaded', () => {
       updatePaginationControls(currentPage);
     });
   }
-
+  
   const updateStatusBtn = document.getElementById("updateStatusBtn");
   if (updateStatusBtn) {
     updateStatusBtn.addEventListener("click", function() {
       const newStatus = document.getElementById("statusSelect").value;
       if (currentRequestId) {
         updateTicketStatus(currentRequestId, newStatus);
-        closeModal();
       } else {
         console.error("No current request selected for update.");
       }
+    });
+  }
+  
+  // Bind comment modal buttons
+  const saveCommentBtn = document.getElementById("saveCommentBtn");
+  if (saveCommentBtn) {
+    saveCommentBtn.addEventListener("click", function() {
+      createComment();
+    });
+  }
+  const updateCommentBtn = document.getElementById("updateCommentBtn");
+  console.log("updateCommentBtn element:", updateCommentBtn);
+  if (updateCommentBtn) {
+    updateCommentBtn.addEventListener("click", function() {
+      console.log("Update Comment button event triggered");
+      updateComment();
     });
   }
 });

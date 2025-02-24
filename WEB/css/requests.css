@@ -73,7 +73,6 @@ body {
   font-size: 0.9rem;
   color: #777;
 }
-
 .sidebar-menu {
   list-style: none;
   padding: 0;
@@ -373,11 +372,20 @@ table td:nth-child(4) {
     padding: 20px 10px;
   }
 }
+/* Sidebar active link override */
+.sidebar-menu li a.active,
+.sidebar-menu li.active a {
+  background: #28a745;
+  color: #fff;
+  border-left: 4px solid #fff;
+}
 
-/* Import Roboto font from Google Fonts */
+/* Modern Admin Comments Styling - Green Theme with Roboto */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
-/* Modern Admin Comments Styling - Green Theme with Roboto Font */
+/* Modern Admin Comments Styling - Green Theme with Roboto */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
 .admin-comment-container {
   font-family: 'Roboto', sans-serif;
   background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
@@ -385,81 +393,114 @@ table td:nth-child(4) {
   padding: 20px 25px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  margin: 20px 0;
+  margin-top: 20px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
 .admin-comment-container:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
-
-/* Optional Header for Admin Details */
-.admin-comment-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.admin-comment-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: 15px;
-  border: 2px solid #2e7d32;
-}
-
-.admin-comment-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.admin-comment-header h3 {
+.admin-comment-container h3 {
   font-size: 1.4rem;
   color: #2e7d32;
-  margin: 0;
+  margin-bottom: 15px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-
-/* Comment Body */
-.admin-comment-body {
+.admin-comment-container p {
   font-size: 1rem;
   line-height: 1.6;
-  color: #424242;
-}
-
-/* Optional Footer for Metadata */
-.admin-comment-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 15px;
-  font-size: 0.9rem;
-  color: #777;
-}
-
-/* Note Below Admin Comments - Green Theme with Roboto Font */
-.admin-comment-note {
-  font-family: 'Roboto', sans-serif;
-  background: #f1f8e9;
-  border-left: 5px solid #2e7d32;
-  padding: 15px 20px;
-  border-radius: 5px;
-  font-size: 1rem;
   color: #2e7d32;
-  margin-top: 20px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  margin-bottom: 10px;
 }
 
-.btn-danger {
-  background: red;
-  color: #fff;
-  padding: 10px 20px;
+/* Comment Modal Styles */
+#commentModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+}
+#commentModal.active {
+  display: flex;
+}
+#commentModal .modal-content {
+  background: #fff;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 5px;
+  overflow: hidden;
+  padding: 20px;
+}
+#commentModal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+#commentModal .modal-header h5 {
+  font-size: 1.25rem;
+  color: #2e7d32;
+}
+#commentModal .modal-body {
+  margin-bottom: 15px;
+}
+#commentModal textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  resize: vertical;
+  min-height: 80px;
+}
+#commentModal .modal-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+/* Comment Modal Buttons */
+#saveCommentBtn, #updateCommentBtn {
+  flex: 1;
+  padding: 10px;
   font-size: 0.9rem;
   border: none;
   border-radius: 3px;
-  display: block;
-  margin: 0 auto;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+#saveCommentBtn {
+  background: #28a745;
+  color: #fff;
+}
+#saveCommentBtn:hover {
+  background: #218838;
+}
+#updateCommentBtn {
+  background: #007bff;
+  color: #fff;
+}
+#updateCommentBtn:hover {
+  background: #0069d9;
+}
+
+/* Override .btn-danger for the Comment button in the table (make it green) */
+.btn.btn-danger {
+  background: #28a745;
+  color: #fff;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.btn.btn-danger:hover {
+  background: #218838;
 }
