@@ -1,11 +1,12 @@
 <?php
 // Define base URL
-$base_url = 'http://192.168.1.7';
+$base_url = 'http://192.168.1.13';
 
 $config = [
     'app' => [
         'name' => 'UPANG LINK',
         'version' => '1.0.0',
+        'base_url' => $base_url,
     ],
     'database' => [
         'host' => 'localhost',
@@ -16,10 +17,10 @@ $config = [
     'email' => [
         'host' => 'smtp.gmail.com',
         'port' => 587,
-        'username' => 'Usernametest@gmail.com',
-        'password' => 'Passwordtest',
+        'username' => 'test@gmail.com',
+        'password' => 'test',
         'from_name' => 'UPANG LINK',
-        'from_email' => 'Usernametest@gmail.com'
+        'from_email' => 'test@gmail.com'
     ],
     'security' => [
         'token_expiry' => 24, // hours

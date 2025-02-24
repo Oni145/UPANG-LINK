@@ -23,3 +23,6 @@ Stack trace: #0 {main}
 Stack trace: #0 {main}
 [21-Feb-2025 02:15:42 Europe/Berlin] Error: Endpoint not found
 Stack trace: #0 {main}
+[23-Feb-2025 03:08:00 Europe/Berlin] PHP Warning:  Undefined array key "base_url" in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 74
+[23-Feb-2025 03:43:22 Europe/Berlin] Error: Endpoint not found
+Stack trace: #0 {main}

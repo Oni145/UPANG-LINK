@@ -46,7 +46,7 @@ class AuthController {
                                         $this->studentLogin();
                                         break;
                                     case 'register':
-                                        $this->studentRegister();
+                                        $this->simplifiedStudentRegister();
                                         break;
                                     case 'verify-email':
                                         $this->verifyEmail();
@@ -151,43 +151,29 @@ class AuthController {
         if(!empty($data->email) && !empty($data->password)) {
             $user = $this->user->getByEmail($data->email);
             
+            // Check if user exists
             if(!$user) {
-                http_response_code(200); // Changed to 200 to hide HTTP errors from users
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'The email you entered is not registered. Please check your email or sign up for a new account.',
-                    'error_type' => 'email_not_found'
-                ]);
+                // Return generic error message
+                $this->sendError('Wrong email or password.');
                 return;
             }
 
+            // Check password
             if(!password_verify($data->password, $user['password'])) {
-                http_response_code(200); // Changed to 200 to hide HTTP errors from users
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Wrong password. Please try again.',
-                    'error_type' => 'invalid_password'
-                ]);
+                // Return generic error message
+                $this->sendError('Wrong email or password.');
                 return;
             }
 
+            // Check user role
             if($user['role'] !== 'student') {
-                http_response_code(200); // Changed to 200 to hide HTTP errors from users
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'This account is not a student account. Please use the correct login page.',
-                    'error_type' => 'invalid_role'
-                ]);
+                $this->sendError('This account is not a student account. Please use the correct login page.');
                 return;
             }
 
+            // Check email verification
             if(!$user['email_verified']) {
-                http_response_code(200); // Changed to 200 to hide HTTP errors from users
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Please verify your email address before logging in. Check your inbox for the verification link.',
-                    'error_type' => 'email_not_verified'
-                ]);
+                $this->sendError('Please verify your email address before logging in. Check your inbox for the verification link.');
                 return;
             }
 
@@ -213,20 +199,10 @@ class AuthController {
                     ]
                 ]);
             } else {
-                http_response_code(200); // Changed to 200 to hide HTTP errors from users
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Unable to log in. Please try again.',
-                    'error_type' => 'session_error'
-                ]);
+                $this->sendError('Unable to log in. Please try again.');
             }
         } else {
-            http_response_code(200); // Changed to 200 to hide HTTP errors from users
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Please enter your email and password.',
-                'error_type' => 'missing_fields'
-            ]);
+            $this->sendError('Please enter your email and password.');
         }
     }
 
@@ -268,16 +244,14 @@ class AuthController {
         }
     }
 
-    private function studentRegister() {
+    private function simplifiedStudentRegister() {
         $data = json_decode(file_get_contents("php://input"));
         
         if(
-            !empty($data->student_number) && 
             !empty($data->email) &&
             !empty($data->password) &&
             !empty($data->first_name) &&
-            !empty($data->last_name) &&
-            !empty($data->course)
+            !empty($data->last_name)
         ) {
             // Check if email already exists
             if($this->user->getByEmail($data->email)) {
@@ -285,26 +259,16 @@ class AuthController {
                 return;
             }
 
-            // Check if student number already exists
-            if($this->user->getByStudentNumber($data->student_number)) {
-                $this->sendError('Student number already exists');
-                return;
-            }
-
-            $this->user->student_number = $data->student_number;
             $this->user->email = $data->email;
             $this->user->password = password_hash($data->password, PASSWORD_DEFAULT);
             $this->user->first_name = $data->first_name;
             $this->user->last_name = $data->last_name;
             $this->user->role = 'student';
-            $this->user->course = $data->course;
-            $this->user->year_level = $data->year_level ?? null;
-            $this->user->block = $data->block ?? null;
-            $this->user->admission_year = $data->admission_year ?? null;
 
             if($this->user->create()) {
                 // Send verification email
-                $this->sendVerificationEmail($this->user->email, $this->user->email_verification_token);
+                $emailHandler = new EmailHandler();
+                $emailHandler->sendVerificationEmail($this->user->email, $this->user->email_verification_token);
                 
                 http_response_code(201);
                 echo json_encode([
@@ -315,7 +279,7 @@ class AuthController {
                 $this->sendError('Unable to create account');
             }
         } else {
-            $this->sendError('Incomplete data');
+            $this->sendError('Please provide email, password, first name, and last name');
         }
     }
 

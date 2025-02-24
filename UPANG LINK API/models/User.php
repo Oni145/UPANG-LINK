@@ -28,8 +28,8 @@ class User {
 
     public function create() {
         $query = "INSERT INTO " . $this->table_name . "
-                (student_number, email, password, first_name, last_name, role, course, year_level, block, admission_year, email_verification_token, email_token_expiry)
-                VALUES (:student_number, :email, :password, :first_name, :last_name, :role, :course, :year_level, :block, :admission_year, :email_verification_token, :email_token_expiry)";
+                (email, password, first_name, last_name, role, email_verification_token, email_token_expiry)
+                VALUES (:email, :password, :first_name, :last_name, :role, :email_verification_token, :email_token_expiry)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -37,16 +37,11 @@ class User {
         $this->email_verification_token = bin2hex(random_bytes(32));
         $this->email_token_expiry = date('Y-m-d H:i:s', strtotime('+24 hours'));
 
-        $stmt->bindParam(":student_number", $this->student_number);
         $stmt->bindParam(":email", $this->email);
         $stmt->bindParam(":password", $this->password);
         $stmt->bindParam(":first_name", $this->first_name);
         $stmt->bindParam(":last_name", $this->last_name);
         $stmt->bindParam(":role", $this->role);
-        $stmt->bindParam(":course", $this->course);
-        $stmt->bindParam(":year_level", $this->year_level);
-        $stmt->bindParam(":block", $this->block);
-        $stmt->bindParam(":admission_year", $this->admission_year);
         $stmt->bindParam(":email_verification_token", $this->email_verification_token);
         $stmt->bindParam(":email_token_expiry", $this->email_token_expiry);
 
