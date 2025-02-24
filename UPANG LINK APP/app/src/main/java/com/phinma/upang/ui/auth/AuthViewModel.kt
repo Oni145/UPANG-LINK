@@ -1,5 +1,6 @@
 package com.phinma.upang.ui.auth
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,10 +9,12 @@ import com.phinma.upang.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _loginState = MutableLiveData<AuthState>()
@@ -36,17 +39,27 @@ class AuthViewModel @Inject constructor(
             try {
                 val result = authRepository.login(email, password)
                 result.fold(
-                    onSuccess = { _loginState.value = AuthState.Success },
-                    onFailure = { _loginState.value = AuthState.Error("Email or password is incorrect") }
+                    onSuccess = { 
+                        // Save token to SharedPreferences
+                        saveToken(it.token)
+                        _loginState.value = AuthState.Success 
+                    },
+                    onFailure = { error -> 
+                        _loginState.value = AuthState.Error(error.message ?: "An unexpected error occurred")
+                    }
                 )
             } catch (e: Exception) {
-                _loginState.value = AuthState.Error("Email or password is incorrect")
+                _loginState.value = AuthState.Error(e.message ?: "An unexpected error occurred")
             }
         }
     }
 
+    private fun saveToken(token: String) {
+        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        sharedPreferences.edit().putString("user_token", token).apply()
+    }
+
     fun register(
-        studentNumber: String,
         firstName: String,
         lastName: String,
         email: String,
@@ -62,21 +75,17 @@ class AuthViewModel @Inject constructor(
             _registerState.value = AuthState.Loading
             try {
                 val result = authRepository.register(
-                    studentNumber = studentNumber,
                     firstName = firstName,
                     lastName = lastName,
                     email = email,
-                    course = "BSIT", // TODO: Add course selection
-                    yearLevel = 1, // TODO: Add year level selection
-                    block = "A", // TODO: Add block selection
                     password = password
                 )
                 result.fold(
                     onSuccess = { _registerState.value = AuthState.Success },
-                    onFailure = { _registerState.value = AuthState.Error(it.message ?: "Registration failed") }
+                    onFailure = { _registerState.value = AuthState.Error(it.message ?: "An error occurred") }
                 )
             } catch (e: Exception) {
-                _registerState.value = AuthState.Error(e.message ?: "Registration failed")
+                _registerState.value = AuthState.Error(e.message ?: "An error occurred")
             }
         }
     }
@@ -96,16 +105,24 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun resendVerificationEmail() {
+    fun resendVerificationEmail(email: String) {
         viewModelScope.launch {
             _resendEmailState.value = AuthState.Loading
             try {
-                // TODO: Implement actual resend verification email logic
-                _resendEmailState.value = AuthState.Success
+                val result = authRepository.resendVerification(email)
+                result.fold(
+                    onSuccess = { _resendEmailState.value = AuthState.Success },
+                    onFailure = { _resendEmailState.value = AuthState.Error(it.message ?: "Failed to resend email") }
+                )
             } catch (e: Exception) {
-                _resendEmailState.value = AuthState.Error(e.message ?: "Failed to resend verification email")
+                _resendEmailState.value = AuthState.Error(e.message ?: "Failed to resend email")
             }
         }
+    }
+
+    fun logout() {
+        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        sharedPreferences.edit().remove("user_token").apply()
     }
 
     sealed class AuthState {

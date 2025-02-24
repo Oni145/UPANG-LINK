@@ -19,17 +19,13 @@ class RegisterViewModel @Inject constructor(
     val registerState: LiveData<RegisterState> = _registerState
 
     fun register(
-        studentNumber: String,
         firstName: String,
         lastName: String,
         email: String,
-        course: String,
-        yearLevel: String,
-        block: String,
         password: String,
         confirmPassword: String
     ) {
-        if (!validateInput(studentNumber, firstName, lastName, email, course, yearLevel, block, password, confirmPassword)) {
+        if (!validateInput(firstName, lastName, email, password, confirmPassword)) {
             return
         }
 
@@ -37,13 +33,9 @@ class RegisterViewModel @Inject constructor(
 
         viewModelScope.launch {
             authRepository.register(
-                studentNumber = studentNumber,
                 firstName = firstName,
                 lastName = lastName,
                 email = email,
-                course = course,
-                yearLevel = yearLevel.toInt(),
-                block = block,
                 password = password
             ).onSuccess { response ->
                 _registerState.value = RegisterState.Success(response)
@@ -54,19 +46,14 @@ class RegisterViewModel @Inject constructor(
     }
 
     private fun validateInput(
-        studentNumber: String,
         firstName: String,
         lastName: String,
         email: String,
-        course: String,
-        yearLevel: String,
-        block: String,
         password: String,
         confirmPassword: String
     ): Boolean {
-        if (studentNumber.isBlank() || firstName.isBlank() || lastName.isBlank() || 
-            email.isBlank() || course.isBlank() || yearLevel.isBlank() || 
-            block.isBlank() || password.isBlank() || confirmPassword.isBlank()
+        if (firstName.isBlank() || lastName.isBlank() || 
+            email.isBlank() || password.isBlank() || confirmPassword.isBlank()
         ) {
             _registerState.value = RegisterState.Error("All fields are required")
             return false
@@ -84,18 +71,6 @@ class RegisterViewModel @Inject constructor(
 
         if (password != confirmPassword) {
             _registerState.value = RegisterState.Error("Passwords do not match")
-            return false
-        }
-
-        try {
-            yearLevel.toInt().let {
-                if (it < 1 || it > 5) {
-                    _registerState.value = RegisterState.Error("Year level must be between 1 and 5")
-                    return false
-                }
-            }
-        } catch (e: NumberFormatException) {
-            _registerState.value = RegisterState.Error("Invalid year level")
             return false
         }
 

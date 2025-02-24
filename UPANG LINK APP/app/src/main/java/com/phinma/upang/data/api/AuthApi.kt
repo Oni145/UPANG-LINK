@@ -8,6 +8,7 @@ interface AuthApi {
     suspend fun login(@Body request: LoginRequest): ApiResponse<LoginResponse>
 
     @POST("auth/student/register")
+    @Headers("Content-Type: application/json")
     suspend fun register(@Body request: RegisterRequest): ApiResponse<RegisterResponse>
 
     @POST("auth/student/verify-email")

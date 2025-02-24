@@ -1,5 +1,6 @@
 package com.phinma.upang.ui
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -8,7 +9,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.navigation.findNavController
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -36,6 +37,21 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         setupNavigation()
         setupSystemBars()
+
+        // Ensure the NavController is set up before accessing it
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+
+        val sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val token = sharedPreferences.getString("user_token", null)
+
+        if (token != null) {
+            // User is logged in, navigate to main screen
+            navigateToMainScreen(navController)
+        } else {
+            // User is not logged in, navigate to login screen
+            navigateToLoginScreen(navController)
+        }
     }
 
     private fun setupSystemBars() {
@@ -93,7 +109,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment)
+        val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment).navController
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
@@ -103,5 +119,23 @@ class MainActivity : AppCompatActivity() {
         } else {
             super.onBackPressed()
         }
+    }
+
+    private fun navigateToMainScreen(navController: NavController) {
+        navController.navigate(R.id.mainFragment) // Replace with your main fragment ID
+    }
+
+    private fun navigateToLoginScreen(navController: NavController) {
+        navController.navigate(R.id.loginFragment) // Replace with your login fragment ID
+    }
+
+    private fun hideSystemUI() {
+        window.decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            or View.SYSTEM_UI_FLAG_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
     }
 } 

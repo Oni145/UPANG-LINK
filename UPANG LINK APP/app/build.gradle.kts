@@ -12,7 +12,7 @@ android {
     compileSdk = 34
 
     // Define the base URL as a constant
-    val baseUrl = "http://192.168.1.7/UPANG-LINK/UPANG%20LINK%20API/api/"
+    val baseUrl = "http://192.168.1.13/UPANG-LINK/UPANG%20LINK%20API/api/"
 
     defaultConfig {
         applicationId = "com.phinma.upang"

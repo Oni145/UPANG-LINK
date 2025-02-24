@@ -17,10 +17,16 @@ class EmailVerificationFragment : Fragment(R.layout.fragment_email_verification)
     private val viewModel: AuthViewModel by viewModels()
     private var _binding: FragmentEmailVerificationBinding? = null
     private val binding get() = _binding!!
+    private var userEmail: String = ""
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentEmailVerificationBinding.bind(view)
+
+        // Get email from arguments or saved state
+        arguments?.getString("email")?.let {
+            userEmail = it
+        }
 
         setupClickListeners()
         observeViewModel()
@@ -32,7 +38,11 @@ class EmailVerificationFragment : Fragment(R.layout.fragment_email_verification)
         }
 
         binding.btnResendEmail.setOnClickListener {
-            viewModel.resendVerificationEmail()
+            if (userEmail.isNotBlank()) {
+                viewModel.resendVerificationEmail(userEmail)
+            } else {
+                Snackbar.make(binding.root, "Email address not found", Snackbar.LENGTH_SHORT).show()
+            }
         }
 
         binding.btnLogin.setOnClickListener {

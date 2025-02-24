@@ -32,15 +32,10 @@ data class LoginResponse(
 )
 
 data class RegisterRequest(
-    val studentNumber: String,
     val email: String,
     val password: String,
-    val firstName: String,
-    val lastName: String,
-    val course: String,
-    val yearLevel: Int,
-    val block: String,
-    val admissionYear: String
+    val first_name: String,
+    val last_name: String
 )
 
 data class RegisterResponse(

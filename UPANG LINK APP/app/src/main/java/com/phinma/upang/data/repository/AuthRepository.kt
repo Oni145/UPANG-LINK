@@ -1,16 +1,36 @@
 package com.phinma.upang.data.repository
 
+import com.google.gson.Gson
 import com.phinma.upang.data.api.AuthApi
 import com.phinma.upang.data.local.SessionManager
 import com.phinma.upang.data.model.*
+import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
+import android.util.Log
 
 @Singleton
 class AuthRepository @Inject constructor(
     private val api: AuthApi,
     private val sessionManager: SessionManager
 ) {
+    private val gson = Gson()
+
+    private fun parseErrorResponse(throwable: Throwable): String {
+        return when (throwable) {
+            is HttpException -> {
+                try {
+                    val errorBody = throwable.response()?.errorBody()?.string()
+                    val errorResponse = gson.fromJson(errorBody, ApiErrorResponse::class.java)
+                    errorResponse.message
+                } catch (e: Exception) {
+                    "An unexpected error occurred"
+                }
+            }
+            else -> throwable.message ?: "An unexpected error occurred"
+        }
+    }
+
     suspend fun login(email: String, password: String): Result<LoginResponse> {
         return try {
             val request = LoginRequest(email, password)
@@ -23,38 +43,53 @@ class AuthRepository @Inject constructor(
                 Result.success(loginResponse)
             } ?: Result.failure(Exception(response.message))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
     suspend fun register(
-        studentNumber: String,
         firstName: String,
         lastName: String,
         email: String,
-        course: String,
-        yearLevel: Int,
-        block: String,
         password: String
     ): Result<RegisterResponse> {
         return try {
+            // Log input parameters
+            Log.d("AuthRepository", "Register Input - firstName: $firstName, lastName: $lastName, email: $email")
+            
             val request = RegisterRequest(
-                studentNumber = studentNumber,
-                firstName = firstName,
-                lastName = lastName,
                 email = email,
-                course = course,
-                yearLevel = yearLevel,
-                block = block,
                 password = password,
-                admissionYear = studentNumber.substring(0, 4) // Extract year from student number
+                first_name = firstName,
+                last_name = lastName
             )
+            
+            // Log the complete request object
+            Log.d("AuthRepository", "Register Request Object: ${gson.toJson(request)}")
+            
             val response = api.register(request)
+            
+            // Log the complete response
+            Log.d("AuthRepository", "Register Raw Response: ${gson.toJson(response)}")
+            Log.d("AuthRepository", "Register Response Status: ${response.status}")
+            Log.d("AuthRepository", "Register Response Message: ${response.message}")
+            Log.d("AuthRepository", "Register Response Data: ${response.data?.let { gson.toJson(it) }}")
+            
             response.data?.let {
                 Result.success(it)
             } ?: Result.failure(Exception(response.message))
         } catch (e: Exception) {
-            Result.failure(e)
+            // Log detailed error information
+            Log.e("AuthRepository", "Register Error Type: ${e.javaClass.simpleName}")
+            Log.e("AuthRepository", "Register Error Message: ${e.message}")
+            Log.e("AuthRepository", "Register Error Stack Trace:", e)
+            
+            if (e is HttpException) {
+                val errorBody = e.response()?.errorBody()?.string()
+                Log.e("AuthRepository", "Register HTTP Error Body: $errorBody")
+            }
+            
+            Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
@@ -67,7 +102,7 @@ class AuthRepository @Inject constructor(
                 Result.failure(Exception(response.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
@@ -80,7 +115,7 @@ class AuthRepository @Inject constructor(
                 Result.failure(Exception(response.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
@@ -96,7 +131,7 @@ class AuthRepository @Inject constructor(
                 Result.failure(Exception(response.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
@@ -109,7 +144,7 @@ class AuthRepository @Inject constructor(
                 Result.failure(Exception(response.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
@@ -154,7 +189,7 @@ class AuthRepository @Inject constructor(
                 Result.failure(Exception(response.message))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
@@ -169,7 +204,7 @@ class AuthRepository @Inject constructor(
             }
         } catch (e: Exception) {
             sessionManager.clearSession() // Clear session even if API call fails
-            Result.failure(e)
+            Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
