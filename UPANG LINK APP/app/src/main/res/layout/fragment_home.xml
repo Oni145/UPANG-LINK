@@ -140,13 +140,20 @@
         app:contentInsetStart="0dp"
         app:contentInsetEnd="0dp">
 
-        <TextView
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="UPANG Link"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-            android:textColor="@color/primary" />
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="UPANG Link"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                android:textColor="@color/primary" />
+
+        </RelativeLayout>
+
     </com.google.android.material.appbar.MaterialToolbar>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 
