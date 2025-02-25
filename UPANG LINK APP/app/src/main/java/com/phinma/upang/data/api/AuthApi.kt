@@ -5,7 +5,7 @@ import retrofit2.http.*
 
 interface AuthApi {
     @POST("auth/student/login")
-    suspend fun login(@Body request: LoginRequest): ApiResponse<LoginResponse>
+    suspend fun login(@Body request: LoginRequest): ApiLoginResponse
 
     @POST("auth/student/register")
     @Headers("Content-Type: application/json")

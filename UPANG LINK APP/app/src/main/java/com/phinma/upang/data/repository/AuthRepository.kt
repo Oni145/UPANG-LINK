@@ -36,12 +36,14 @@ class AuthRepository @Inject constructor(
             val request = LoginRequest(email, password)
             val response = api.login(request)
             
-            response.data?.let { loginResponse ->
+            if (response.status == "success" && response.data != null) {
                 // Save auth token and user profile
-                sessionManager.saveAuthToken(loginResponse.token)
-                sessionManager.saveUser(loginResponse.user)
-                Result.success(loginResponse)
-            } ?: Result.failure(Exception(response.message))
+                sessionManager.saveAuthToken(response.data.token)
+                sessionManager.saveUser(response.data.user)
+                Result.success(response.data)
+            } else {
+                Result.failure(Exception(response.message))
+            }
         } catch (e: Exception) {
             Result.failure(Exception(parseErrorResponse(e)))
         }

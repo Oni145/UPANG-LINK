@@ -104,7 +104,11 @@
         android:id="@+id/homeFragment"
         android:name="com.phinma.upang.ui.home.HomeFragment"
         android:label="Home">
-        <!-- Removed Notifications Fragment and its action -->
+        <action
+            android:id="@+id/action_navigation_home_to_createRequestFragment"
+            app:destination="@id/createRequestFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim" />
     </fragment>
 
     <fragment

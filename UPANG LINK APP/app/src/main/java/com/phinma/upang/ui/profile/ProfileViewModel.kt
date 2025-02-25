@@ -7,9 +7,16 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.phinma.upang.data.api.AuthApi
+import com.phinma.upang.data.model.UserProfile
+import com.phinma.upang.data.local.SessionManager
+import com.phinma.upang.data.repository.AuthRepository
 
 @HiltViewModel
-class ProfileViewModel @Inject constructor() : ViewModel() {
+class ProfileViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val sessionManager: SessionManager
+) : ViewModel() {
 
     private val _profileState = MutableLiveData<ProfileState>()
     val profileState: LiveData<ProfileState> = _profileState
@@ -22,13 +29,19 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
         viewModelScope.launch {
             _profileState.value = ProfileState.Loading
             try {
-                // TODO: Implement actual profile loading logic
-                val user = User(
-                    firstName = "John",
-                    lastName = "Doe",
-                    email = "john.doe@example.com"
-                )
-                _profileState.value = ProfileState.Success(user)
+                // Get user from SessionManager
+                val user = sessionManager.getUser()
+                if (user != null) {
+                    _profileState.value = ProfileState.Success(user)
+                } else {
+                    // If user is not in SessionManager, try to fetch from API
+                    val response = authRepository.getProfile()
+                    response.onSuccess { profile ->
+                        _profileState.value = ProfileState.Success(profile)
+                    }.onFailure { error ->
+                        _profileState.value = ProfileState.Error(error.message ?: "Failed to load profile")
+                    }
+                }
             } catch (e: Exception) {
                 _profileState.value = ProfileState.Error(e.message ?: "Failed to load profile")
             }
@@ -38,7 +51,12 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     fun logout() {
         viewModelScope.launch {
             try {
-                // TODO: Implement actual logout logic
+                val result = authRepository.logout()
+                result.onSuccess {
+                    sessionManager.clearSession()
+                }.onFailure { error ->
+                    _profileState.value = ProfileState.Error(error.message ?: "Failed to logout")
+                }
             } catch (e: Exception) {
                 _profileState.value = ProfileState.Error(e.message ?: "Failed to logout")
             }
@@ -47,7 +65,7 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
 
     sealed class ProfileState {
         object Loading : ProfileState()
-        data class Success(val user: User) : ProfileState()
+        data class Success(val user: UserProfile) : ProfileState()
         data class Error(val message: String) : ProfileState()
     }
 

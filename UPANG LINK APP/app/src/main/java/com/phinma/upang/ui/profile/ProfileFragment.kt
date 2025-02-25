@@ -52,7 +52,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                     // Handle loading state if needed
                 }
                 is ProfileViewModel.ProfileState.Success -> {
-                    binding.tvName.text = "${state.user.firstName} ${state.user.lastName}"
+                    binding.tvName.text = "${state.user.first_name} ${state.user.last_name}"
                     binding.tvEmail.text = state.user.email
                 }
                 is ProfileViewModel.ProfileState.Error -> {

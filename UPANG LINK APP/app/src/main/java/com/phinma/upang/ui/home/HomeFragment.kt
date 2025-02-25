@@ -28,7 +28,7 @@ class HomeFragment : BaseFragment(R.layout.fragment_home) {
         binding.rvRecentRequests.visibility = View.GONE
 
         binding.fabAddRequest.setOnClickListener {
-            findNavController().navigate(R.id.action_requests_to_create)
+            findNavController().navigate(R.id.action_navigation_home_to_createRequestFragment)
         }
     }
 

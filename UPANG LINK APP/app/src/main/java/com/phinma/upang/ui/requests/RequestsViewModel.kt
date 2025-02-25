@@ -52,13 +52,23 @@ class RequestsViewModel @Inject constructor(
                 repository.getRequests(filter).fold(
                     onSuccess = { requests ->
                         _requests.value = requests
+                        // Clear any previous errors
+                        _error.value = null
                     },
                     onFailure = { e ->
-                        _error.value = e.message ?: "Failed to load requests"
+                        // Only show error if it's not a 404
+                        if (e.message?.contains("404", ignoreCase = true) != true) {
+                            _error.value = e.message
+                        }
+                        _requests.value = emptyList()
                     }
                 )
             } catch (e: Exception) {
-                _error.value = e.message ?: "Failed to load requests"
+                // Only show error if it's not a 404
+                if (e.message?.contains("404", ignoreCase = true) != true) {
+                    _error.value = e.message
+                }
+                _requests.value = emptyList()
             } finally {
                 _isLoading.value = false
             }

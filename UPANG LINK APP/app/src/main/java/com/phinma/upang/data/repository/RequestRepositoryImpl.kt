@@ -21,28 +21,36 @@ class RequestRepositoryImpl @Inject constructor(
     override suspend fun getRequests(filter: RequestFilter?): Result<List<Request>> {
         return try {
             val response = api.getRequests()
-            response.data?.let { requests ->
-                // Apply filters if provided
-                val filteredRequests = filter?.let { f ->
-                    requests.filter { request ->
-                        var matches = true
-                        f.status?.let { matches = matches && request.status == it }
-                        f.type?.let { matches = matches && request.typeId == it }
-                        f.startDate?.let { matches = matches && request.createdAt >= it }
-                        f.endDate?.let { matches = matches && request.createdAt <= it }
-                        f.searchQuery?.let { query ->
-                            matches = matches && (
-                                request.purpose.contains(query, ignoreCase = true) ||
-                                request.type.name.contains(query, ignoreCase = true)
-                            )
+            if (response.status == "error" && (response.message == "No requests found" || response.message?.contains("404") == true)) {
+                Result.success(emptyList()) // Return empty list for both "No requests" and 404 errors
+            } else {
+                response.data?.let { requests ->
+                    // Apply filters if provided
+                    val filteredRequests = filter?.let { f ->
+                        requests.filter { request ->
+                            var matches = true
+                            f.status?.let { matches = matches && request.status == it }
+                            f.type?.let { matches = matches && request.typeId == it }
+                            f.startDate?.let { matches = matches && request.createdAt >= it }
+                            f.endDate?.let { matches = matches && request.createdAt <= it }
+                            f.searchQuery?.let { query ->
+                                matches = matches && (
+                                    request.purpose.contains(query, ignoreCase = true) ||
+                                    request.type.name.contains(query, ignoreCase = true)
+                                )
+                            }
+                            matches
                         }
-                        matches
-                    }
-                } ?: requests
-                Result.success(filteredRequests)
-            } ?: Result.failure(Exception(response.message))
+                    } ?: requests
+                    Result.success(filteredRequests)
+                } ?: Result.success(emptyList()) // Return empty list instead of error when data is null
+            }
         } catch (e: Exception) {
-            Result.failure(e)
+            if (e.message?.contains("404") == true) {
+                Result.success(emptyList()) // Return empty list for 404 errors
+            } else {
+                Result.failure(e)
+            }
         }
     }
 
@@ -162,11 +170,37 @@ class RequestRepositoryImpl @Inject constructor(
     override suspend fun getRequestStatistics(): Result<RequestStatistics> {
         return try {
             val response = api.getRequestStatistics()
-            response.data?.let {
-                Result.success(it)
-            } ?: Result.failure(Exception(response.message))
+            if (response.status == "error" && response.message?.contains("404") == true) {
+                // Return empty statistics for 404 with all required parameters
+                Result.success(RequestStatistics(
+                    total = 0,
+                    pending = 0,
+                    completed = 0,
+                    inProgress = 0,
+                    cancelled = 0,
+                    byType = emptyMap(),
+                    byMonth = emptyMap()
+                ))
+            } else {
+                response.data?.let {
+                    Result.success(it)
+                } ?: Result.failure(Exception(response.message))
+            }
         } catch (e: Exception) {
-            Result.failure(e)
+            if (e.message?.contains("404") == true) {
+                // Return empty statistics for 404 with all required parameters
+                Result.success(RequestStatistics(
+                    total = 0,
+                    pending = 0,
+                    completed = 0,
+                    inProgress = 0,
+                    cancelled = 0,
+                    byType = emptyMap(),
+                    byMonth = emptyMap()
+                ))
+            } else {
+                Result.failure(e)
+            }
         }
     }
 } 
