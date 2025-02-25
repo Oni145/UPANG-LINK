@@ -23,7 +23,6 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     
     private lateinit var binding: ActivityMainBinding
-    private lateinit var appBarConfiguration: AppBarConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,12 +30,14 @@ class MainActivity : AppCompatActivity() {
         // Configure window to draw under system bars
         WindowCompat.setDecorFitsSystemWindows(window, false)
         
+        // Make the status bar transparent
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        
+        // Hide the system UI
+        hideSystemUI()
+        
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        setSupportActionBar(binding.toolbar)
-        setupNavigation()
-        setupSystemBars()
 
         // Ensure the NavController is set up before accessing it
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
@@ -54,88 +55,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupSystemBars() {
-        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
-        windowInsetsController.apply {
-            // Show the status bar but make it transparent
-            show(WindowInsetsCompat.Type.statusBars())
-            show(WindowInsetsCompat.Type.navigationBars())
-            // Use light appearance (dark icons) since we have a light theme
-            isAppearanceLightStatusBars = true
-            isAppearanceLightNavigationBars = true
-        }
-    }
-
-    fun openDrawer() {
-        binding.drawerLayout.openDrawer(GravityCompat.START)
-    }
-
-    private fun setupNavigation() {
-        val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
-        
-        // Set up drawer navigation
-        appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.navigation_home,
-                R.id.navigation_requests,
-                R.id.navigation_notifications,
-                R.id.navigation_profile
-            ),
-            binding.drawerLayout
-        )
-
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        binding.navView.setupWithNavController(navController)
-
-        // Hide drawer and toolbar for auth screens
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            val isAuthScreen = when (destination.id) {
-                R.id.loginFragment,
-                R.id.registerFragment,
-                R.id.forgotPasswordFragment,
-                R.id.resetPasswordSentFragment,
-                R.id.emailVerificationFragment -> true
-                else -> false
-            }
-
-            binding.toolbar.visibility = if (isAuthScreen) View.GONE else View.VISIBLE
-            binding.drawerLayout.setDrawerLockMode(
-                if (isAuthScreen) DrawerLayout.LOCK_MODE_LOCKED_CLOSED
-                else DrawerLayout.LOCK_MODE_UNLOCKED
-            )
-        }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment).navController
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
-    }
-
-    override fun onBackPressed() {
-        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            binding.drawerLayout.closeDrawer(GravityCompat.START)
-        } else {
-            super.onBackPressed()
-        }
+    private fun hideSystemUI() {
+        val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+        windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
     }
 
     private fun navigateToMainScreen(navController: NavController) {
-        navController.navigate(R.id.mainFragment) // Replace with your main fragment ID
+        navController.navigate(R.id.mainFragment)
     }
 
     private fun navigateToLoginScreen(navController: NavController) {
-        navController.navigate(R.id.loginFragment) // Replace with your login fragment ID
-    }
-
-    private fun hideSystemUI() {
-        window.decorView.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            or View.SYSTEM_UI_FLAG_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+        navController.navigate(R.id.loginFragment)
     }
 } 
