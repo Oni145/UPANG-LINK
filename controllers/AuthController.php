@@ -1,5 +1,5 @@
 <?php
-// Include Composer's autoloader once at the top.
+// Include Composer's autoloader.
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -9,10 +9,13 @@ class AuthController {
     
     private $db;
     private $user;
-    
-    public function __construct($db) {
-        $this->db   = $db;
-        $this->user = new User($db);
+    private $config; // Store configuration settings
+
+    // Accept both the database connection and config array in the constructor.
+    public function __construct($db, $config) {
+        $this->db     = $db;
+        $this->config = $config;
+        $this->user   = new User($db);
     }
     
     public function handleRequest($method, $uri) {
@@ -70,7 +73,6 @@ class AuthController {
                     if ($uri[0] === 'verify') {
                         $this->verifyEmail();
                     } elseif ($uri[0] === 'users') {
-                        // Require a valid token for fetching user data.
                         $this->requireToken();
                         if (isset($uri[1]) && !empty($uri[1])) {
                             $this->getUser($uri[1]);
@@ -93,7 +95,7 @@ class AuthController {
     private function login() {
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
-        if (empty($data->email)) { $missing[] = "email"; }
+        if (empty($data->email))    { $missing[] = "email"; }
         if (empty($data->password)) { $missing[] = "password"; }
         if (!empty($missing)) {
             $this->sendError("Missing fields: " . implode(', ', $missing), 400);
@@ -135,11 +137,11 @@ class AuthController {
     private function register() {
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
-        if (empty($data->email)) { $missing[] = "email"; }
-        if (empty($data->password)) { $missing[] = "password"; }
-        if (empty($data->first_name)) { $missing[] = "first_name"; }
-        if (empty($data->last_name)) { $missing[] = "last_name"; }
-        if (empty($data->year_level)) { $missing[] = "year_level"; }
+        if (empty($data->email))        { $missing[] = "email"; }
+        if (empty($data->password))     { $missing[] = "password"; }
+        if (empty($data->first_name))   { $missing[] = "first_name"; }
+        if (empty($data->last_name))    { $missing[] = "last_name"; }
+        if (empty($data->year_level))   { $missing[] = "year_level"; }
         if (empty($data->admission_year)) { $missing[] = "admission_year"; }
         if (!empty($missing)) {
             $this->sendError("Missing fields: " . implode(', ', $missing), 400);
@@ -157,7 +159,6 @@ class AuthController {
         $this->user->password = password_hash($data->password, PASSWORD_DEFAULT);
         $this->user->first_name = $data->first_name;
         $this->user->last_name = $data->last_name;
-        // Removed: $this->user->course = $data->course;
         $this->user->year_level = $data->year_level;
         $this->user->admission_year = $data->admission_year;
         
@@ -168,35 +169,27 @@ class AuthController {
             $stmt = $this->db->prepare("UPDATE users SET email_verification_token = ? WHERE email = ?");
             $stmt->execute([$verifyToken, $data->email]);
             
-            // Prepare verification email.
+            // Build the verification link using the API URL from config and point to verify-email.php in "pages".
+            $verificationLink = $this->config['app']['api_url'] . '/pages/verify-email.php?token=' . $verifyToken;
             $subject = "Verify Your Email Address";
             $body = "Your verification token is: " . $verifyToken . "\n\n" .
-                    "Use this token in Postman to verify your email by sending a GET request to: \n" .
-                    "http://localhost:8000/auth/verify?token=" . $verifyToken;
+                    "Click the link below to verify your email:\n" . $verificationLink;
             
-            $mail = new PHPMailer(true);
-            try {
-                $mail->isSMTP();
-                $mail->Host       = 'smtp.gmail.com';
-                $mail->SMTPAuth   = true;
-                $mail->Username   = 'librariansystem1@gmail.com';
-                $mail->Password   = 'fyii qywz sobr wfks';
-                $mail->SMTPSecure = 'TLS';
-                $mail->Port       = 587;
-                $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
-                $mail->addAddress($data->email, $data->first_name . ' ' . $data->last_name);
-                $mail->isHTML(false);
-                $mail->Subject  = $subject;
-                $mail->Body     = $body;
-                $mail->send();
-            } catch (Exception $e) {
-                error_log("PHPMailer Error: " . $mail->ErrorInfo);
+            // Use the centralized email sender.
+            $sent = $this->sendMail(
+                $data->email,
+                $subject,
+                $body,
+                $data->first_name . ' ' . $data->last_name
+            );
+            if (!$sent) {
+                error_log("Failed to send verification email");
             }
             
             http_response_code(201);
             echo json_encode([
                 'status'  => 'success',
-                'message' => 'Registered successfully. Please check your email for the verification token.'
+                'message' => 'Registered successfully. Please check your email for the verification link.'
             ]);
         } else {
             $this->sendError('Unable to create user', 500);
@@ -227,33 +220,25 @@ class AuthController {
             $verifyToken = $user['email_verification_token'];
         }
         
+        // Build the verification link using the API URL from config.
+        $verificationLink = $this->config['app']['api_url'] . '/pages/verify-email.php?token=' . $verifyToken;
         $subject = "Verify Your Email Address";
         $body = "Your verification token is: " . $verifyToken . "\n\n" .
-                "Use this token in Postman to verify your email by sending a GET request to: \n" .
-                "http://localhost:8000/auth/verify?token=" . $verifyToken;
+                "Click the link below to verify your email:\n" . $verificationLink;
         
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'librariansystem1@gmail.com';
-            $mail->Password   = 'fyii qywz sobr wfks';
-            $mail->SMTPSecure = 'TLS';
-            $mail->Port       = 587;
-            $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
-            $mail->addAddress($data->email, $user['first_name'] . ' ' . $user['last_name']);
-            $mail->isHTML(false);
-            $mail->Subject = $subject;
-            $mail->Body    = $body;
-            $mail->send();
+        $sent = $this->sendMail(
+            $data->email,
+            $subject,
+            $body,
+            $user['first_name'] . ' ' . $user['last_name']
+        );
+        if ($sent) {
             echo json_encode([
                 'status'  => 'success',
-                'message' => 'Verification token resent successfully.'
+                'message' => 'Verification link resent successfully.'
             ]);
-        } catch (Exception $e) {
-            error_log("PHPMailer Error: " . $mail->ErrorInfo);
-            $this->sendError("Failed to send verification token", 500);
+        } else {
+            $this->sendError("Failed to send verification link", 500);
         }
     }
     
@@ -305,25 +290,7 @@ class AuthController {
                 "\"" . $resetToken . "\"\n\n" .
                 "If you did not request a password reset, please ignore this email.";
         
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'librariansystem1@gmail.com';
-            $mail->Password   = 'fyii qywz sobr wfks';
-            $mail->SMTPSecure = 'TLS';
-            $mail->Port       = 587;
-            $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
-            $mail->addAddress($data->email);
-            $mail->isHTML(false);
-            $mail->Subject  = $subject;
-            $mail->Body     = $body;
-            $mail->send();
-        } catch (Exception $e) {
-            error_log("PHPMailer Error: " . $mail->ErrorInfo);
-        }
-        
+        $this->sendMail($data->email, $subject, $body);
         echo json_encode([
             'status'  => 'success',
             'message' => 'Password reset token has been sent to your email.'
@@ -361,7 +328,6 @@ class AuthController {
     }
     
     // ----- CHANGE PASSWORD FUNCTIONALITY (PUT) -----
-    // This endpoint allows a user to change their password using a token sent via email.
     private function changePassword() {
         $data = json_decode(file_get_contents("php://input"));
         if (empty($data->token) || empty($data->new_password)) {
@@ -392,7 +358,6 @@ class AuthController {
     }
     
     // ----- REQUEST CHANGE PASSWORD TOKEN FUNCTIONALITY (POST) -----
-    // This endpoint allows an authenticated user to request a change password token via email.
     private function requestChangePassword() {
         // Require an authentication token.
         $tokenData = $this->requireToken();
@@ -410,41 +375,31 @@ class AuthController {
         $changeToken = $this->generateToken(16);
         $expiresAt = date('Y-m-d H:i:s', time() + 3600); // valid for 1 hour
         
-        // Store the token (using the same fields as password reset).
+        // Store the token.
         $stmt = $this->db->prepare("UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE user_id = ?");
         if (!$stmt->execute([$changeToken, $expiresAt, $userId])) {
             $this->sendError("Unable to generate change password token", 500);
             return;
         }
         
-        // Prepare the email.
         $subject = "Change Your Password";
         $body = "You requested to change your password.\n\n" .
                 "Use the following token to change your password:\n\n" .
                 $changeToken . "\n\n" .
                 "This token is valid for one hour.";
         
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'librariansystem1@gmail.com';
-            $mail->Password   = 'fyii qywz sobr wfks';
-            $mail->SMTPSecure = 'TLS';
-            $mail->Port       = 587;
-            $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
-            $mail->addAddress($user['email'], $user['first_name'] . ' ' . $user['last_name']);
-            $mail->isHTML(false);
-            $mail->Subject  = $subject;
-            $mail->Body     = $body;
-            $mail->send();
+        $sent = $this->sendMail(
+            $user['email'],
+            $subject,
+            $body,
+            $user['first_name'] . ' ' . $user['last_name']
+        );
+        if ($sent) {
             echo json_encode([
                 'status'  => 'success',
                 'message' => 'Change password token sent to your email.'
             ]);
-        } catch (Exception $e) {
-            error_log("PHPMailer Error: " . $mail->ErrorInfo);
+        } else {
             $this->sendError("Failed to send change password token", 500);
         }
     }
@@ -453,10 +408,10 @@ class AuthController {
     private function updateUser($id) {
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
-        if (empty($data->email)) { $missing[] = "email"; }
-        if (empty($data->first_name)) { $missing[] = "first_name"; }
-        if (empty($data->last_name)) { $missing[] = "last_name"; }
-        if (empty($data->year_level)) { $missing[] = "year_level"; }
+        if (empty($data->email))        { $missing[] = "email"; }
+        if (empty($data->first_name))   { $missing[] = "first_name"; }
+        if (empty($data->last_name))    { $missing[] = "last_name"; }
+        if (empty($data->year_level))   { $missing[] = "year_level"; }
         if (empty($data->admission_year)) { $missing[] = "admission_year"; }
         if (!empty($missing)) {
             $this->sendError("Missing fields for update: " . implode(', ', $missing), 400);
@@ -466,7 +421,6 @@ class AuthController {
         $this->user->email = $data->email;
         $this->user->first_name = $data->first_name;
         $this->user->last_name = $data->last_name;
-        // Removed: $this->user->course = $data->course;
         $this->user->year_level = $data->year_level;
         $this->user->admission_year = $data->admission_year;
     
@@ -571,10 +525,12 @@ class AuthController {
         return false;
     }
     
+    // ----- HELPER FUNCTION: Generate Random Token -----
     private function generateToken($length = 16) {
         return bin2hex(random_bytes($length));
     }
     
+    // ----- HELPER FUNCTION: Require and Validate Authorization Token -----
     private function requireToken() {
         $headers = apache_request_headers();
         $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : null);
@@ -595,12 +551,36 @@ class AuthController {
         return $tokenData;
     }
     
+    // ----- HELPER FUNCTION: Centralized Email Sending -----
+    private function sendMail($to, $subject, $body, $toName = '') {
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = $this->config['email']['smtp_host'];
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $this->config['email']['smtp_username'];
+            $mail->Password   = $this->config['email']['smtp_password'];
+            $mail->SMTPSecure = $this->config['email']['smtp_secure'];
+            $mail->Port       = $this->config['email']['smtp_port'];
+            $mail->setFrom($this->config['email']['from_email'], $this->config['email']['from_name']);
+            $mail->addAddress($to, $toName);
+            $mail->isHTML(false);
+            $mail->Subject  = $subject;
+            $mail->Body     = $body;
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log("PHPMailer Error: " . $mail->ErrorInfo);
+            return false;
+        }
+    }
+    
+    // ----- HELPER FUNCTION: Send Error Responses -----
     private function sendError($message, $code = 400) {
         http_response_code($code);
         echo json_encode([
-            'status' => 'error',
+            'status'  => 'error',
             'message' => $message
         ]);
     }
 }
-?>

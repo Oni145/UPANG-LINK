@@ -1,13 +1,25 @@
 <?php
-session_start(); // Start session to persist rate-limiter data
+// Enable error reporting in development (disable or modify in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Set CORS and content-type headers
+// Include Composer's autoloader to load dependencies.
+require_once __DIR__ . '/../vendor/autoload.php';
+
+// Start session to persist rate-limiter data.
+session_start();
+
+// Optionally load your centralized configuration if needed.
+$config = require_once __DIR__ . '/../config/config.php';
+
+// Set CORS and content-type headers.
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Platform");
 
+// Pre-flight (OPTIONS) request: return the headers and exit.
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -15,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Include required files
+// Include required files.
 include_once __DIR__ . '/../config/Database.php';
 include_once __DIR__ . '/../models/User.php';
 include_once __DIR__ . '/../models/Request.php';
@@ -26,7 +38,7 @@ include_once __DIR__ . '/../controllers/AuthController.php';
 include_once __DIR__ . '/../controllers/RequestController.php';
 include_once __DIR__ . '/../controllers/RequirementNoteController.php';
 
-// Include the middleware pipeline class
+// Include the middleware pipeline class.
 include_once __DIR__ . '/../middleware/MiddlewarePipeline.php';
 
 // Define a RequestCounter class to enforce a limit of 1000 posts per hour using session storage.
@@ -63,26 +75,26 @@ if (!class_exists('RequestCounter')) {
     }
 }
 
-// Setup Database
+// Setup Database.
 $database = new Database();
 $db = $database->getConnection();
 
-// Parse Request URI
+// Parse Request URI.
 $request_uri = urldecode($_SERVER['REQUEST_URI']);
 $uri_parts   = parse_url($request_uri);
 $path        = $uri_parts['path'];
-// Set your base path as deployed (adjust if needed)
+// Set your base path as deployed (adjust if needed).
 $base_path   = '/UPANG LINK';
 $endpoint    = str_replace($base_path, '', $path);
 $uri         = explode('/', trim($endpoint, '/'));
 
-// Debug logging
+// Debug logging.
 error_log("Request URI: " . $request_uri);
 error_log("Path: " . $path);
 error_log("Endpoint: " . $endpoint);
 error_log("URI: " . print_r($uri, true));
 
-// If no endpoint is provided, return API info
+// If no endpoint is provided, return API info.
 if (!isset($uri[0]) || empty($uri[0])) {
     echo json_encode([
         'status'    => 'success',
@@ -98,36 +110,37 @@ if (!isset($uri[0]) || empty($uri[0])) {
     exit();
 }
 
-// Determine which controller to use based on the first URI segment
+// Determine which controller to use based on the first URI segment.
 $requestMethod = $_SERVER["REQUEST_METHOD"];
 $controller    = null;
 
 switch ($uri[0]) {
     case 'admin':
         $controller = new AdminController($db);
-        array_unshift($uri, 'auth'); // Prepend to match expected URI for admin auth
+        array_unshift($uri, 'auth'); // Prepend to match expected URI for admin auth.
         break;
 
     case 'auth':
-        $controller = new AuthController($db);
-        array_shift($uri); // Remove 'auth'
+        // Fixed: Pass both $db and $config to the constructor.
+        $controller = new AuthController($db, $config);
+        array_shift($uri); // Remove 'auth'.
         break;
 
     case 'requests':
-        // Check if it's a nested notes route: /requests/notes
+        // Check if it's a nested notes route: /requests/notes.
         if (isset($uri[1]) && strtolower($uri[1]) === 'notes') {
             $controller = new RequirementNoteController($db);
-            array_shift($uri); // Remove 'requests'
-            array_shift($uri); // Remove 'notes'
+            array_shift($uri); // Remove 'requests'.
+            array_shift($uri); // Remove 'notes'.
         } else {
             $controller = new RequestController($db);
         }
         break;
     
     case 'notes':
-        // Dedicated route for notes: /notes
+        // Dedicated route for notes: /notes.
         $controller = new RequirementNoteController($db);
-        array_shift($uri); // Remove 'notes'
+        array_shift($uri); // Remove 'notes'.
         break;
 
     default:
@@ -155,7 +168,6 @@ $pipeline = new MiddlewarePipeline($finalHandler);
 
 // Middleware 1: Log the request endpoint.
 $pipeline->add(function($request, $next) {
-    // Check if 'endpoint' and its first element are set to avoid warnings.
     if (isset($request['endpoint'][0])) {
         error_log("Middleware Log: Processing endpoint " . implode('/', $request['endpoint']));
     }
