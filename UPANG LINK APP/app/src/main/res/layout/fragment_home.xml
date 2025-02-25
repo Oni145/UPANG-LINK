@@ -114,4 +114,14 @@
 
     </com.google.android.material.appbar.MaterialToolbar>
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddRequest"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="72dp"
+        android:contentDescription="Create new request"
+        app:srcCompat="@drawable/ic_add" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

@@ -13,9 +13,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:menu="@menu/profile_menu"
-            app:title="Profile"
-            app:titleTextColor="@color/primary" />
+            app:menu="@menu/profile_menu" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

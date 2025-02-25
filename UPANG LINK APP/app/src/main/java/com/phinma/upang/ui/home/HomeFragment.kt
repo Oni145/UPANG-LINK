@@ -26,6 +26,10 @@ class HomeFragment : BaseFragment(R.layout.fragment_home) {
         // Initially show the "No requests" message
         binding.tvNoRequests.visibility = View.VISIBLE
         binding.rvRecentRequests.visibility = View.GONE
+
+        binding.fabAddRequest.setOnClickListener {
+            findNavController().navigate(R.id.action_requests_to_create)
+        }
     }
 
     override fun onDestroyView() {

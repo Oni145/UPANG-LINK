@@ -28,10 +28,10 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     private fun setupViews() {
         binding.toolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.action_settings -> {
-                    // TODO: Navigate to settings screen
-                    true
-                }
+                // R.id.action_settings -> {
+                //     // TODO: Navigate to settings screen
+                //     true
+                // }
                 else -> false
             }
         }
