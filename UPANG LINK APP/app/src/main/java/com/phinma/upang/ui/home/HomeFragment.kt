@@ -23,15 +23,6 @@ class HomeFragment : BaseFragment(R.layout.fragment_home) {
     }
 
     private fun setupViews() {
-        // Quick Actions
-        binding.newRequestButton.setOnClickListener {
-            findNavController().navigate(R.id.action_requests_to_create)
-        }
-
-        binding.viewRequestsButton.setOnClickListener {
-            findNavController().navigate(R.id.navigation_requests)
-        }
-
         // Initially show the "No requests" message
         binding.tvNoRequests.visibility = View.VISIBLE
         binding.rvRecentRequests.visibility = View.GONE
