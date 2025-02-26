@@ -5,16 +5,11 @@ USE upang_link;
 -- Users table
 CREATE TABLE users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
-    student_number VARCHAR(50) UNIQUE,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    role ENUM('student', 'admin', 'staff') NOT NULL,
-    course VARCHAR(100),
-    year_level INT,
-    block VARCHAR(10),
-    admission_year VARCHAR(4),
+    role ENUM('student', 'admin') NOT NULL,
     email_verified BOOLEAN DEFAULT FALSE,
     email_verification_token VARCHAR(255),
     email_token_expiry DATETIME,
@@ -113,21 +108,61 @@ INSERT INTO categories (name, description) VALUES
 
 -- Insert sample request types
 INSERT INTO request_types (category_id, name, description, requirements, processing_time) VALUES
-(1, 'Transcript of Records', 'Official academic transcript', 'Clearance form, Request letter', '5-7 working days'),
-(1, 'Enrollment Certificate', 'Proof of enrollment document', 'Valid student ID', '2-3 working days'),
-(2, 'New Student ID', 'First time ID request', '1x1 ID Picture (white background, formal attire), Registration Form', '5-7 working days'),
-(2, 'ID Replacement', 'Lost or damaged ID replacement', 'Affidavit of Loss, 1x1 ID Picture (white background, formal attire)', '5-7 working days'),
-(3, 'PE Uniform Request', 'Physical Education uniform set', 'Valid student ID', '3-5 working days'),
-(3, 'School Uniform Request', 'Regular school uniform set', 'Valid student ID', '3-5 working days'),
-(4, 'Course Module Request', 'Subject-specific learning materials', 'Valid student ID, Professor approval', '1-2 working days');
+(1, 'Transcript of Records', 'Official academic transcript', 
+ JSON_OBJECT('required_docs', JSON_ARRAY('Clearance form', 'Request letter')), 
+ '5-7 working days'),
+(1, 'Enrollment Certificate', 'Proof of enrollment document', 
+ JSON_OBJECT('required_docs', JSON_ARRAY('Valid student ID')), 
+ '2-3 working days'),
+(2, 'New Student ID', 'First time ID request', 
+ JSON_OBJECT('required_docs', JSON_ARRAY('1x1 ID Picture (white background, formal attire)', 'Registration Form')), 
+ '5-7 working days'),
+(2, 'ID Replacement', 'Lost or damaged ID replacement', 
+ JSON_OBJECT('required_docs', JSON_ARRAY('Affidavit of Loss', '1x1 ID Picture (white background, formal attire)')), 
+ '5-7 working days'),
+(3, 'PE Uniform Request', 'Physical Education uniform set', 
+ JSON_OBJECT('required_docs', JSON_ARRAY('Valid student ID')), 
+ '3-5 working days'),
+(3, 'School Uniform Request', 'Regular school uniform set', 
+ JSON_OBJECT('required_docs', JSON_ARRAY('Valid student ID')), 
+ '3-5 working days'),
+(4, 'Course Module Request', 'Subject-specific learning materials', 
+ JSON_OBJECT('required_docs', JSON_ARRAY('Valid student ID', 'Professor approval')), 
+ '1-2 working days');
 
 -- Insert default admin user
-INSERT INTO users (student_number, password, first_name, last_name, role) VALUES
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin');
+INSERT INTO users (email, password, first_name, last_name, role, email_verified) VALUES
+('admin@upang.edu.ph', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin', 1);
 
--- Insert sample student accounts with proper student ID format
-INSERT INTO users (student_number, password, first_name, last_name, role, course, year_level, block, admission_year) VALUES
-('0001-2021-00123', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Matthew Cymon', 'Estrada', 'student', 'BSIT', 3, 'BN', '2021');
+-- Insert Jericko Garcia's account
+INSERT INTO users (email, password, first_name, last_name, role, email_verified) VALUES
+('jerickogarcia0@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Jericko', 'Garcia', 'student', 1);
+
+-- Insert sample requests for Jericko Garcia
+INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
+SELECT 
+    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
+    1, 'pending', NOW(), NOW();
+
+INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
+SELECT 
+    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
+    2, 'in_progress', NOW(), NOW();
+
+INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
+SELECT 
+    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
+    3, 'completed', DATE_SUB(NOW(), INTERVAL 2 DAY), NOW();
+
+INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
+SELECT 
+    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
+    4, 'rejected', DATE_SUB(NOW(), INTERVAL 3 DAY), NOW();
+
+INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
+SELECT 
+    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
+    5, 'completed', DATE_SUB(NOW(), INTERVAL 5 DAY), NOW();
 
 -- Add requirements column to request_types if not exists
 ALTER TABLE request_types 

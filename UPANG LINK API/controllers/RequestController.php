@@ -20,6 +20,10 @@ class RequestController {
                         $this->getRequestNotes($uri[2]);
                     } else if($uri[1] === 'form' && isset($uri[2])) {
                         $this->getRequestForm($uri[2]);
+                    } else if($uri[1] === 'types') {
+                        $this->getRequestTypes();
+                    } else if($uri[1] === 'statistics') {
+                        $this->getRequestStatistics();
                     } else {
                         $this->getRequest($uri[1]);
                     }
@@ -295,6 +299,72 @@ class RequestController {
         } else {
             $this->sendError('Request type not found', 404);
         }
+    }
+
+    private function getRequestTypes() {
+        $requestType = new RequestType($this->db);
+        $stmt = $requestType->read();
+        $num = $stmt->rowCount();
+
+        if($num > 0) {
+            $types_arr = array();
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                array_push($types_arr, $row);
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'data' => $types_arr
+            ]);
+        } else {
+            $this->sendError('No request types found', 404);
+        }
+    }
+
+    private function getRequestStatistics() {
+        $query = "SELECT 
+                    COUNT(*) as total_requests,
+                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                    SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
+                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
+                FROM requests 
+                WHERE user_id = ?";
+
+        $stmt = $this->db->prepare($query);
+        $user_id = $this->getUserIdFromToken();
+        
+        if(!$user_id) {
+            $this->sendError('Unauthorized', 401);
+            return;
+        }
+
+        $stmt->bindParam(1, $user_id);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if($result) {
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'data' => $result
+            ]);
+        } else {
+            $this->sendError('No statistics found', 404);
+        }
+    }
+
+    private function getUserIdFromToken() {
+        $headers = getallheaders();
+        $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
+        
+        if(!$token) return false;
+
+        $user = new User($this->db);
+        $result = $user->validateSession($token);
+        
+        return $result['valid'] ? $result['user_id'] : false;
     }
 
     private function sendError($message, $code = 400, $errors = null) {

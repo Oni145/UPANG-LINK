@@ -40,7 +40,7 @@ class Request {
     // Read All Requests with Details
     public function read() {
         $query = "SELECT r.*, rt.name as request_type, rt.processing_time,
-                  u.first_name, u.last_name, u.student_number,
+                  u.first_name, u.last_name,
                   c.name as category_name
                   FROM " . $this->table_name . " r
                   LEFT JOIN request_types rt ON r.type_id = rt.type_id
@@ -57,7 +57,7 @@ class Request {
     // Read Single Request with Details
     public function readOne() {
         $query = "SELECT r.*, rt.name as request_type, rt.processing_time,
-                  u.first_name, u.last_name, u.student_number,
+                  u.first_name, u.last_name,
                   c.name as category_name
                   FROM " . $this->table_name . " r
                   LEFT JOIN request_types rt ON r.type_id = rt.type_id
@@ -117,7 +117,7 @@ class Request {
     // Read Requests by Status
     public function readByStatus($status) {
         $query = "SELECT r.*, rt.name as request_type, rt.processing_time,
-                  u.first_name, u.last_name, u.student_number,
+                  u.first_name, u.last_name,
                   c.name as category_name
                   FROM " . $this->table_name . " r
                   LEFT JOIN request_types rt ON r.type_id = rt.type_id

@@ -221,9 +221,97 @@ Content-Type: multipart/form-data
     }
 }
 
-# Get Request Status
+# View All Requests
+GET /requests
+Authorization: Bearer {token}
+
+Response:
+{
+    "status": "success",
+    "data": [
+        {
+            "request_id": 1,
+            "user_id": 2,
+            "type_id": 1,
+            "status": "pending",
+            "submitted_at": "2024-03-21 10:00:00",
+            "updated_at": "2024-03-21 10:00:00",
+            "request_type": "Transcript of Records",
+            "processing_time": "5-7 working days",
+            "first_name": "Jericko",
+            "last_name": "Garcia",
+            "category_name": "Academic Documents"
+        }
+    ]
+}
+
+# View Single Request
 GET /requests/{id}
 Authorization: Bearer {token}
+
+Response:
+{
+    "status": "success",
+    "data": {
+        "request_id": 1,
+        "user_id": 2,
+        "type_id": 1,
+        "status": "pending",
+        "submitted_at": "2024-03-21 10:00:00",
+        "updated_at": "2024-03-21 10:00:00",
+        "request_type": "Transcript of Records",
+        "processing_time": "5-7 working days",
+        "first_name": "Jericko",
+        "last_name": "Garcia",
+        "category_name": "Academic Documents"
+    }
+}
+
+# View Requests by User
+GET /requests/user/{user_id}
+Authorization: Bearer {token}
+
+Response:
+{
+    "status": "success",
+    "data": [
+        {
+            "request_id": 1,
+            "user_id": 2,
+            "type_id": 1,
+            "status": "pending",
+            "submitted_at": "2024-03-21 10:00:00",
+            "updated_at": "2024-03-21 10:00:00",
+            "request_type": "Transcript of Records",
+            "processing_time": "5-7 working days",
+            "category_name": "Academic Documents"
+        }
+    ]
+}
+
+# View Requests by Status
+GET /requests/status/{status}
+Authorization: Bearer {token}
+
+Response:
+{
+    "status": "success",
+    "data": [
+        {
+            "request_id": 1,
+            "user_id": 2,
+            "type_id": 1,
+            "status": "pending",
+            "submitted_at": "2024-03-21 10:00:00",
+            "updated_at": "2024-03-21 10:00:00",
+            "request_type": "Transcript of Records",
+            "processing_time": "5-7 working days",
+            "first_name": "Jericko",
+            "last_name": "Garcia",
+            "category_name": "Academic Documents"
+        }
+    ]
+}
 
 # Update Request Status (Admin only)
 PUT /requests/{id}

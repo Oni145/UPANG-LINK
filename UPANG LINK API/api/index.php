@@ -140,7 +140,29 @@ try {
     // Handle the request
     $controller->handleRequest($requestMethod, $uri);
 } catch (Exception $e) {
-    $status_code = $e->getCode() ?: 500;
+    // Convert SQL error codes to HTTP status codes
+    $status_code = 500; // Default to 500 Internal Server Error
+    
+    // Get the error code
+    $error_code = $e->getCode();
+    
+    // Map SQL error codes to HTTP status codes
+    if (is_string($error_code)) {
+        switch ($error_code) {
+            case '42S22': // Column not found
+            case '42S02': // Table not found
+                $status_code = 500; // Internal Server Error
+                break;
+            case '23000': // Integrity constraint violation
+                $status_code = 409; // Conflict
+                break;
+            default:
+                $status_code = 500;
+        }
+    } else {
+        $status_code = $error_code ?: 500;
+    }
+    
     http_response_code($status_code);
     echo json_encode([
         'status' => 'error',
