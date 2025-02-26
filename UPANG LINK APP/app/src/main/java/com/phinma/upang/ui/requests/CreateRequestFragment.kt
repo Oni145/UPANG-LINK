@@ -101,8 +101,7 @@ class CreateRequestFragment : Fragment() {
 
         viewModel.selectedType.observe(viewLifecycleOwner) { type ->
             binding.apply {
-                processingTimeText.text = "Processing time: ${type.processingTime}"
-                feeText.text = "Fee: ₱${type.fee}"
+                processingTimeText.text = "Processing time: ${type.processing_time}"
                 submitButton.isEnabled = true
             }
         }

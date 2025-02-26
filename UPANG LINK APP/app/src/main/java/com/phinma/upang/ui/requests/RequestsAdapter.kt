@@ -11,11 +11,21 @@ import com.phinma.upang.data.model.RequestStatus
 import com.phinma.upang.databinding.ItemRequestBinding
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.core.content.ContextCompat
+import com.phinma.upang.R
+import java.text.ParseException
 
 class RequestsAdapter(
     private val onItemClick: (Request) -> Unit,
     private val onCancelClick: (Request) -> Unit
 ) : ListAdapter<Request, RequestsAdapter.RequestViewHolder>(RequestDiffCallback()) {
+
+    inner class RequestViewHolder(
+        val binding: ItemRequestBinding
+    ) : RecyclerView.ViewHolder(binding.root)
+
+    private val displayDateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    private val apiDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RequestViewHolder {
         val binding = ItemRequestBinding.inflate(
@@ -27,41 +37,60 @@ class RequestsAdapter(
     }
 
     override fun onBindViewHolder(holder: RequestViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        val request = getItem(position)
+        with(holder.binding) {
+            // Safely handle potentially null type
+            requestTitle.text = request.type?.name ?: request.document_type
+            requestDescription.text = request.purpose
+
+            // Format the date safely
+            val formattedDate = try {
+                val date = apiDateFormat.parse(request.submitted_at)
+                date?.let { displayDateFormat.format(it) } ?: "Date not available"
+            } catch (e: ParseException) {
+                "Date not available"
+            }
+            requestDate.text = formattedDate
+
+            // Use the status directly, defaulting to PENDING if null
+            updateStatusViews(request.status ?: RequestStatus.PENDING, holder)
+
+            root.setOnClickListener {
+                onItemClick(request)
+            }
+
+            cancelButton.setOnClickListener {
+                onCancelClick(request)
+            }
+        }
     }
 
-    inner class RequestViewHolder(
-        private val binding: ItemRequestBinding
-    ) : RecyclerView.ViewHolder(binding.root) {
-
-        private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-
-        fun bind(request: Request) {
-            binding.apply {
-                root.setOnClickListener { onItemClick(request) }
-                requestTitle.text = request.type.name
-                requestDescription.text = request.purpose
-                requestDate.text = dateFormat.format(request.createdAt)
-                requestStatus.text = request.status.name
-
-                // Show cancel button only for pending requests
-                cancelButton.isVisible = request.status == RequestStatus.PENDING
-                cancelButton.setOnClickListener { onCancelClick(request) }
-
-                // Set status color based on request status
-                val statusColor = when (request.status) {
-                    RequestStatus.DRAFT -> android.graphics.Color.parseColor("#808080") // Gray
-                    RequestStatus.PENDING -> android.graphics.Color.parseColor("#FFA500") // Orange
-                    RequestStatus.IN_REVIEW -> android.graphics.Color.parseColor("#1E90FF") // Blue
-                    RequestStatus.NEEDS_REVISION -> android.graphics.Color.parseColor("#FF4500") // Orange Red
-                    RequestStatus.PROCESSING -> android.graphics.Color.parseColor("#1E90FF") // Blue
-                    RequestStatus.READY_FOR_PICKUP -> android.graphics.Color.parseColor("#32CD32") // Green
-                    RequestStatus.COMPLETED -> android.graphics.Color.parseColor("#32CD32") // Green
-                    RequestStatus.CANCELLED -> android.graphics.Color.parseColor("#FF0000") // Red
-                    RequestStatus.REJECTED -> android.graphics.Color.parseColor("#FF0000") // Red
+    private fun updateStatusViews(status: RequestStatus, holder: RequestViewHolder) {
+        with(holder.binding) {
+            when (status) {
+                RequestStatus.PENDING -> {
+                    requestStatus.text = "Pending"
+                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.warning))
+                    requestStatus.setBackgroundResource(R.drawable.bg_status_pending)
                 }
-                requestStatus.setTextColor(statusColor)
+                RequestStatus.IN_PROGRESS -> {
+                    requestStatus.text = "In Progress"
+                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.warning))
+                    requestStatus.setBackgroundResource(R.drawable.bg_status_pending)
+                }
+                RequestStatus.COMPLETED -> {
+                    requestStatus.text = "Completed"
+                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.success))
+                    requestStatus.setBackgroundResource(R.drawable.bg_status_approved)
+                }
+                RequestStatus.REJECTED -> {
+                    requestStatus.text = "Rejected"
+                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.error))
+                    requestStatus.setBackgroundResource(R.drawable.bg_status_rejected)
+                }
             }
+            // Show cancel button only for pending requests
+            cancelButton.isVisible = status == RequestStatus.PENDING
         }
     }
 

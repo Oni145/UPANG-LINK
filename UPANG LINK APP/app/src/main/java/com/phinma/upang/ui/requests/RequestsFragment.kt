@@ -72,18 +72,25 @@ class RequestsFragment : Fragment() {
             )
         }
 
-        binding.filterChipGroup.setOnCheckedStateChangeListener { group, _ ->
-            when (group.checkedChipId) {
-                R.id.chipAll -> viewModel.loadRequests()
-                R.id.chipPending -> viewModel.loadRequests(
-                    RequestFilter(status = RequestStatus.PENDING)
-                )
-                R.id.chipInProgress -> viewModel.loadRequests(
-                    RequestFilter(status = RequestStatus.IN_REVIEW)
-                )
-                R.id.chipCompleted -> viewModel.loadRequests(
-                    RequestFilter(status = RequestStatus.COMPLETED)
-                )
+        setupFilterChips()
+    }
+
+    private fun setupFilterChips() {
+        with(binding) {
+            chipPending.setOnClickListener {
+                viewModel.loadRequests(RequestFilter(status = RequestStatus.PENDING.name))
+            }
+
+            chipApproved.setOnClickListener {
+                viewModel.loadRequests(RequestFilter(status = RequestStatus.IN_PROGRESS.name))
+            }
+
+            chipRejected.setOnClickListener {
+                viewModel.loadRequests(RequestFilter(status = RequestStatus.REJECTED.name))
+            }
+
+            chipAll.setOnClickListener {
+                viewModel.loadRequests()
             }
         }
     }

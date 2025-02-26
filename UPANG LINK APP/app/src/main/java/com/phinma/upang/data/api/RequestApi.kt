@@ -10,9 +10,7 @@ interface RequestApi {
     suspend fun getRequests(): ApiResponse<List<Request>>
 
     @GET("requests/{id}")
-    suspend fun getRequest(
-        @Path("id") id: String
-    ): ApiResponse<Request>
+    suspend fun getRequest(@Path("id") id: String): ApiResponse<Request>
 
     @Multipart
     @POST("requests")
@@ -25,10 +23,8 @@ interface RequestApi {
     @GET("requests/types")
     suspend fun getRequestTypes(): ApiResponse<List<RequestType>>
 
-    @GET("requests/requirements/{typeId}")
-    suspend fun getRequestRequirements(
-        @Path("typeId") typeId: Int
-    ): ApiResponse<List<Requirement>>
+    @GET("requests/types/{typeId}/requirements")
+    suspend fun getRequestRequirements(@Path("typeId") typeId: Int): ApiResponse<List<Requirement>>
 
     @Multipart
     @POST("requests/{requestId}/requirements/{requirementId}")
@@ -45,9 +41,7 @@ interface RequestApi {
     ): ApiResponse<Unit>
 
     @POST("requests/{id}/cancel")
-    suspend fun cancelRequest(
-        @Path("id") id: String
-    ): ApiResponse<Unit>
+    suspend fun cancelRequest(@Path("id") id: String): ApiResponse<Unit>
 
     @GET("requests/statistics")
     suspend fun getRequestStatistics(): ApiResponse<RequestStatistics>

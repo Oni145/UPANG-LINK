@@ -21,33 +21,49 @@ class RequestRepositoryImpl @Inject constructor(
     override suspend fun getRequests(filter: RequestFilter?): Result<List<Request>> {
         return try {
             val response = api.getRequests()
-            if (response.status == "error" && (response.message == "No requests found" || response.message?.contains("404") == true)) {
-                Result.success(emptyList()) // Return empty list for both "No requests" and 404 errors
-            } else {
-                response.data?.let { requests ->
+            when (response.status) {
+                "success" -> {
+                    val requests = response.data?.map { request ->
+                        // Parse the status string from the API response
+                        val statusString = request.status?.toString() ?: request.request_type
+                        val parsedStatus = try {
+                            RequestStatus.fromString(statusString)
+                        } catch (e: Exception) {
+                            RequestStatus.PENDING
+                        }
+                        request.copy(status = parsedStatus)
+                    } ?: emptyList()
                     // Apply filters if provided
                     val filteredRequests = filter?.let { f ->
                         requests.filter { request ->
                             var matches = true
-                            f.status?.let { matches = matches && request.status == it }
-                            f.type?.let { matches = matches && request.typeId == it }
-                            f.startDate?.let { matches = matches && request.createdAt >= it }
-                            f.endDate?.let { matches = matches && request.createdAt <= it }
+                            f.status?.let { statusStr -> 
+                                val filterStatus = RequestStatus.fromString(statusStr)
+                                matches = matches && request.status == filterStatus
+                            }
                             f.searchQuery?.let { query ->
                                 matches = matches && (
                                     request.purpose.contains(query, ignoreCase = true) ||
-                                    request.type.name.contains(query, ignoreCase = true)
+                                    request.document_type.contains(query, ignoreCase = true)
                                 )
                             }
                             matches
                         }
                     } ?: requests
                     Result.success(filteredRequests)
-                } ?: Result.success(emptyList()) // Return empty list instead of error when data is null
+                }
+                "error" -> {
+                    if (response.message == "No requests found" || response.message?.contains("404") == true) {
+                        Result.success(emptyList())
+                    } else {
+                        Result.failure(Exception(response.message ?: "Unknown error"))
+                    }
+                }
+                else -> Result.failure(Exception("Unknown response status"))
             }
         } catch (e: Exception) {
             if (e.message?.contains("404") == true) {
-                Result.success(emptyList()) // Return empty list for 404 errors
+                Result.success(emptyList())
             } else {
                 Result.failure(e)
             }

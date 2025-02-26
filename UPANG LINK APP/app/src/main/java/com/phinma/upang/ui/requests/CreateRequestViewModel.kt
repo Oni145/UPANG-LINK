@@ -50,7 +50,15 @@ class CreateRequestViewModel @Inject constructor(
 
     fun selectRequestType(type: RequestType) {
         _selectedType.value = type
-        _requirements.value = type.requirements
+        viewModelScope.launch {
+            repository.getRequestRequirements(type.type_id)
+                .onSuccess { requirements ->
+                    _requirements.value = requirements
+                }
+                .onFailure { error ->
+                    _uiState.value = CreateRequestUiState.Error(error.message ?: "Failed to load requirements")
+                }
+        }
     }
 
     fun addFile(requirement: RequirementItem, file: File) {
@@ -74,8 +82,10 @@ class CreateRequestViewModel @Inject constructor(
             }
 
             // Validate required files
-            val missingRequirements = type.requirements
-                .filter { it.isRequired && !files.containsKey(it.id) }
+            val missingRequirements = _requirements.value?.filter { requirement ->
+                requirement.isRequired && !files.containsKey(requirement.id)
+            } ?: emptyList()
+
             if (missingRequirements.isNotEmpty()) {
                 val message = "Please upload the following required files:\n" +
                     missingRequirements.joinToString("\n") { "- ${it.name}" }
@@ -84,7 +94,7 @@ class CreateRequestViewModel @Inject constructor(
             }
 
             _uiState.value = CreateRequestUiState.Loading
-            repository.createRequest(type.id, purpose, files.values.toList())
+            repository.createRequest(type.type_id, purpose, files.values.toList())
                 .onSuccess { response ->
                     _uiState.value = CreateRequestUiState.RequestCreated(response.request)
                     // Clear files after successful creation

@@ -24,6 +24,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.core.content.ContextCompat
 
 @AndroidEntryPoint
 class RequestDetailsFragment : Fragment() {
@@ -34,6 +35,7 @@ class RequestDetailsFragment : Fragment() {
     private val args: RequestDetailsFragmentArgs by navArgs()
     private lateinit var requirementsAdapter: RequirementsAdapter
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    private val apiDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
     private var currentRequirement: RequirementItem? = null
 
@@ -92,10 +94,10 @@ class RequestDetailsFragment : Fragment() {
     private fun observeViewModel() {
         viewModel.request.observe(viewLifecycleOwner) { request ->
             binding.apply {
-                requestTitle.text = request.type.name
+                requestTitle.text = request.type?.name ?: request.document_type
                 requestDescription.text = request.purpose
-                requestDate.text = "Created: ${dateFormat.format(request.createdAt)}"
-                requestStatus.text = request.status.name
+                requestDate.text = "Created: ${formatDate(request.submitted_at)}"
+                updateStatusViews(request.status ?: RequestStatus.PENDING)
 
                 // Update requirements list
                 requirementsAdapter.submitList(request.requirements.map { RequirementItem.fromSubmission(it) })
@@ -107,15 +109,6 @@ class RequestDetailsFragment : Fragment() {
                 } ?: run {
                     remarksCard.isVisible = false
                 }
-
-                // Show cancel button only for requests that can be cancelled
-                cancelButton.isVisible = when (request.status) {
-                    RequestStatus.DRAFT,
-                    RequestStatus.PENDING,
-                    RequestStatus.IN_REVIEW,
-                    RequestStatus.NEEDS_REVISION -> true
-                    else -> false
-                }
             }
         }
 
@@ -123,10 +116,44 @@ class RequestDetailsFragment : Fragment() {
             binding.progressBar.isVisible = isLoading
         }
 
-        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
-            message?.let {
-                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+        viewModel.errorMessage.observe(viewLifecycleOwner) { error ->
+            error?.let {
+                showError(it)
             }
+        }
+    }
+
+    private fun formatDate(dateString: String): String {
+        return try {
+            val date = apiDateFormat.parse(dateString)
+            date?.let { dateFormat.format(it) } ?: "Date not available"
+        } catch (e: Exception) {
+            "Date not available"
+        }
+    }
+
+    private fun updateStatusViews(status: RequestStatus) {
+        val (colorRes, text) = when (status) {
+            RequestStatus.PENDING -> {
+                Pair(R.color.status_pending, "Pending")
+            }
+            RequestStatus.IN_PROGRESS -> {
+                Pair(R.color.status_pending, "In Progress")
+            }
+            RequestStatus.COMPLETED -> {
+                Pair(R.color.status_approved, "Completed")
+            }
+            RequestStatus.REJECTED -> {
+                Pair(R.color.status_rejected, "Rejected")
+            }
+        }
+
+        binding.apply {
+            requestStatus.text = text
+            context?.let { ctx ->
+                requestStatus.setTextColor(ContextCompat.getColor(ctx, colorRes))
+            }
+            cancelButton.isVisible = status == RequestStatus.PENDING
         }
     }
 
@@ -162,10 +189,6 @@ class RequestDetailsFragment : Fragment() {
         }
     }
 
-    private fun showError(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
-    }
-
     private fun showCancelConfirmationDialog() {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Cancel Request")
@@ -175,6 +198,10 @@ class RequestDetailsFragment : Fragment() {
             }
             .setNegativeButton("No", null)
             .show()
+    }
+
+    private fun showError(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroyView() {
