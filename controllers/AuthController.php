@@ -179,8 +179,8 @@ class AuthController {
                 $mail->isSMTP();
                 $mail->Host       = 'smtp.gmail.com';
                 $mail->SMTPAuth   = true;
-                $mail->Username   = 'librariansystem1@gmail.com';
-                $mail->Password   = 'fyii qywz sobr wfks';
+                $mail->Username   = '';
+                $mail->Password   = '';
                 $mail->SMTPSecure = 'TLS';
                 $mail->Port       = 587;
                 $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
@@ -237,8 +237,8 @@ class AuthController {
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'librariansystem1@gmail.com';
-            $mail->Password   = 'fyii qywz sobr wfks';
+            $mail->Username   = '';
+            $mail->Password   = '';
             $mail->SMTPSecure = 'TLS';
             $mail->Port       = 587;
             $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
@@ -310,8 +310,8 @@ class AuthController {
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'librariansystem1@gmail.com';
-            $mail->Password   = 'fyii qywz sobr wfks';
+            $mail->Username   = '';
+            $mail->Password   = '';
             $mail->SMTPSecure = 'TLS';
             $mail->Port       = 587;
             $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
@@ -429,8 +429,8 @@ class AuthController {
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'librariansystem1@gmail.com';
-            $mail->Password   = 'fyii qywz sobr wfks';
+            $mail->Username   = '';
+            $mail->Password   = '';
             $mail->SMTPSecure = 'TLS';
             $mail->Port       = 587;
             $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
