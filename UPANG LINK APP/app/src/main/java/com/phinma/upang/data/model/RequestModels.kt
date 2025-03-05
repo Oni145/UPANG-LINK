@@ -1,7 +1,12 @@
 package com.phinma.upang.data.model
 
 import android.os.Parcelable
+import android.os.Parcel
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.TypeParceler
+import kotlinx.parcelize.Parceler
 import java.util.Date
 
 @Parcelize
@@ -12,9 +17,9 @@ data class Request(
     val type_id: Int,
     val type: RequestType?,
     val document_type: String,
-    val purpose: String,
+    val purpose: String?,
     val status: RequestStatus? = RequestStatus.PENDING,
-    val requirements: List<RequirementSubmission>,
+    val requirements: String,
     val remarks: String?,
     val submitted_at: String,
     val updated_at: String,
@@ -23,19 +28,93 @@ data class Request(
     val first_name: String,
     val last_name: String,
     val category_name: String
-) : Parcelable
+) : Parcelable {
+    fun parseRequirements(): RequirementsData {
+        return try {
+            val gson = Gson()
+            // First parse the outer JSON string
+            val requirementsMap = gson.fromJson(requirements, Map::class.java)
+            
+            // Handle fields if present
+            val fields = (requirementsMap["fields"] as? List<*>)?.firstOrNull() as? String
+            val parsedFields = if (fields != null) {
+                gson.fromJson<List<RequirementField>>(fields, object : TypeToken<List<RequirementField>>() {}.type)
+            } else {
+                null
+            }
+            
+            // Handle required_docs if present
+            @Suppress("UNCHECKED_CAST")
+            val requiredDocs = requirementsMap["required_docs"] as? List<String>
+            
+            // Handle instructions
+            val instructions = requirementsMap["instructions"] as? String
+            
+            RequirementsData(
+                fields = parsedFields,
+                required_docs = requiredDocs,
+                instructions = instructions
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("Request", "Error parsing requirements: ${e.message}")
+            RequirementsData()
+        }
+    }
+}
+
+object MapParceler : Parceler<Map<String, Any>> {
+    override fun create(parcel: Parcel): Map<String, Any> {
+        val json = parcel.readString() ?: "{}"
+        return Gson().fromJson(json, object : TypeToken<Map<String, Any>>() {}.type)
+    }
+
+    override fun Map<String, Any>.write(parcel: Parcel, flags: Int) {
+        parcel.writeString(Gson().toJson(this))
+    }
+}
 
 @Parcelize
+@TypeParceler<Map<String, Any>, MapParceler>()
 data class RequestType(
     val type_id: Int,
     val category_id: Int,
     val name: String,
     val description: String,
-    val requirements: String,
+    val requirements: Map<String, Any>,
     val processing_time: String,
     val is_active: Int,
     val category_name: String
-) : Parcelable
+) : Parcelable {
+    fun parseRequirements(): RequirementsData {
+        return try {
+            val gson = Gson()
+            
+            // Handle fields if present
+            val fields = (requirements["fields"] as? List<*>)?.firstOrNull() as? String
+            val parsedFields = if (fields != null) {
+                gson.fromJson<List<RequirementField>>(fields, object : TypeToken<List<RequirementField>>() {}.type)
+            } else {
+                null
+            }
+            
+            // Handle required_docs if present
+            @Suppress("UNCHECKED_CAST")
+            val requiredDocs = requirements["required_docs"] as? List<String>
+            
+            // Handle instructions
+            val instructions = requirements["instructions"] as? String
+            
+            RequirementsData(
+                fields = parsedFields,
+                required_docs = requiredDocs,
+                instructions = instructions
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("RequestType", "Error parsing requirements: ${e.message}")
+            RequirementsData()
+        }
+    }
+}
 
 @Parcelize
 data class Requirement(
@@ -115,4 +194,46 @@ data class ApiResponse<T>(
     val status: String,
     val message: String? = null,
     val data: T? = null
-) 
+)
+
+fun Request.getRequirementsMap(): Map<String, Any> {
+    return try {
+        val gson = Gson()
+        gson.fromJson(requirements, object : TypeToken<Map<String, Any>>() {}.type)
+    } catch (e: Exception) {
+        emptyMap()
+    }
+}
+
+fun RequestType.getRequirementsMap(): Map<String, Any> {
+    return requirements
+}
+
+@Parcelize
+data class RequirementField(
+    val name: String,
+    val label: String,
+    val type: String,
+    val required: Boolean,
+    val allowed_types: String? = null,
+    val description: String
+) : Parcelable
+
+@Parcelize
+data class RequirementsData(
+    val fields: List<RequirementField>? = null,
+    val required_docs: List<String>? = null,
+    val instructions: String? = null
+) : Parcelable
+
+@Parcelize
+data class RequirementItem(
+    val id: String,
+    val name: String,
+    val description: String,
+    val isRequired: Boolean,
+    val allowedFileTypes: List<String>,
+    val maxFileSize: Long,
+    val status: RequirementStatus,
+    val fileUrl: String?
+) : Parcelable 

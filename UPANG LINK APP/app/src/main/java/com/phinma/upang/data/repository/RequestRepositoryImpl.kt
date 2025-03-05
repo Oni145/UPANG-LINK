@@ -26,30 +26,37 @@ class RequestRepositoryImpl @Inject constructor(
                     val requests = response.data?.map { request ->
                         // Parse the status string from the API response
                         val statusString = request.status?.toString() ?: request.request_type
+                        android.util.Log.d("RequestRepo", "Raw status: $statusString")
                         val parsedStatus = try {
-                            RequestStatus.fromString(statusString)
+                            val status = RequestStatus.fromString(statusString)
+                            android.util.Log.d("RequestRepo", "Parsed status: $status")
+                            status
                         } catch (e: Exception) {
+                            android.util.Log.e("RequestRepo", "Error parsing status: ${e.message}")
                             RequestStatus.PENDING
                         }
                         request.copy(status = parsedStatus)
                     } ?: emptyList()
                     // Apply filters if provided
                     val filteredRequests = filter?.let { f ->
+                        android.util.Log.d("RequestRepo", "Applying filter: ${f.status}")
                         requests.filter { request ->
                             var matches = true
                             f.status?.let { statusStr -> 
                                 val filterStatus = RequestStatus.fromString(statusStr)
+                                android.util.Log.d("RequestRepo", "Comparing status: ${request.status} == $filterStatus")
                                 matches = matches && request.status == filterStatus
                             }
                             f.searchQuery?.let { query ->
                                 matches = matches && (
-                                    request.purpose.contains(query, ignoreCase = true) ||
+                                    request.purpose?.contains(query, ignoreCase = true) ?: false ||
                                     request.document_type.contains(query, ignoreCase = true)
                                 )
                             }
                             matches
                         }
                     } ?: requests
+                    android.util.Log.d("RequestRepo", "Filtered requests count: ${filteredRequests.size}")
                     Result.success(filteredRequests)
                 }
                 "error" -> {

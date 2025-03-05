@@ -81,8 +81,8 @@ class RequestsFragment : Fragment() {
                 viewModel.loadRequests(RequestFilter(status = RequestStatus.PENDING.name))
             }
 
-            chipApproved.setOnClickListener {
-                viewModel.loadRequests(RequestFilter(status = RequestStatus.IN_PROGRESS.name))
+            chipCompleted.setOnClickListener {
+                viewModel.loadRequests(RequestFilter(status = RequestStatus.COMPLETED.name))
             }
 
             chipRejected.setOnClickListener {

@@ -40,6 +40,7 @@ UPANG LINK is an application that simplifies the process of requesting essential
   - GD (for image processing)
   - OpenSSL
   - FileInfo
+- XAMPP (recommended for development)
 
 ## Installation
 
@@ -55,10 +56,23 @@ mkdir uploads logs
 chmod 755 uploads logs
 ```
 
-3. Set up the database:
+3. Set up the database using the provided batch script:
 ```bash
-mysql -u root -p < database/schema.sql
+# Double click setup_db.bat
+# OR run from command line:
+setup_db.bat
 ```
+
+This script will:
+- Drop existing database if it exists
+- Create new database and import schema
+- Fix database constraints
+- Create test user account:
+  - Email: jerickogarcia0@gmail.com
+  - Password: password
+  - Role: student
+  - Course: BSIT
+  - Sample requests included
 
 4. Configure your web server:
 ```apache

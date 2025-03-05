@@ -68,10 +68,10 @@
                         android:textColor="@color/black" />
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chipApproved"
+                        android:id="@+id/chipCompleted"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="In Progress"
+                        android:text="Completed"
                         app:chipBackgroundColor="@color/white"
                         app:chipStrokeColor="@color/black"
                         app:chipStrokeWidth="1dp"

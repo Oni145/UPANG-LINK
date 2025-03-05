@@ -1,6 +1,9 @@
 <?php
 header('Content-Type: application/json');
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../utils/EmailHandler.php';
+
+use App\Utils\EmailHandler;
 
 try {
     $emailHandler = new EmailHandler();

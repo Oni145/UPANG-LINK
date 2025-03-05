@@ -99,8 +99,43 @@ class RequestDetailsFragment : Fragment() {
                 requestDate.text = "Created: ${formatDate(request.submitted_at)}"
                 updateStatusViews(request.status ?: RequestStatus.PENDING)
 
-                // Update requirements list
-                requirementsAdapter.submitList(request.requirements.map { RequirementItem.fromSubmission(it) })
+                // Parse and display requirements
+                val requirementsData = request.parseRequirements()
+                val requirementsList = mutableListOf<RequirementItem>()
+                
+                // Add fields if available
+                requirementsData.fields?.forEach { field ->
+                    requirementsList.add(
+                        RequirementItem(
+                            id = field.name,
+                            name = field.label,
+                            description = field.description,
+                            isRequired = field.required,
+                            allowedFileTypes = field.allowed_types?.split(",") ?: listOf(),
+                            maxFileSize = 5 * 1024 * 1024L, // 5MB default
+                            status = RequirementStatus.PENDING,
+                            fileUrl = null
+                        )
+                    )
+                }
+                
+                // Add required docs if available
+                requirementsData.required_docs?.forEach { doc ->
+                    requirementsList.add(
+                        RequirementItem(
+                            id = doc.lowercase().replace(" ", "_"),
+                            name = doc,
+                            description = "Required document",
+                            isRequired = true,
+                            allowedFileTypes = listOf("pdf", "jpg", "jpeg", "png"),
+                            maxFileSize = 5 * 1024 * 1024L, // 5MB default
+                            status = RequirementStatus.PENDING,
+                            fileUrl = null
+                        )
+                    )
+                }
+
+                requirementsAdapter.submitList(requirementsList)
 
                 // Show remarks if available
                 request.remarks?.let { remarks ->
