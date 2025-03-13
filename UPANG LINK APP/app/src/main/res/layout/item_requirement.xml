@@ -1,133 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView
-            android:id="@+id/requirementTitle"
-            android:layout_width="0dp"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/requiredBadge"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Valid ID" />
+            android:paddingBottom="8dp">
 
-        <TextView
-            android:id="@+id/requiredBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/badge_background"
-            android:padding="4dp"
-            android:text="Required"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            <TextView
+                android:id="@+id/requirementName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:textStyle="bold"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/requiredText"
+                android:layout_marginEnd="8dp"
+                tools:text="Uniform Size" />
+
+            <TextView
+                android:id="@+id/requiredText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Required"
+                android:textColor="#F44336"
+                android:textSize="12sp"
+                android:background="@drawable/bg_required_badge_horizontal"
+                android:gravity="center"
+                android:layout_alignParentEnd="true"
+                android:visibility="visible" />
+
+            <TextView
+                android:id="@+id/optionalText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Optional"
+                android:textColor="#757575"
+                android:textSize="12sp"
+                android:background="@drawable/bg_optional_badge_horizontal"
+                android:gravity="center"
+                android:layout_alignParentEnd="true"
+                android:visibility="gone" />
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/requirementDescription"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="?android:textColorSecondary"
             android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/requirementTitle"
-            tools:text="Please upload a clear copy of any valid government-issued ID" />
+            android:textColor="#757575"
+            tools:text="Please provide your uniform size" />
 
-        <TextView
-            android:id="@+id/fileTypeText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="?android:textColorSecondary"
-            android:textSize="12sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/requirementDescription"
-            tools:text="Accepted formats: PDF, JPG, PNG" />
-
-        <TextView
-            android:id="@+id/fileSizeText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:textColor="?android:textColorSecondary"
-            android:textSize="12sp"
-            app:layout_constraintStart_toEndOf="@id/fileTypeText"
-            app:layout_constraintTop_toTopOf="@id/fileTypeText"
-            tools:text="Max size: 5MB" />
-
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/uploadButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Upload File"
+            android:textColor="#4285F4"
+            app:icon="@drawable/ic_upload"
+            app:iconTint="#4285F4"
+            app:strokeColor="#4285F4" />
+
+        <TextView
+            android:id="@+id/fileNameText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Upload File"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/requirementTitle" />
-
-        <ImageButton
-            android:id="@+id/removeButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Remove file"
-            android:src="@drawable/ic_close"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:textSize="14sp"
+            android:textColor="#4285F4"
+            android:background="@drawable/bg_file_name"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            android:drawablePadding="8dp"
+            app:drawableStartCompat="@drawable/ic_file"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@id/uploadButton"
-            app:layout_constraintStart_toEndOf="@id/uploadButton"
-            app:layout_constraintTop_toTopOf="@id/uploadButton" />
+            tools:text="clearance_form.pdf"
+            tools:visibility="visible" />
 
         <LinearLayout
-            android:id="@+id/statusGroup"
-            android:layout_width="wrap_content"
+            android:id="@+id/inputContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/uploadButton">
+            android:orientation="vertical"
+            android:layout_marginTop="8dp">
 
-            <ImageView
-                android:id="@+id/statusIcon"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginEnd="4dp" />
-
-            <TextView
-                android:id="@+id/statusText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp" />
+            <!-- Input views will be added here programmatically -->
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/remarksText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="@android:color/holo_red_dark"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/statusGroup" />
+    </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</com.google.android.material.card.MaterialCardView> 
+</androidx.cardview.widget.CardView> 

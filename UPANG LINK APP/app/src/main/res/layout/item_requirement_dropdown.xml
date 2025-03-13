@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/requirementName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:textStyle="bold"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/requiredText"
+                android:layout_marginEnd="8dp"
+                tools:text="Year Level" />
+
+            <TextView
+                android:id="@+id/requiredText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Required"
+                android:textColor="#F44336"
+                android:textSize="12sp"
+                android:background="@drawable/bg_required_badge_horizontal"
+                android:gravity="center"
+                android:layout_alignParentEnd="true"
+                android:visibility="visible" />
+
+            <TextView
+                android:id="@+id/optionalText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Optional"
+                android:textColor="#757575"
+                android:textSize="12sp"
+                android:background="@drawable/bg_optional_badge_horizontal"
+                android:gravity="center"
+                android:layout_alignParentEnd="true"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/requirementDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#757575"
+            tools:text="Select your year level" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/dropdownLayout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Select an option">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/dropdownText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:paddingVertical="12dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView> 

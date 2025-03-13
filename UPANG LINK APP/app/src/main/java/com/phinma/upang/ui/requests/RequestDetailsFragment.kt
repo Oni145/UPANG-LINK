@@ -17,7 +17,10 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.phinma.upang.R
-import com.phinma.upang.data.model.*
+import com.phinma.upang.data.model.RequirementItem
+import com.phinma.upang.data.model.RequirementStatus
+import com.phinma.upang.data.model.Request
+import com.phinma.upang.data.model.RequestStatus
 import com.phinma.upang.databinding.FragmentRequestDetailsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
@@ -33,7 +36,7 @@ class RequestDetailsFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: RequestDetailsViewModel by viewModels()
     private val args: RequestDetailsFragmentArgs by navArgs()
-    private lateinit var requirementsAdapter: RequirementsAdapter
+    private lateinit var requirementsAdapter: RequestDetailsAdapter
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     private val apiDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
@@ -69,7 +72,7 @@ class RequestDetailsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        requirementsAdapter = RequirementsAdapter(
+        requirementsAdapter = RequestDetailsAdapter(
             onUploadClick = { requirement ->
                 launchFilePicker(requirement)
             },
@@ -109,7 +112,7 @@ class RequestDetailsFragment : Fragment() {
                         RequirementItem(
                             id = field.name,
                             name = field.label,
-                            description = field.description,
+                            description = field.description ?: "",
                             isRequired = field.required,
                             allowedFileTypes = field.allowed_types?.split(",") ?: listOf(),
                             maxFileSize = 5 * 1024 * 1024L, // 5MB default
@@ -144,6 +147,9 @@ class RequestDetailsFragment : Fragment() {
                 } ?: run {
                     remarksCard.isVisible = false
                 }
+
+                // Set processing time
+                processingTimeText.text = request.processing_time
             }
         }
 

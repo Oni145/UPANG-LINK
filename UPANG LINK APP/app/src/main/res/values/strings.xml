@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">UPANG LINK</string>
+    <string name="app_logo">App Logo</string>
     <string name="reset_password_sent_message">We\'ve sent password reset instructions to %s. Please check your inbox and follow the link to reset your password.</string>
     <string name="check_your_email">Check Your Email</string>
     
@@ -12,4 +13,6 @@
     <string name="menu_notifications">Notifications</string>
     <string name="menu_profile">Profile</string>
     <string name="nav_header_subtitle">Your one-stop platform for managing document requests</string>
+    <string name="no_requests_found">No requests found</string>
+    <string name="no_filtered_requests">No %s requests</string>
 </resources>

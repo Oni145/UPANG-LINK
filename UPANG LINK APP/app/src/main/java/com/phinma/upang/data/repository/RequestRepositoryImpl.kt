@@ -1,6 +1,7 @@
 package com.phinma.upang.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.phinma.upang.data.api.RequestApi
 import com.phinma.upang.data.model.*
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -8,6 +9,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.HttpException
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,61 +20,98 @@ class RequestRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : RequestRepository {
 
+    companion object {
+        private const val TAG = "RequestRepository"
+    }
+
     override suspend fun getRequests(filter: RequestFilter?): Result<List<Request>> {
         return try {
             val response = api.getRequests()
-            when (response.status) {
+            Log.d(TAG, "Response: $response")
+            
+            when (response.status?.lowercase()) {
                 "success" -> {
-                    val requests = response.data?.map { request ->
-                        // Parse the status string from the API response
-                        val statusString = request.status?.toString() ?: request.request_type
-                        android.util.Log.d("RequestRepo", "Raw status: $statusString")
-                        val parsedStatus = try {
-                            val status = RequestStatus.fromString(statusString)
-                            android.util.Log.d("RequestRepo", "Parsed status: $status")
-                            status
-                        } catch (e: Exception) {
-                            android.util.Log.e("RequestRepo", "Error parsing status: ${e.message}")
-                            RequestStatus.PENDING
-                        }
-                        request.copy(status = parsedStatus)
-                    } ?: emptyList()
+                    val requests = response.data ?: emptyList()
+                    Log.d(TAG, "Got ${requests.size} requests")
+                    
                     // Apply filters if provided
-                    val filteredRequests = filter?.let { f ->
-                        android.util.Log.d("RequestRepo", "Applying filter: ${f.status}")
+                    val filteredRequests = if (filter != null) {
                         requests.filter { request ->
                             var matches = true
-                            f.status?.let { statusStr -> 
-                                val filterStatus = RequestStatus.fromString(statusStr)
-                                android.util.Log.d("RequestRepo", "Comparing status: ${request.status} == $filterStatus")
-                                matches = matches && request.status == filterStatus
+                            
+                            // Filter by status
+                            if (!filter.status.isNullOrEmpty()) {
+                                matches = matches && request.status?.name.equals(filter.status, ignoreCase = true)
                             }
-                            f.searchQuery?.let { query ->
+                            
+                            // Filter by type
+                            if (filter.type != null) {
+                                matches = matches && request.type_id == filter.type
+                            }
+                            
+                            // Filter by search query
+                            if (!filter.searchQuery.isNullOrEmpty()) {
                                 matches = matches && (
-                                    request.purpose?.contains(query, ignoreCase = true) ?: false ||
-                                    request.document_type.contains(query, ignoreCase = true)
+                                    request.document_type.contains(filter.searchQuery, ignoreCase = true) ||
+                                    request.purpose?.contains(filter.searchQuery, ignoreCase = true) == true ||
+                                    request.request_type.contains(filter.searchQuery, ignoreCase = true)
                                 )
                             }
+                            
                             matches
                         }
-                    } ?: requests
-                    android.util.Log.d("RequestRepo", "Filtered requests count: ${filteredRequests.size}")
+                    } else {
+                        requests
+                    }
+                    
                     Result.success(filteredRequests)
                 }
                 "error" -> {
-                    if (response.message == "No requests found" || response.message?.contains("404") == true) {
-                        Result.success(emptyList())
-                    } else {
-                        Result.failure(Exception(response.message ?: "Unknown error"))
+                    Log.d(TAG, "Error response: ${response.message}, code: ${response.code}")
+                    when {
+                        response.error_type == "MALFORMED_RESPONSE" -> {
+                            Log.e(TAG, "Server returned malformed response")
+                            Result.failure(Exception("Server error. Please try again later."))
+                        }
+                        response.message?.contains("Unauthorized", ignoreCase = true) == true ||
+                        response.message?.contains("token", ignoreCase = true) == true -> {
+                            Log.e(TAG, "Authentication error: ${response.message}")
+                            Result.failure(Exception("Authentication failed. Please log in again."))
+                        }
+                        response.code == 404 || response.message?.contains("No requests found") == true -> {
+                            Log.d(TAG, "No requests found")
+                            Result.success(emptyList())
+                        }
+                        else -> {
+                            Log.e(TAG, "Error response: ${response.message}")
+                            Result.failure(Exception(response.message ?: "Unknown error"))
+                        }
                     }
                 }
-                else -> Result.failure(Exception("Unknown response status"))
+                else -> {
+                    Log.e(TAG, "Unknown response status: ${response.status}")
+                    Result.failure(Exception("Server returned an invalid response"))
+                }
             }
         } catch (e: Exception) {
-            if (e.message?.contains("404") == true) {
-                Result.success(emptyList())
-            } else {
-                Result.failure(e)
+            Log.e(TAG, "Error getting requests", e)
+            when (e) {
+                is HttpException -> {
+                    when (e.code()) {
+                        401 -> Result.failure(Exception("Authentication failed. Please log in again."))
+                        404 -> Result.success(emptyList())
+                        else -> Result.failure(Exception("Server error (${e.code()}). Please try again later."))
+                    }
+                }
+                is com.google.gson.JsonSyntaxException,
+                is com.google.gson.stream.MalformedJsonException -> {
+                    Log.e(TAG, "JSON parsing error", e)
+                    Result.failure(Exception("Server returned invalid data. Please try again later."))
+                }
+                else -> {
+                    Log.e(TAG, "Unexpected error", e)
+                    Result.failure(Exception("An unexpected error occurred. Please try again later."))
+                }
             }
         }
     }

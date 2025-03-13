@@ -31,19 +31,11 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun login(email: String, password: String): Result<LoginResponse> {
+    suspend fun login(email: String, password: String): Result<ApiResponse<LoginResponse>> {
         return try {
             val request = LoginRequest(email, password)
             val response = api.login(request)
-            
-            if (response.status == "success" && response.data != null) {
-                // Save auth token and user profile
-                sessionManager.saveAuthToken(response.data.token)
-                sessionManager.saveUser(response.data.user)
-                Result.success(response.data)
-            } else {
-                Result.failure(Exception(response.message))
-            }
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(Exception(parseErrorResponse(e)))
         }
@@ -54,120 +46,78 @@ class AuthRepository @Inject constructor(
         lastName: String,
         email: String,
         password: String
-    ): Result<RegisterResponse> {
+    ): Result<ApiResponse<Unit>> {
         return try {
-            // Log input parameters
-            Log.d("AuthRepository", "Register Input - firstName: $firstName, lastName: $lastName, email: $email")
-            
             val request = RegisterRequest(
                 email = email,
                 password = password,
                 first_name = firstName,
                 last_name = lastName
             )
-            
-            // Log the complete request object
-            Log.d("AuthRepository", "Register Request Object: ${gson.toJson(request)}")
-            
             val response = api.register(request)
-            
-            // Log the complete response
-            Log.d("AuthRepository", "Register Raw Response: ${gson.toJson(response)}")
-            Log.d("AuthRepository", "Register Response Status: ${response.status}")
-            Log.d("AuthRepository", "Register Response Message: ${response.message}")
-            Log.d("AuthRepository", "Register Response Data: ${response.data?.let { gson.toJson(it) }}")
-            
-            response.data?.let {
-                Result.success(it)
-            } ?: Result.failure(Exception(response.message))
+            Result.success(response)
         } catch (e: Exception) {
-            // Log detailed error information
-            Log.e("AuthRepository", "Register Error Type: ${e.javaClass.simpleName}")
-            Log.e("AuthRepository", "Register Error Message: ${e.message}")
-            Log.e("AuthRepository", "Register Error Stack Trace:", e)
-            
-            if (e is HttpException) {
-                val errorBody = e.response()?.errorBody()?.string()
-                Log.e("AuthRepository", "Register HTTP Error Body: $errorBody")
-            }
-            
             Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
-    suspend fun verifyEmail(token: String): Result<Unit> {
+    suspend fun verifyEmail(token: String): Result<ApiResponse<Unit>> {
         return try {
-            val response = api.verifyEmail(mapOf("token" to token))
-            if (response.status == "success") {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.message))
-            }
+            val request = VerifyEmailRequest(token)
+            val response = api.verifyEmail(request)
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
-    suspend fun forgotPassword(email: String): Result<Unit> {
+    suspend fun forgotPassword(email: String): Result<ApiResponse<Unit>> {
         return try {
-            val response = api.forgotPassword(mapOf("email" to email))
-            if (response.status == "success") {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.message))
-            }
+            val request = ForgotPasswordRequest(email)
+            val response = api.forgotPassword(request)
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
-    suspend fun resetPassword(token: String, newPassword: String): Result<Unit> {
+    suspend fun resetPassword(token: String, password: String): Result<ApiResponse<Unit>> {
         return try {
-            val response = api.resetPassword(mapOf(
-                "token" to token,
-                "password" to newPassword
-            ))
-            if (response.status == "success") {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.message))
-            }
+            val request = ResetPasswordRequest(token, password)
+            val response = api.resetPassword(request)
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
-    suspend fun resendVerification(email: String): Result<Unit> {
+    suspend fun resendVerification(email: String): Result<ApiResponse<Unit>> {
         return try {
-            val response = api.resendVerification(mapOf("email" to email))
-            if (response.status == "success") {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.message))
-            }
+            val request = ResendVerificationRequest(email)
+            val response = api.resendVerification(request)
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
-    suspend fun getProfile(): Result<UserProfile> {
+    suspend fun getProfile(): Result<ApiResponse<UserProfile>> {
         return try {
             val response = api.getProfile()
-            response.data?.let {
-                Result.success(it)
-            } ?: Result.failure(Exception(response.message))
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun updateProfile(request: UpdateProfileRequest): Result<UserProfile> {
+    suspend fun updateProfile(firstName: String, lastName: String): Result<ApiResponse<UserProfile>> {
         return try {
+            val request = UpdateProfileRequest(
+                firstName = firstName,
+                lastName = lastName
+            )
             val response = api.updateProfile(request)
-            response.data?.let {
-                sessionManager.saveUser(it)
-                Result.success(it)
-            } ?: Result.failure(Exception(response.message))
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -177,7 +127,7 @@ class AuthRepository @Inject constructor(
         currentPassword: String,
         newPassword: String,
         confirmPassword: String
-    ): Result<Unit> {
+    ): Result<ApiResponse<Unit>> {
         return try {
             val request = ChangePasswordRequest(
                 currentPassword = currentPassword,
@@ -185,27 +135,30 @@ class AuthRepository @Inject constructor(
                 confirmPassword = confirmPassword
             )
             val response = api.changePassword(request)
-            if (response.status == "success") {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.message))
-            }
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(Exception(parseErrorResponse(e)))
         }
     }
 
-    suspend fun logout(): Result<Unit> {
+    suspend fun logout(): Result<ApiResponse<Unit>> {
         return try {
             val response = api.logout()
-            sessionManager.clearSession()
             if (response.status == "success") {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.message))
+                sessionManager.clearSession()
             }
+            Result.success(response)
         } catch (e: Exception) {
             sessionManager.clearSession() // Clear session even if API call fails
+            Result.failure(Exception(parseErrorResponse(e)))
+        }
+    }
+
+    suspend fun validateToken(): Result<ApiResponse<ValidateTokenResponse>> {
+        return try {
+            val response = api.validateToken()
+            Result.success(response)
+        } catch (e: Exception) {
             Result.failure(Exception(parseErrorResponse(e)))
         }
     }

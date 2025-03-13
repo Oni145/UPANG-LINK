@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phinma.upang.data.model.RegisterResponse
 import com.phinma.upang.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -25,22 +24,33 @@ class RegisterViewModel @Inject constructor(
         password: String,
         confirmPassword: String
     ) {
-        if (!validateInput(firstName, lastName, email, password, confirmPassword)) {
+        if (password != confirmPassword) {
+            _registerState.value = RegisterState.Error("Passwords do not match")
             return
         }
 
-        _registerState.value = RegisterState.Loading
-
         viewModelScope.launch {
-            authRepository.register(
-                firstName = firstName,
-                lastName = lastName,
-                email = email,
-                password = password
-            ).onSuccess { response ->
-                _registerState.value = RegisterState.Success(response)
-            }.onFailure { error ->
-                _registerState.value = RegisterState.Error(error.message ?: "Registration failed")
+            _registerState.value = RegisterState.Loading
+            try {
+                authRepository.register(
+                    firstName = firstName,
+                    lastName = lastName,
+                    email = email,
+                    password = password
+                ).fold(
+                    onSuccess = { response ->
+                        if (response.status == "success") {
+                            _registerState.value = RegisterState.Success
+                        } else {
+                            _registerState.value = RegisterState.Error(response.message ?: "Registration failed")
+                        }
+                    },
+                    onFailure = { error ->
+                        _registerState.value = RegisterState.Error(error.message ?: "Registration failed")
+                    }
+                )
+            } catch (e: Exception) {
+                _registerState.value = RegisterState.Error(e.message ?: "An unexpected error occurred")
             }
         }
     }
@@ -79,7 +89,7 @@ class RegisterViewModel @Inject constructor(
 
     sealed class RegisterState {
         object Loading : RegisterState()
-        data class Success(val response: RegisterResponse) : RegisterState()
+        object Success : RegisterState()
         data class Error(val message: String) : RegisterState()
     }
 } 

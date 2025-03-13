@@ -56,6 +56,7 @@ CREATE TABLE request_types (
 -- Requests table
 CREATE TABLE requests (
     request_id INT PRIMARY KEY AUTO_INCREMENT,
+    tracking_number VARCHAR(20) UNIQUE NOT NULL,
     user_id INT NOT NULL,
     type_id INT NOT NULL,
     status ENUM('pending', 'approved', 'rejected', 'in_progress', 'completed') DEFAULT 'pending',
@@ -99,12 +100,30 @@ CREATE TABLE notifications (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+-- Create request_files table
+CREATE TABLE IF NOT EXISTS request_files (
+    file_id INT PRIMARY KEY AUTO_INCREMENT,
+    request_id INT NOT NULL,
+    field_name VARCHAR(100) NOT NULL,
+    original_name VARCHAR(255) NOT NULL COMMENT 'Original filename from user',
+    file_name VARCHAR(255) NOT NULL COMMENT 'System generated filename',
+    file_path VARCHAR(255) NOT NULL,
+    file_type VARCHAR(50),
+    file_size INT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES requests(request_id) ON DELETE CASCADE
+);
+
 -- Insert default categories
 INSERT INTO categories (name, description) VALUES
 ('Academic Documents', 'Transcripts, certificates, and other academic records'),
 ('Student ID', 'Student identification card and related items (1x1 ID photo required)'),
 ('Uniforms', 'School uniform requests'),
 ('Books and Modules', 'Academic materials and learning resources');
+
+-- Insert default admin user
+INSERT INTO users (email, password, first_name, last_name, role, email_verified) VALUES
+('admin@upang.edu.ph', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin', 1);
 
 -- Insert sample request types
 INSERT INTO request_types (category_id, name, description, requirements, processing_time) VALUES
@@ -130,40 +149,6 @@ INSERT INTO request_types (category_id, name, description, requirements, process
  JSON_OBJECT('required_docs', JSON_ARRAY('Valid student ID', 'Professor approval')), 
  '1-2 working days');
 
--- Insert default admin user
-INSERT INTO users (email, password, first_name, last_name, role, email_verified) VALUES
-('admin@upang.edu.ph', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin', 1);
-
--- Insert Jericko Garcia's account
-INSERT INTO users (email, password, first_name, last_name, role, email_verified) VALUES
-('jerickogarcia0@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Jericko', 'Garcia', 'student', 1);
-
--- Insert sample requests for Jericko Garcia
-INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
-SELECT 
-    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
-    1, 'pending', NOW(), NOW();
-
-INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
-SELECT 
-    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
-    2, 'in_progress', NOW(), NOW();
-
-INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
-SELECT 
-    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
-    3, 'completed', DATE_SUB(NOW(), INTERVAL 2 DAY), NOW();
-
-INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
-SELECT 
-    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
-    4, 'rejected', DATE_SUB(NOW(), INTERVAL 3 DAY), NOW();
-
-INSERT INTO requests (user_id, type_id, status, submitted_at, updated_at) 
-SELECT 
-    (SELECT user_id FROM users WHERE email = 'jerickogarcia0@gmail.com'),
-    5, 'completed', DATE_SUB(NOW(), INTERVAL 5 DAY), NOW();
-
 -- Add requirements column to request_types if not exists
 ALTER TABLE request_types 
 MODIFY COLUMN requirements JSON;
@@ -174,7 +159,7 @@ CREATE TABLE requirement_templates (
     type_id INT NOT NULL,
     requirement_name VARCHAR(100) NOT NULL,
     description TEXT,
-    file_types VARCHAR(255), -- Allowed file types (e.g., "pdf,jpg,png")
+    file_types VARCHAR(255),
     is_required BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (type_id) REFERENCES request_types(type_id)
 );
@@ -265,12 +250,66 @@ SET requirements = JSON_OBJECT(
                     'description', 'Any additional information about your ID replacement request'
                 )
             )
+        -- For Enrollment Certificate
+        WHEN name = 'Enrollment Certificate' THEN
+            JSON_ARRAY(
+                JSON_OBJECT(
+                    'name', 'student_id',
+                    'label', 'Student ID Number',
+                    'type', 'text',
+                    'required', true,
+                    'description', 'Enter your student ID number'
+                ),
+                JSON_OBJECT(
+                    'name', 'year_level',
+                    'label', 'Year Level',
+                    'type', 'dropdown',
+                    'required', true,
+                    'description', 'Select your current year level',
+                    'options', JSON_ARRAY('1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year')
+                ),
+                JSON_OBJECT(
+                    'name', 'purpose',
+                    'label', 'Purpose',
+                    'type', 'text',
+                    'required', true,
+                    'description', 'State the purpose of requesting the Enrollment Certificate'
+                )
+            )
+        -- For Course Module Request
+        WHEN name = 'Course Module Request' THEN
+            JSON_ARRAY(
+                JSON_OBJECT(
+                    'name', 'student_id',
+                    'label', 'Student ID Number',
+                    'type', 'text',
+                    'required', true,
+                    'description', 'Enter your student ID number'
+                ),
+                JSON_OBJECT(
+                    'name', 'course_code',
+                    'label', 'Course Code',
+                    'type', 'text',
+                    'required', true,
+                    'description', 'Enter the course code for the module you need'
+                ),
+                JSON_OBJECT(
+                    'name', 'professor_approval',
+                    'label', 'Professor Approval',
+                    'type', 'file',
+                    'required', true,
+                    'allowed_types', 'pdf,jpg,png',
+                    'description', 'Upload the signed approval from your professor'
+                )
+            )
         END
     ),
     'instructions', CASE 
         WHEN name = 'Transcript of Records' THEN 'Please ensure all required documents are complete. Additional supporting documents are optional but may help process your request faster.'
         WHEN name = 'ID Replacement' THEN 'Submit the required documents. Payment receipt can be submitted later but must be provided before ID release.'
+        WHEN name = 'Enrollment Certificate' THEN 'Please provide your student ID number, year level, and purpose for requesting the Enrollment Certificate.'
+        WHEN name = 'Course Module Request' THEN 'Please provide your student ID, course code, and professor approval for the module request.'
         ELSE 'Please submit all required documents.'
     END
 )
-WHERE name IN ('Transcript of Records', 'ID Replacement'); 
+WHERE name IN ('Transcript of Records', 'ID Replacement', 'Enrollment Certificate', 'Course Module Request'); 

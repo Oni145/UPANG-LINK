@@ -1,133 +1,355 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#F5F7FA">
 
-    <androidx.core.widget.NestedScrollView
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:paddingTop="24dp"
+        android:paddingBottom="24dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/backButton"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            app:icon="@drawable/ic_arrow_back"
+            app:iconTint="#333333"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:padding="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:clickable="true"
+            android:focusable="true"
+            app:rippleColor="#33333333" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
+            android:id="@+id/contentContainer"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:padding="16dp">
+            app:layout_constraintWidth_percent="1.0"
+            app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintTop_toBottomOf="@id/backButton"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="24dp">
 
-            <TextView
-                android:id="@+id/titleText"
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/startGuideline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Create Request"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.06" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/endGuideline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.94" />
+
+            <TextView
+                android:id="@+id/createRequestTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Create New Request"
                 android:textSize="24sp"
                 android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="16dp"
+                android:gravity="center"
+                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/requestTypeLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/formCard"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:hint="Request Type"
-                app:layout_constraintTop_toBottomOf="@id/titleText">
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:layout_constraintTop_toBottomOf="@id/createRequestTitle"
+                app:layout_constraintStart_toStartOf="@id/startGuideline"
+                app:layout_constraintEnd_toEndOf="@id/endGuideline">
 
-                <AutoCompleteTextView
-                    android:id="@+id/requestTypeInput"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Request Details"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"
+                        android:gravity="center"
+                        android:layout_marginBottom="16dp" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/purposeLayout"
-                android:layout_width="match_parent"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/requestTypeLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Request Type"
+                        app:startIconDrawable="@drawable/ic_document_type"
+                        app:endIconTint="#4285F4">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/requestTypeDropdown"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:paddingVertical="16dp" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/processingTimeText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textColor="?android:textColorSecondary"
+                        android:textSize="14sp"
+                        android:visibility="gone"
+                        tools:text="Processing Time: 3-5 working days"
+                        tools:visibility="visible" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/requirementsCard"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Purpose"
-                app:layout_constraintTop_toBottomOf="@id/requestTypeLayout">
+                android:layout_marginTop="24dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:layout_constraintStart_toStartOf="@id/startGuideline"
+                app:layout_constraintEnd_toEndOf="@id/endGuideline"
+                app:layout_constraintTop_toBottomOf="@id/formCard">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/purposeInput"
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="top"
-                    android:inputType="textMultiLine"
-                    android:lines="4" />
+                    android:padding="16dp">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <LinearLayout
+                        android:id="@+id/requirementsHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent">
 
-            <TextView
-                android:id="@+id/requirementsTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Requirements"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/purposeLayout" />
+                        <ImageView
+                            android:id="@+id/requirementsIcon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_requirements"
+                            android:contentDescription="Requirements Icon" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/requirementsRecyclerView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:nestedScrollingEnabled="false"
-                app:layout_constraintTop_toBottomOf="@id/requirementsTitle" />
+                        <TextView
+                            android:id="@+id/requirementsTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="Requirements"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:gravity="center_vertical" />
+                            
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/sizeChartButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Size Chart"
+                            android:textSize="12sp"
+                            android:visibility="gone"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            app:icon="@drawable/ic_info"
+                            app:iconSize="16dp" />
+                    </LinearLayout>
 
-            <TextView
-                android:id="@+id/noRequirementsText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Select a request type to view requirements"
-                android:textColor="?android:textColorSecondary"
-                android:visibility="gone"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/requirementsTitle" />
+                    <LinearLayout
+                        android:id="@+id/placeholderRequirements"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="16dp"
+                        app:layout_constraintTop_toBottomOf="@id/requirementsHeader"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        android:visibility="visible">
 
-            <TextView
-                android:id="@+id/processingTimeText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:textColor="?android:textColorSecondary"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/requirementsRecyclerView" />
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginVertical="6dp"
+                            app:strokeColor="#E0E0E0"
+                            app:strokeWidth="1dp"
+                            app:cardCornerRadius="10dp"
+                            app:cardElevation="1dp">
 
-            <TextView
-                android:id="@+id/feeText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="?android:textColorSecondary"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/processingTimeText" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="16dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+                                    
+                                    <View
+                                        android:layout_width="160dp"
+                                        android:layout_height="20dp"
+                                        android:background="#EFEFEF" />
+                                        
+                                    <View
+                                        android:layout_width="80dp"
+                                        android:layout_height="24dp"
+                                        android:layout_marginStart="8dp"
+                                        android:background="#EFEFEF" />
+                                </LinearLayout>
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="40dp"
+                                    android:layout_marginTop="12dp"
+                                    android:background="#EFEFEF" />
+
+                                <View
+                                    android:layout_width="120dp"
+                                    android:layout_height="36dp"
+                                    android:layout_marginTop="12dp"
+                                    android:background="#EFEFEF" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginVertical="6dp"
+                            app:strokeColor="#E0E0E0"
+                            app:strokeWidth="1dp"
+                            app:cardCornerRadius="10dp"
+                            app:cardElevation="1dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="16dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+                                    
+                                    <View
+                                        android:layout_width="180dp"
+                                        android:layout_height="20dp"
+                                        android:background="#EFEFEF" />
+                                </LinearLayout>
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="40dp"
+                                    android:layout_marginTop="12dp"
+                                    android:background="#EFEFEF" />
+
+                                <View
+                                    android:layout_width="120dp"
+                                    android:layout_height="36dp"
+                                    android:layout_marginTop="12dp"
+                                    android:background="#EFEFEF" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/noRequirementsText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Please select a request type to see requirements"
+                        android:textColor="#757575"
+                        android:textSize="16sp"
+                        android:gravity="center"
+                        android:padding="24dp"
+                        android:layout_marginTop="16dp"
+                        app:layout_constraintTop_toBottomOf="@id/requirementsHeader"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        android:visibility="visible" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/requirementsRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        android:paddingTop="16dp"
+                        android:paddingBottom="8dp"
+                        app:layout_constraintTop_toBottomOf="@id/requirementsHeader"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        android:visibility="gone"
+                        tools:listitem="@layout/item_requirement"
+                        tools:itemCount="2"
+                        tools:visibility="visible" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/submitButton"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
-                android:enabled="false"
-                android:padding="12dp"
-                android:text="Submit Request"
-                app:layout_constraintTop_toBottomOf="@id/feeText" />
-
-            <ProgressBar
-                android:id="@+id/progressBar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
+                android:layout_marginBottom="16dp"
+                android:text="SUBMIT REQUEST"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:paddingVertical="16dp"
+                app:cornerRadius="8dp"
+                android:backgroundTint="#4285F4"
+                app:layout_constraintStart_toStartOf="@id/startGuideline"
+                app:layout_constraintEnd_toEndOf="@id/endGuideline"
+                app:layout_constraintTop_toBottomOf="@id/requirementsCard"
+                app:layout_constraintBottom_toBottomOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </androidx.core.widget.NestedScrollView>
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout> 
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.core.widget.NestedScrollView> 

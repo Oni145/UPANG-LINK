@@ -4,16 +4,11 @@ class User {
     private $table_name = "users";
 
     public $user_id;
-    public $student_number;
     public $email;
     public $password;
     public $first_name;
     public $last_name;
     public $role;
-    public $course;
-    public $year_level;
-    public $block;
-    public $admission_year;
     public $email_verified;
     public $email_verification_token;
     public $email_token_expiry;
@@ -27,29 +22,50 @@ class User {
     }
 
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . "
-                (email, password, first_name, last_name, role, email_verification_token, email_token_expiry)
-                VALUES (:email, :password, :first_name, :last_name, :role, :email_verification_token, :email_token_expiry)";
+        try {
+            error_log("Starting user creation...");
+            
+            $query = "INSERT INTO " . $this->table_name . "
+                    (email, password, first_name, last_name, role, email_verification_token, email_token_expiry)
+                    VALUES (:email, :password, :first_name, :last_name, :role, :email_verification_token, :email_token_expiry)";
 
-        $stmt = $this->conn->prepare($query);
+            error_log("Prepared query: " . $query);
+            error_log("Email: " . $this->email);
+            error_log("First Name: " . $this->first_name);
+            error_log("Last Name: " . $this->last_name);
+            error_log("Role: " . $this->role);
 
-        // Generate verification token
-        $this->email_verification_token = bin2hex(random_bytes(32));
-        $this->email_token_expiry = date('Y-m-d H:i:s', strtotime('+24 hours'));
+            $stmt = $this->conn->prepare($query);
 
-        $stmt->bindParam(":email", $this->email);
-        $stmt->bindParam(":password", $this->password);
-        $stmt->bindParam(":first_name", $this->first_name);
-        $stmt->bindParam(":last_name", $this->last_name);
-        $stmt->bindParam(":role", $this->role);
-        $stmt->bindParam(":email_verification_token", $this->email_verification_token);
-        $stmt->bindParam(":email_token_expiry", $this->email_token_expiry);
+            // Generate verification token
+            $this->email_verification_token = bin2hex(random_bytes(32));
+            $this->email_token_expiry = date('Y-m-d H:i:s', strtotime('+24 hours'));
 
-        if($stmt->execute()) {
-            $this->user_id = $this->conn->lastInsertId();
-            return true;
+            $stmt->bindParam(":email", $this->email);
+            $stmt->bindParam(":password", $this->password);
+            $stmt->bindParam(":first_name", $this->first_name);
+            $stmt->bindParam(":last_name", $this->last_name);
+            $stmt->bindParam(":role", $this->role);
+            $stmt->bindParam(":email_verification_token", $this->email_verification_token);
+            $stmt->bindParam(":email_token_expiry", $this->email_token_expiry);
+
+            if($stmt->execute()) {
+                $this->user_id = $this->conn->lastInsertId();
+                error_log("User created successfully with ID: " . $this->user_id);
+                return true;
+            }
+            error_log("Failed to execute user creation query");
+            return false;
+        } catch (PDOException $e) {
+            error_log("Database error during user creation: " . $e->getMessage());
+            error_log("SQL State: " . $e->errorInfo[0]);
+            error_log("Error Code: " . $e->errorInfo[1]);
+            error_log("Error Message: " . $e->errorInfo[2]);
+            throw $e;
+        } catch (Exception $e) {
+            error_log("General error during user creation: " . $e->getMessage());
+            throw $e;
         }
-        return false;
     }
 
     public function verifyEmail($token) {
@@ -109,28 +125,41 @@ class User {
     }
 
     public function validateSession($token) {
+        error_log("Validating session for token: " . $token);
+        
         $query = "SELECT us.*, u.email_verified 
                 FROM user_sessions us
                 JOIN users u ON us.user_id = u.user_id
                 WHERE us.token = ? AND us.is_active = 1 AND us.expires_at > NOW()";
         
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $token);
-        $stmt->execute();
-
-        if($stmt->rowCount() > 0) {
-            $session = $stmt->fetch(PDO::FETCH_ASSOC);
+        error_log("Executing query: " . $query);
+        
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $token);
+            $stmt->execute();
             
-            // Update last activity
-            $this->updateSessionActivity($token);
+            error_log("Query executed. Row count: " . $stmt->rowCount());
             
-            return [
-                'valid' => true,
-                'user_id' => $session['user_id'],
-                'email_verified' => $session['email_verified']
-            ];
+            if($stmt->rowCount() > 0) {
+                $session = $stmt->fetch(PDO::FETCH_ASSOC);
+                error_log("Session found: " . json_encode($session));
+                
+                // Update last activity
+                $this->updateSessionActivity($token);
+                
+                return [
+                    'valid' => true,
+                    'user_id' => $session['user_id'],
+                    'email_verified' => $session['email_verified']
+                ];
+            }
+            error_log("No valid session found");
+            return ['valid' => false];
+        } catch (PDOException $e) {
+            error_log("Database error in validateSession: " . $e->getMessage());
+            throw $e;
         }
-        return ['valid' => false];
     }
 
     public function logout($token) {
@@ -145,14 +174,22 @@ class User {
     }
 
     private function updateSessionActivity($token) {
+        error_log("Updating session activity for token: " . $token);
+        
         $query = "UPDATE user_sessions 
                 SET last_activity = CURRENT_TIMESTAMP 
                 WHERE token = ?";
         
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $token);
-        
-        return $stmt->execute();
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $token);
+            $result = $stmt->execute();
+            error_log("Session activity update result: " . ($result ? "success" : "failed"));
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error updating session activity: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function read() {
@@ -181,19 +218,13 @@ class User {
     public function update() {
         $query = "UPDATE " . $this->table_name . "
                 SET first_name = :first_name,
-                    last_name = :last_name,
-                    course = :course,
-                    year_level = :year_level,
-                    block = :block
+                    last_name = :last_name
                 WHERE user_id = :user_id";
 
         $stmt = $this->conn->prepare($query);
 
         $stmt->bindParam(":first_name", $this->first_name);
         $stmt->bindParam(":last_name", $this->last_name);
-        $stmt->bindParam(":course", $this->course);
-        $stmt->bindParam(":year_level", $this->year_level);
-        $stmt->bindParam(":block", $this->block);
         $stmt->bindParam(":user_id", $this->user_id);
 
         return $stmt->execute();

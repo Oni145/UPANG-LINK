@@ -5,23 +5,25 @@ import retrofit2.http.*
 
 interface AuthApi {
     @POST("auth/student/login")
-    suspend fun login(@Body request: LoginRequest): ApiLoginResponse
+    suspend fun login(@Body loginRequest: LoginRequest): ApiResponse<LoginResponse>
 
     @POST("auth/student/register")
-    @Headers("Content-Type: application/json")
-    suspend fun register(@Body request: RegisterRequest): ApiResponse<RegisterResponse>
+    suspend fun register(@Body registerRequest: RegisterRequest): ApiResponse<Unit>
 
     @POST("auth/student/verify-email")
-    suspend fun verifyEmail(@Body request: Map<String, String>): ApiResponse<Unit>
-
-    @POST("auth/student/forgot-password")
-    suspend fun forgotPassword(@Body request: Map<String, String>): ApiResponse<Unit>
-
-    @POST("auth/student/reset-password")
-    suspend fun resetPassword(@Body request: Map<String, String>): ApiResponse<Unit>
+    suspend fun verifyEmail(@Body verifyEmailRequest: VerifyEmailRequest): ApiResponse<Unit>
 
     @POST("auth/student/resend-verification")
-    suspend fun resendVerification(@Body request: Map<String, String>): ApiResponse<Unit>
+    suspend fun resendVerification(@Body resendVerificationRequest: ResendVerificationRequest): ApiResponse<Unit>
+
+    @POST("auth/student/forgot-password")
+    suspend fun forgotPassword(@Body forgotPasswordRequest: ForgotPasswordRequest): ApiResponse<Unit>
+
+    @POST("auth/student/reset-password")
+    suspend fun resetPassword(@Body resetPasswordRequest: ResetPasswordRequest): ApiResponse<Unit>
+
+    @POST("auth/student/validate-token")
+    suspend fun validateToken(): ApiResponse<ValidateTokenResponse>
 
     @GET("auth/student/profile")
     suspend fun getProfile(): ApiResponse<UserProfile>

@@ -37,6 +37,9 @@ class RequestsViewModel @Inject constructor(
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
+    private val _currentFilter = MutableLiveData<RequestFilter?>()
+    val currentFilter: LiveData<RequestFilter?> = _currentFilter
+
     init {
         loadRequests()
         loadRequestTypes()
@@ -48,6 +51,7 @@ class RequestsViewModel @Inject constructor(
             try {
                 _isLoading.value = true
                 _error.value = null
+                _currentFilter.value = filter
                 
                 repository.getRequests(filter).fold(
                     onSuccess = { requests ->
@@ -56,18 +60,12 @@ class RequestsViewModel @Inject constructor(
                         _error.value = null
                     },
                     onFailure = { e ->
-                        // Only show error if it's not a 404
-                        if (e.message?.contains("404", ignoreCase = true) != true) {
-                            _error.value = e.message
-                        }
+                        _error.value = e.message
                         _requests.value = emptyList()
                     }
                 )
             } catch (e: Exception) {
-                // Only show error if it's not a 404
-                if (e.message?.contains("404", ignoreCase = true) != true) {
-                    _error.value = e.message
-                }
+                _error.value = e.message
                 _requests.value = emptyList()
             } finally {
                 _isLoading.value = false
@@ -152,7 +150,8 @@ class RequestsViewModel @Inject constructor(
 
                 repository.cancelRequest(requestId).fold(
                     onSuccess = {
-                        loadRequests() // Refresh the list after cancellation
+                        // Refresh the list with current filter
+                        loadRequests(_currentFilter.value)
                     },
                     onFailure = { e ->
                         _error.value = e.message ?: "Failed to cancel request"

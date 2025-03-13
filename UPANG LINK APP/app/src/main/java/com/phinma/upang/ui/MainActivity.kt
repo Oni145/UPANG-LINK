@@ -2,27 +2,30 @@ package com.phinma.upang.ui
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.phinma.upang.R
 import com.phinma.upang.databinding.ActivityMainBinding
+import com.phinma.upang.data.SessionManager
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     
+    @Inject
+    lateinit var sessionManager: SessionManager
+    
     private lateinit var binding: ActivityMainBinding
+    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,32 +42,55 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Ensure the NavController is set up before accessing it
+        // Set up navigation
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
+        navController = navHostFragment.navController
 
-        val sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val token = sharedPreferences.getString("user_token", null)
+        // Set up bottom navigation
+        binding.bottomNav.setupWithNavController(navController)
 
-        if (token != null) {
-            // User is logged in, navigate to main screen
-            navigateToMainScreen(navController)
+        // Check token validity from SplashActivity
+        val isTokenValid = intent.getBooleanExtra("token_valid", false)
+        Log.d("MainActivity", "Token valid from intent: $isTokenValid")
+
+        // Set up navigation based on token validity
+        val navGraph = navController.navInflater.inflate(R.navigation.nav_graph_main)
+        
+        if (isTokenValid) {
+            Log.d("MainActivity", "Setting start destination to mainFragment")
+            navGraph.setStartDestination(R.id.mainFragment)
         } else {
-            // User is not logged in, navigate to login screen
-            navigateToLoginScreen(navController)
+            Log.d("MainActivity", "Setting start destination to loginFragment")
+            navGraph.setStartDestination(R.id.loginFragment)
+        }
+        
+        navController.graph = navGraph
+
+        // Update UI based on current destination
+        updateUIForDestination(navController.currentDestination?.id)
+
+        // Show/hide bottom navigation based on current destination
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            Log.d("MainActivity", "Navigation to: ${resources.getResourceName(destination.id)}")
+            updateUIForDestination(destination.id)
+        }
+    }
+
+    private fun updateUIForDestination(destinationId: Int?) {
+        when (destinationId) {
+            R.id.loginFragment,
+            R.id.registerFragment,
+            R.id.forgotPasswordFragment -> {
+                binding.bottomNav.visibility = View.GONE
+            }
+            else -> {
+                binding.bottomNav.visibility = View.VISIBLE
+            }
         }
     }
 
     private fun hideSystemUI() {
         val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
         windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-    }
-
-    private fun navigateToMainScreen(navController: NavController) {
-        navController.navigate(R.id.mainFragment)
-    }
-
-    private fun navigateToLoginScreen(navController: NavController) {
-        navController.navigate(R.id.loginFragment)
     }
 } 

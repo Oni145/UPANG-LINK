@@ -7,15 +7,10 @@ import java.util.Date
 @Parcelize
 data class UserProfile(
     val user_id: Int,
-    val student_number: String,
     val email: String,
     val first_name: String,
     val last_name: String,
     val role: String,
-    val course: String,
-    val year_level: Int,
-    val block: String,
-    val admission_year: String,
     val email_verified: Int,
     val created_at: String,
     val updated_at: String
@@ -52,10 +47,7 @@ data class RegisterResponse(
 
 data class UpdateProfileRequest(
     val firstName: String,
-    val lastName: String,
-    val course: String,
-    val yearLevel: Int,
-    val block: String
+    val lastName: String
 )
 
 data class ChangePasswordRequest(

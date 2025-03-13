@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__) . '/models/User.php';
+
 class AuthMiddleware {
     private $db;
     private $user;
@@ -12,6 +14,10 @@ class AuthMiddleware {
             '/auth/student/resend-verification',
             '/auth/forgot-password',
             '/auth/reset-password'
+        ],
+        'GET' => [
+            '/requests/types',
+            '/requests/types/0/requirements'
         ]
     ];
 

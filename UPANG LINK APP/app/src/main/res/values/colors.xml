@@ -12,6 +12,7 @@
     <color name="primary">#2196F3</color>
     <color name="primary_dark">#1976D2</color>
     <color name="primary_light">#64B5F6</color>
+    <color name="primary_color">#2196F3</color>
     
     <!-- Accent colors -->
     <color name="accent_orange">#FF9800</color>
@@ -20,6 +21,7 @@
     <color name="accent_green">#4CAF50</color>
     <color name="accent_green_light">#81C784</color>
     <color name="accent_green_dark">#388E3C</color>
+    <color name="accent_color">#FF4081</color>
     
     <!-- Status colors -->
     <color name="status_pending">#FFFF9800</color>
@@ -33,11 +35,15 @@
     <color name="text_secondary">#99000000</color>
     <color name="text_disabled">#61000000</color>
     <color name="text_hint">#757575</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
 
     <!-- Background colors -->
     <color name="background">#F5F5F5</color>
     <color name="surface">#FFFFFF</color>
     <color name="card_background">#FFFFFF</color>
+    <color name="background_color">#F5F5F5</color>
+    <color name="surface_color">#FFFFFF</color>
 
     <!-- Chip colors -->
     <color name="chip_background_unchecked">#F5F5F5</color>
@@ -50,15 +56,23 @@
     <color name="gray_600">#757575</color>
     <color name="gray_800">#424242</color>
 
-    <!-- Status colors -->
+    <!-- Semantic colors -->
     <color name="error">#F44336</color>
     <color name="success">#4CAF50</color>
-    <color name="warning">#FFC107</color>
+    <color name="warning">#F5A623</color>
     <color name="info">#2196F3</color>
+    <color name="error_color">#B00020</color>
+    <color name="success_color">#4CAF50</color>
 
     <!-- Launcher Icon -->
     <color name="ic_launcher_background">#FFFFFF</color>
 
     <!-- Status bar color -->
     <color name="status_bar">#cfbaff</color>
+
+    <!-- Status background colors -->
+    <color name="status_pending_bg">#F5F5F5</color>
+    <color name="status_progress_bg">#E8F4FD</color>
+    <color name="status_completed_bg">#E6F4EA</color>
+    <color name="status_rejected_bg">#FEECEB</color>
 </resources> 

@@ -14,6 +14,7 @@ import java.util.Locale
 import androidx.core.content.ContextCompat
 import com.phinma.upang.R
 import java.text.ParseException
+import android.view.View
 
 class RequestsAdapter(
     private val onItemClick: (Request) -> Unit,
@@ -39,9 +40,24 @@ class RequestsAdapter(
     override fun onBindViewHolder(holder: RequestViewHolder, position: Int) {
         val request = getItem(position)
         with(holder.binding) {
+            // Show tracking number if available
+            if (!request.id.isNullOrEmpty()) {
+                requestTrackingNumber.text = request.id
+                requestTrackingNumber.visibility = View.VISIBLE
+            } else {
+                requestTrackingNumber.visibility = View.GONE
+            }
+            
             // Safely handle potentially null type
             requestTitle.text = request.type?.name ?: request.document_type
-            requestDescription.text = request.purpose
+            
+            // Hide description if not needed
+            if (request.purpose.isNullOrEmpty()) {
+                requestDescription.visibility = View.GONE
+            } else {
+                requestDescription.visibility = View.VISIBLE
+                requestDescription.text = request.purpose
+            }
 
             // Format the date safely
             val formattedDate = try {
@@ -51,6 +67,9 @@ class RequestsAdapter(
                 "Date not available"
             }
             requestDate.text = formattedDate
+
+            // Set processing time
+            processingTime.text = "Processing Time: ${request.processing_time ?: "5-7 working days"}"
 
             // Use the status directly, defaulting to PENDING if null
             updateStatusViews(request.status ?: RequestStatus.PENDING, holder)
@@ -71,22 +90,22 @@ class RequestsAdapter(
                 RequestStatus.PENDING -> {
                     requestStatus.text = "Pending"
                     requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.warning))
-                    requestStatus.setBackgroundResource(R.drawable.bg_status_pending)
+                    requestStatus.chipBackgroundColor = ContextCompat.getColorStateList(root.context, R.color.status_pending_bg)
                 }
                 RequestStatus.IN_PROGRESS -> {
                     requestStatus.text = "In Progress"
-                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.warning))
-                    requestStatus.setBackgroundResource(R.drawable.bg_status_pending)
+                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.info))
+                    requestStatus.chipBackgroundColor = ContextCompat.getColorStateList(root.context, R.color.status_progress_bg)
                 }
                 RequestStatus.COMPLETED -> {
                     requestStatus.text = "Completed"
                     requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.success))
-                    requestStatus.setBackgroundResource(R.drawable.bg_status_approved)
+                    requestStatus.chipBackgroundColor = ContextCompat.getColorStateList(root.context, R.color.status_completed_bg)
                 }
                 RequestStatus.REJECTED -> {
                     requestStatus.text = "Rejected"
                     requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.error))
-                    requestStatus.setBackgroundResource(R.drawable.bg_status_rejected)
+                    requestStatus.chipBackgroundColor = ContextCompat.getColorStateList(root.context, R.color.status_rejected_bg)
                 }
             }
             // Show cancel button only for pending requests

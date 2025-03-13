@@ -1,0 +1,30 @@
+Current Transcript of Records requirements:
+
+{
+    "fields": [
+        {
+            "name": "student_id",
+            "label": "Student ID Number",
+            "type": "text",
+            "required": true,
+            "description": "Enter your student ID number"
+        },
+        {
+            "name": "clearance_form",
+            "label": "Clearance Form",
+            "type": "file",
+            "required": true,
+            "description": "Upload your completed clearance form",
+            "allowed_types": "jpg,jpeg,png,pdf"
+        },
+        {
+            "name": "request_letter",
+            "label": "Request Letter",
+            "type": "file",
+            "required": true,
+            "description": "Formal letter stating the purpose of requesting TOR",
+            "allowed_types": "pdf,doc,docx"
+        }
+    ],
+    "instructions": "Please enter your student ID number and upload your completed clearance form and request letter to request a transcript of records."
+}

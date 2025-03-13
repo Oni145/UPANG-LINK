@@ -10,15 +10,19 @@ class Database {
         $this->conn = null;
 
         try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
-                $this->username,
-                $this->password
-            );
+            $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->db_name;
+            error_log("Attempting to connect to database: " . $dsn);
+            
+            $this->conn = new PDO($dsn, $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            
+            error_log("Database connection successful");
         } catch(PDOException $e) {
             error_log("Database Connection Error: " . $e->getMessage());
-            throw new Exception("Database connection failed", 500);
+            error_log("DSN: mysql:host=" . $this->host . ";dbname=" . $this->db_name);
+            error_log("Username: " . $this->username);
+            throw new Exception("Database connection failed: " . $e->getMessage(), 500);
         }
 
         return $this->conn;

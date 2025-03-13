@@ -1,4 +1,9 @@
 <?php
+require_once __DIR__ . '/../utils/EmailHandler.php';
+require_once __DIR__ . '/../models/User.php';
+
+use App\Utils\EmailHandler;
+
 class AuthController {
     private $db;
     private $user;
@@ -8,12 +13,13 @@ class AuthController {
         $this->user = new User($db);
     }
 
-    private function sendError($message, $code = 400) {
+    private function sendError($message, $code = 400, $error_type = 'GENERAL_ERROR') {
         http_response_code($code);
         echo json_encode([
             'status' => 'error',
             'message' => $message,
-            'code' => $code
+            'code' => $code,
+            'error_type' => $error_type
         ]);
     }
 
@@ -62,6 +68,9 @@ class AuthController {
                                         break;
                                     case 'reset-password':
                                         $this->resetPassword();
+                                        break;
+                                    case 'validate-token':
+                                        $this->validateToken();
                                         break;
                                     default:
                                         $this->sendError('Invalid student endpoint');
@@ -154,26 +163,26 @@ class AuthController {
             // Check if user exists
             if(!$user) {
                 // Return generic error message
-                $this->sendError('Wrong email or password.');
+                $this->sendError('Wrong email or password.', 400, 'INVALID_CREDENTIALS');
                 return;
             }
 
             // Check password
             if(!password_verify($data->password, $user['password'])) {
                 // Return generic error message
-                $this->sendError('Wrong email or password.');
+                $this->sendError('Wrong email or password.', 400, 'INVALID_CREDENTIALS');
                 return;
             }
 
             // Check user role
             if($user['role'] !== 'student') {
-                $this->sendError('This account is not a student account. Please use the correct login page.');
+                $this->sendError('This account is not a student account. Please use the correct login page.', 400, 'INVALID_ACCOUNT_TYPE');
                 return;
             }
 
             // Check email verification
             if(!$user['email_verified']) {
-                $this->sendError('Please verify your email address before logging in. Check your inbox for the verification link.');
+                $this->sendError('Please verify your email address before logging in. Check your inbox for the verification link.', 400, 'EMAIL_NOT_VERIFIED');
                 return;
             }
 
@@ -199,10 +208,10 @@ class AuthController {
                     ]
                 ]);
             } else {
-                $this->sendError('Unable to log in. Please try again.');
+                $this->sendError('Unable to log in. Please try again.', 500, 'SESSION_CREATE_FAILED');
             }
         } else {
-            $this->sendError('Please enter your email and password.');
+            $this->sendError('Please enter your email and password.', 400, 'MISSING_CREDENTIALS');
         }
     }
 
@@ -255,7 +264,21 @@ class AuthController {
         ) {
             // Check if email already exists
             if($this->user->getByEmail($data->email)) {
-                $this->sendError('Email already exists');
+                $this->sendError(
+                    'An account with this email address already exists.',
+                    400,
+                    'EMAIL_EXISTS'
+                );
+                return;
+            }
+
+            // Validate password length
+            if(strlen($data->password) < 8) {
+                $this->sendError(
+                    'Password must be at least 8 characters long.',
+                    400,
+                    'INVALID_PASSWORD'
+                );
                 return;
             }
 
@@ -276,10 +299,14 @@ class AuthController {
                     'message' => 'Account created successfully. Please check your email to verify your account.'
                 ]);
             } else {
-                $this->sendError('Unable to create account');
+                $this->sendError('Unable to create account. Please try again later.', 500, 'ACCOUNT_CREATE_FAILED');
             }
         } else {
-            $this->sendError('Please provide email, password, first name, and last name');
+            $this->sendError(
+                'Please provide email, password, first name, and last name.',
+                400,
+                'MISSING_REQUIRED_FIELDS'
+            );
         }
     }
 
@@ -293,10 +320,10 @@ class AuthController {
                 http_response_code(200);
                 echo json_encode($result);
             } else {
-                $this->sendError($result['message']);
+                $this->sendError($result['message'], 400, 'INVALID_VERIFICATION_TOKEN');
             }
         } else {
-            $this->sendError('Verification token is required');
+            $this->sendError('Verification token is required', 400, 'MISSING_TOKEN');
         }
     }
 
@@ -345,6 +372,7 @@ class AuthController {
         } else {
             $this->sendError('Authorization token is required');
         }
+
     }
 
     private function sendVerificationEmail($email, $token) {
@@ -411,6 +439,7 @@ class AuthController {
             } else {
                 $this->sendError('Unable to update user');
             }
+
         } else {
             $this->sendError('No data provided');
         }
@@ -449,7 +478,7 @@ class AuthController {
                         'message' => 'Password reset instructions have been sent to your email'
                     ]);
                 } else {
-                    $this->sendError('Failed to generate reset token');
+                    $this->sendError('Failed to generate reset token', 500, 'TOKEN_GENERATION_FAILED');
                 }
             } else {
                 // For security reasons, don't reveal if email exists
@@ -460,7 +489,7 @@ class AuthController {
                 ]);
             }
         } else {
-            $this->sendError('Email is required');
+            $this->sendError('Email is required', 400, 'MISSING_EMAIL');
         }
     }
 
@@ -470,7 +499,7 @@ class AuthController {
         if(!empty($data->token) && !empty($data->password)) {
             // Validate password strength
             if(strlen($data->password) < 8) {
-                $this->sendError('Password must be at least 8 characters long');
+                $this->sendError('Password must be at least 8 characters long', 400, 'INVALID_PASSWORD');
                 return;
             }
 
@@ -485,13 +514,42 @@ class AuthController {
                         'message' => 'Password has been reset successfully'
                     ]);
                 } else {
-                    $this->sendError('Failed to reset password');
+                    $this->sendError('Failed to reset password', 500, 'PASSWORD_RESET_FAILED');
                 }
             } else {
-                $this->sendError($result['message']);
+                $this->sendError($result['message'], 400, 'INVALID_RESET_TOKEN');
             }
         } else {
-            $this->sendError('Token and new password are required');
+            $this->sendError('Token and new password are required', 400, 'MISSING_REQUIRED_FIELDS');
         }
     }
-} 
+
+    private function validateToken() {
+        // Get authorization header
+        $headers = apache_request_headers();
+        $auth_header = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+        
+        // Check if token is provided
+        if(empty($auth_header) || !preg_match('/Bearer\s+(.*)$/i', $auth_header, $matches)) {
+            $this->sendError('No token provided', 401, 'TOKEN_MISSING');
+            return;
+        }
+        
+        $token = $matches[1];
+        $result = $this->user->validateSession($token);
+        
+        if($result['valid']) {
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Token is valid',
+                'data' => [
+                    'user_id' => $result['user_id'],
+                    'email_verified' => $result['email_verified']
+                ]
+            ]);
+        } else {
+            $this->sendError('Invalid or expired token', 401, 'INVALID_TOKEN');
+        }
+    }
+}

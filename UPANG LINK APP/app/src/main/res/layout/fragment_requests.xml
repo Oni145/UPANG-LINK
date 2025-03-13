@@ -9,8 +9,7 @@
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="56dp">
+        android:layout_height="match_parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -68,6 +67,16 @@
                         android:textColor="@color/black" />
 
                     <com.google.android.material.chip.Chip
+                        android:id="@+id/chipInProgress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="In Progress"
+                        app:chipBackgroundColor="@color/white"
+                        app:chipStrokeColor="@color/black"
+                        app:chipStrokeWidth="1dp"
+                        android:textColor="@color/black" />
+
+                    <com.google.android.material.chip.Chip
                         android:id="@+id/chipCompleted"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -97,7 +106,7 @@
                 android:layout_height="0dp"
                 android:layout_marginTop="8dp"
                 android:clipToPadding="false"
-                android:paddingBottom="16dp"
+                android:paddingBottom="56dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/filterScrollView"
                 tools:listitem="@layout/item_request" />

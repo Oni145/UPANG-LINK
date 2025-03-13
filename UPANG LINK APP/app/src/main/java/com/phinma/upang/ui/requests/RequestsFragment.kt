@@ -40,6 +40,15 @@ class RequestsFragment : Fragment() {
         setupRecyclerView()
         setupListeners()
         observeViewModel()
+        
+        // Initial load
+        viewModel.loadRequests()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh data when returning to the fragment
+        viewModel.loadRequests()
     }
 
     private fun setupRecyclerView() {
@@ -77,20 +86,20 @@ class RequestsFragment : Fragment() {
 
     private fun setupFilterChips() {
         with(binding) {
+            chipAll.setOnClickListener {
+                viewModel.loadRequests()
+            }
+
             chipPending.setOnClickListener {
                 viewModel.loadRequests(RequestFilter(status = RequestStatus.PENDING.name))
             }
 
+            chipInProgress.setOnClickListener {
+                viewModel.loadRequests(RequestFilter(status = RequestStatus.IN_PROGRESS.name))
+            }
+
             chipCompleted.setOnClickListener {
                 viewModel.loadRequests(RequestFilter(status = RequestStatus.COMPLETED.name))
-            }
-
-            chipRejected.setOnClickListener {
-                viewModel.loadRequests(RequestFilter(status = RequestStatus.REJECTED.name))
-            }
-
-            chipAll.setOnClickListener {
-                viewModel.loadRequests()
             }
         }
     }
@@ -98,18 +107,41 @@ class RequestsFragment : Fragment() {
     private fun observeViewModel() {
         viewModel.requests.observe(viewLifecycleOwner) { requests ->
             requestsAdapter.submitList(requests)
-            binding.noRequestsText.isVisible = requests.isEmpty()
-            binding.recyclerViewRequests.isVisible = requests.isNotEmpty()
+            
+            // Update visibility of views
+            binding.apply {
+                val isLoading = viewModel.isLoading.value == true
+                noRequestsText.isVisible = requests.isEmpty() && !isLoading
+                recyclerViewRequests.isVisible = requests.isNotEmpty()
+                
+                // Show appropriate message for empty state
+                if (requests.isEmpty() && !isLoading) {
+                    noRequestsText.text = when {
+                        viewModel.currentFilter.value?.status != null -> 
+                            getString(R.string.no_filtered_requests, viewModel.currentFilter.value?.status?.toLowerCase())
+                        else -> getString(R.string.no_requests_found)
+                    }
+                }
+            }
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            binding.progressBar.isVisible = isLoading
-            binding.swipeRefresh.isRefreshing = isLoading
+            binding.apply {
+                progressBar.isVisible = isLoading
+                swipeRefresh.isRefreshing = isLoading
+                // Hide no requests text while loading
+                if (isLoading) {
+                    noRequestsText.isVisible = false
+                } else {
+                    // Show no requests text only if the list is empty
+                    noRequestsText.isVisible = viewModel.requests.value?.isEmpty() == true
+                }
+            }
         }
 
         viewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
-                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             }
         }
     }

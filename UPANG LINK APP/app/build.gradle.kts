@@ -85,4 +85,6 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.48")
     ksp("com.google.dagger:hilt-android-compiler:2.48")
+
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
 }

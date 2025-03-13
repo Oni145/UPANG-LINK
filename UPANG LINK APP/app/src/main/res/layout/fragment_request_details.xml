@@ -56,6 +56,27 @@
                 app:layout_constraintTop_toBottomOf="@id/requestDate" />
 
             <TextView
+                android:id="@+id/processingTimeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Processing Time"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/requestStatus" />
+
+            <TextView
+                android:id="@+id/processingTimeText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/processingTimeLabel"
+                tools:text="3-5 working days" />
+
+            <TextView
                 android:id="@+id/purposeLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

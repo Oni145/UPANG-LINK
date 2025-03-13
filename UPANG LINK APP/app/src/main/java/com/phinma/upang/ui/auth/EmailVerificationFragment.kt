@@ -46,9 +46,7 @@ class EmailVerificationFragment : Fragment(R.layout.fragment_email_verification)
         }
 
         binding.btnLogin.setOnClickListener {
-            findNavController().navigate(
-                EmailVerificationFragmentDirections.actionEmailVerificationFragmentToLoginFragment()
-            )
+            findNavController().navigate(R.id.action_emailVerificationFragment_to_loginFragment)
         }
     }
 

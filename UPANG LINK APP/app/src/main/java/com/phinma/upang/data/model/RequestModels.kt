@@ -7,7 +7,73 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
 import kotlinx.parcelize.Parceler
+import kotlinx.parcelize.RawValue
 import java.util.Date
+
+enum class RequestStatus {
+    PENDING,
+    IN_PROGRESS,
+    COMPLETED,
+    REJECTED;
+
+    companion object {
+        fun fromString(value: String): RequestStatus {
+            return when (value.lowercase()) {
+                "pending" -> PENDING
+                "in_progress" -> IN_PROGRESS
+                "completed" -> COMPLETED
+                "rejected" -> REJECTED
+                else -> PENDING // Default to PENDING if unknown status
+            }
+        }
+    }
+}
+
+enum class RequirementStatus {
+    PENDING,
+    SUBMITTED,
+    VERIFIED,
+    REJECTED
+}
+
+data class ApiResponse<T>(
+    val status: String,
+    val message: String? = null,
+    val data: T? = null,
+    val error_type: String? = null,
+    val code: Int? = null
+)
+
+data class RequestFilter(
+    val status: String? = null,
+    val type: Int? = null,
+    val startDate: Date? = null,
+    val endDate: Date? = null,
+    val searchQuery: String? = null
+)
+
+data class RequestStatistics(
+    val total: Int,
+    val pending: Int,
+    val completed: Int,
+    val inProgress: Int,
+    val cancelled: Int,
+    val byType: Map<String, Int>,
+    val byMonth: Map<String, Int>
+)
+
+data class RequestCreateResponse(
+    val request: Request,
+    val requirements: List<Requirement>
+)
+
+data class CreateRequestResponse(
+    val request_id: Int,
+    val tracking_number: String,
+    val token: String,
+    val status: String,
+    val submitted_at: String
+)
 
 @Parcelize
 data class Request(
@@ -15,7 +81,7 @@ data class Request(
     val request_id: Int,
     val user_id: Int,
     val type_id: Int,
-    val type: RequestType?,
+    val type: @RawValue RequestType?,
     val document_type: String,
     val purpose: String?,
     val status: RequestStatus? = RequestStatus.PENDING,
@@ -74,17 +140,20 @@ object MapParceler : Parceler<Map<String, Any>> {
 }
 
 @Parcelize
-@TypeParceler<Map<String, Any>, MapParceler>()
 data class RequestType(
     val type_id: Int,
     val category_id: Int,
     val name: String,
     val description: String,
-    val requirements: Map<String, Any>,
+    val requirements: @RawValue Map<String, Any>,
     val processing_time: String,
     val is_active: Int,
     val category_name: String
 ) : Parcelable {
+    override fun toString(): String {
+        return name
+    }
+
     fun parseRequirements(): RequirementsData {
         return try {
             val gson = Gson()
@@ -116,86 +185,6 @@ data class RequestType(
     }
 }
 
-@Parcelize
-data class Requirement(
-    val id: String,
-    val request_type_id: Int,
-    val name: String,
-    val description: String,
-    val isRequired: Boolean,
-    val allowedFileTypes: List<String>,
-    val maxFileSize: Long, // in bytes
-    val created_at: String,
-    val updated_at: String
-) : Parcelable
-
-@Parcelize
-data class RequirementSubmission(
-    val id: String,
-    val requirementId: String,
-    val requirement: Requirement,
-    val fileUrl: String?,
-    val status: RequirementStatus,
-    val remarks: String?,
-    val submittedAt: Date?,
-    val verifiedAt: Date?
-) : Parcelable
-
-enum class RequestStatus {
-    PENDING,
-    IN_PROGRESS,
-    COMPLETED,
-    REJECTED;
-
-    companion object {
-        fun fromString(value: String): RequestStatus {
-            return when (value.lowercase()) {
-                "pending" -> PENDING
-                "in_progress" -> IN_PROGRESS
-                "completed" -> COMPLETED
-                "rejected" -> REJECTED
-                else -> PENDING // Default to PENDING if unknown status
-            }
-        }
-    }
-}
-
-enum class RequirementStatus {
-    PENDING,
-    SUBMITTED,
-    VERIFIED,
-    REJECTED
-}
-
-data class RequestCreateResponse(
-    val request: Request,
-    val requirements: List<Requirement>
-)
-
-data class RequestStatistics(
-    val total: Int,
-    val pending: Int,
-    val completed: Int,
-    val inProgress: Int,
-    val cancelled: Int,
-    val byType: Map<String, Int>,
-    val byMonth: Map<String, Int>
-)
-
-data class RequestFilter(
-    val status: String? = null,
-    val type: Int? = null,
-    val startDate: Date? = null,
-    val endDate: Date? = null,
-    val searchQuery: String? = null
-)
-
-data class ApiResponse<T>(
-    val status: String,
-    val message: String? = null,
-    val data: T? = null
-)
-
 fun Request.getRequirementsMap(): Map<String, Any> {
     return try {
         val gson = Gson()
@@ -210,30 +199,8 @@ fun RequestType.getRequirementsMap(): Map<String, Any> {
 }
 
 @Parcelize
-data class RequirementField(
-    val name: String,
-    val label: String,
-    val type: String,
-    val required: Boolean,
-    val allowed_types: String? = null,
-    val description: String
-) : Parcelable
-
-@Parcelize
 data class RequirementsData(
-    val fields: List<RequirementField>? = null,
+    val fields: @RawValue List<RequirementField>? = null,
     val required_docs: List<String>? = null,
     val instructions: String? = null
-) : Parcelable
-
-@Parcelize
-data class RequirementItem(
-    val id: String,
-    val name: String,
-    val description: String,
-    val isRequired: Boolean,
-    val allowedFileTypes: List<String>,
-    val maxFileSize: Long,
-    val status: RequirementStatus,
-    val fileUrl: String?
 ) : Parcelable 

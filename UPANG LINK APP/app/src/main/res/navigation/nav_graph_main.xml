@@ -2,59 +2,105 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_graph_main"
-    app:startDestination="@id/navigation_home">
+    app:startDestination="@id/loginFragment">
+
+    <!-- Auth Flow -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.phinma.upang.ui.auth.LoginFragment"
+        android:label="Login">
+        <action
+            android:id="@+id/action_loginFragment_to_mainFragment"
+            app:destination="@id/mainFragment"
+            app:popUpTo="@id/nav_graph_main"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_forgotPasswordFragment"
+            app:destination="@id/forgotPasswordFragment" />
+    </fragment>
 
     <fragment
-        android:id="@+id/navigation_home"
-        android:name="com.phinma.upang.ui.home.HomeFragment"
-        android:label="Home" />
+        android:id="@+id/registerFragment"
+        android:name="com.phinma.upang.ui.auth.RegisterFragment"
+        android:label="Register">
+        <action
+            android:id="@+id/action_registerFragment_to_emailVerificationFragment"
+            app:destination="@id/emailVerificationFragment" />
+    </fragment>
 
     <fragment
-        android:id="@+id/navigation_requests"
-        android:name="com.phinma.upang.ui.requests.RequestsFragment"
-        android:label="Requests">
+        android:id="@+id/forgotPasswordFragment"
+        android:name="com.phinma.upang.ui.auth.ForgotPasswordFragment"
+        android:label="Forgot Password" />
+
+    <fragment
+        android:id="@+id/emailVerificationFragment"
+        android:name="com.phinma.upang.ui.auth.EmailVerificationFragment"
+        android:label="Email Verification">
         <action
-            android:id="@+id/action_requests_to_create"
-            app:destination="@id/createRequestFragment"
-            app:enterAnim="@anim/nav_default_enter_anim"
-            app:exitAnim="@anim/nav_default_exit_anim"
-            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
-            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
-        <action
-            android:id="@+id/action_requests_to_details"
-            app:destination="@id/requestDetailsFragment"
-            app:enterAnim="@anim/nav_default_enter_anim"
-            app:exitAnim="@anim/nav_default_exit_anim"
-            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
-            app:popExitAnim="@anim/nav_default_pop_exit_anim">
+            android:id="@+id/action_emailVerificationFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/nav_graph_main"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Main Flow -->
+    <navigation android:id="@+id/mainFragment"
+        app:startDestination="@id/navigation_home">
+        
+        <fragment
+            android:id="@+id/navigation_home"
+            android:name="com.phinma.upang.ui.main.MainFragment"
+            android:label="Home" />
+
+        <fragment
+            android:id="@+id/navigation_requests"
+            android:name="com.phinma.upang.ui.requests.RequestsFragment"
+            android:label="Requests">
+            <action
+                android:id="@+id/action_requests_to_create"
+                app:destination="@id/createRequestFragment" />
+            <action
+                android:id="@+id/action_requests_to_details"
+                app:destination="@id/requestDetailsFragment">
+                <argument
+                    android:name="requestId"
+                    app:argType="string" />
+            </action>
+        </fragment>
+
+        <fragment
+            android:id="@+id/navigation_notifications"
+            android:name="com.phinma.upang.ui.notifications.NotificationsFragment"
+            android:label="Notifications" />
+
+        <fragment
+            android:id="@+id/navigation_profile"
+            android:name="com.phinma.upang.ui.profile.ProfileFragment"
+            android:label="Profile" />
+
+        <fragment
+            android:id="@+id/createRequestFragment"
+            android:name="com.phinma.upang.ui.requests.CreateRequestFragment"
+            android:label="Create Request" />
+
+        <fragment
+            android:id="@+id/requestDetailsFragment"
+            android:name="com.phinma.upang.ui.requests.RequestDetailsFragment"
+            android:label="Request Details">
             <argument
                 android:name="requestId"
                 app:argType="string" />
-        </action>
-    </fragment>
+        </fragment>
 
-    <fragment
-        android:id="@+id/navigation_notifications"
-        android:name="com.phinma.upang.ui.notifications.NotificationsFragment"
-        android:label="Notifications" />
-
-    <fragment
-        android:id="@+id/navigation_profile"
-        android:name="com.phinma.upang.ui.profile.ProfileFragment"
-        android:label="Profile" />
-
-    <fragment
-        android:id="@+id/createRequestFragment"
-        android:name="com.phinma.upang.ui.requests.CreateRequestFragment"
-        android:label="Create Request" />
-
-    <fragment
-        android:id="@+id/requestDetailsFragment"
-        android:name="com.phinma.upang.ui.requests.RequestDetailsFragment"
-        android:label="Request Details">
-        <argument
-            android:name="requestId"
-            app:argType="string" />
-    </fragment>
+        <action
+            android:id="@+id/action_global_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/nav_graph_main"
+            app:popUpToInclusive="true" />
+    </navigation>
 
 </navigation> 
