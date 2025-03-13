@@ -76,8 +76,8 @@
   }
   
   .sidebar-header .subtitle {
-    font-size: 0.9rem;
-    color: #777;
+    font-size: 1rem;
+    color: green;
   }
   
   .sidebar-menu {
@@ -153,9 +153,7 @@
   
   .user-info button {
     padding: 5px 10px;
-    background: #e74c3c;
     border: none;
-    color: #fff;
     border-radius: 3px;
     cursor: pointer;
   }
@@ -197,6 +195,7 @@
   table {
     width: 100%;
     border-collapse: collapse;
+
   }
   
   table th, table td {

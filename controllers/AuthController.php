@@ -26,6 +26,25 @@ class AuthController {
                         case 'register':
                             $this->register();
                             break;
+                        case 'student':
+                            if (isset($uri[1])) {
+                                switch ($uri[1]) {
+                                    case 'register':
+                                        $this->studentRegister();
+                                        break;
+                                    case 'login':
+                                        $this->studentLogin();
+                                        break;
+                                    case 'logout':
+                                        $this->studentLogout(); // Call student logout function
+                                        break;
+                                    default:
+                                        $this->sendError('Invalid student endpoint');
+                                }
+                            } else {
+                                $this->sendError('Invalid student endpoint');
+                            }
+                            break;
                         case 'logout':
                             $this->logout();
                             break;
@@ -70,7 +89,6 @@ class AuthController {
                     if ($uri[0] === 'verify') {
                         $this->verifyEmail();
                     } elseif ($uri[0] === 'users') {
-                        // Require a valid token for fetching user data.
                         $this->requireToken();
                         if (isset($uri[1]) && !empty($uri[1])) {
                             $this->getUser($uri[1]);
@@ -89,110 +107,68 @@ class AuthController {
         }
     }
     
-    // ----- LOGIN FUNCTIONALITY -----
-    private function login() {
+
+
+
+
+    // ----- STUDENT REGISTRATION FUNCTIONALITY -----
+    private function studentRegister() {
         $data = json_decode(file_get_contents("php://input"));
         $missing = [];
-        if (empty($data->email)) { $missing[] = "email"; }
-        if (empty($data->password)) { $missing[] = "password"; }
-        if (!empty($missing)) {
-            $this->sendError("Missing fields: " . implode(', ', $missing), 400);
-            return;
-        }
-        $user = $this->user->getByEmail($data->email);
-        if ($user && password_verify($data->password, $user['password'])) {
-            if (!$user['is_verified']) {
-                $this->sendError('Email not verified. Please verify your email before logging in.', 403);
-                return;
-            }
-            // Remove sensitive fields.
-            unset($user['password'], $user['email_verification_token'], $user['password_reset_token'], $user['password_reset_expires']);
-            
-            // Invalidate existing tokens and generate a new one.
-            $stmt = $this->db->prepare("DELETE FROM auth_tokens WHERE user_id = ?");
-            $stmt->execute([$user['user_id']]);
-            $token = $this->generateToken();
-            $expiresAt = date('Y-m-d H:i:s', time() + 86400);
-            $stmt = $this->db->prepare("INSERT INTO auth_tokens (token, user_id, login_time, expires_at) VALUES (?, ?, NOW(), ?)");
-            if (!$stmt->execute([$token, $user['user_id'], $expiresAt])) {
-                $this->sendError('Could not generate token', 500);
-                return;
-            }
-            http_response_code(200);
-            echo json_encode([
-                'status'     => 'success',
-                'message'    => 'Login successful',
-                'data'       => $user,
-                'token'      => $token,
-                'expires_at' => $expiresAt
-            ]);
-        } else {
-            $this->sendError('Invalid credentials', 401);
-        }
-    }
     
-    // ----- REGISTRATION FUNCTIONALITY -----
-    private function register() {
-        $data = json_decode(file_get_contents("php://input"));
-        $missing = [];
         if (empty($data->email)) { $missing[] = "email"; }
         if (empty($data->password)) { $missing[] = "password"; }
         if (empty($data->first_name)) { $missing[] = "first_name"; }
         if (empty($data->last_name)) { $missing[] = "last_name"; }
-        if (empty($data->year_level)) { $missing[] = "year_level"; }
-        if (empty($data->admission_year)) { $missing[] = "admission_year"; }
+    
         if (!empty($missing)) {
             $this->sendError("Missing fields: " . implode(', ', $missing), 400);
             return;
         }
-        
-        // Duplicate check.
+    
+        // Check if email already exists
         if ($this->user->getByEmail($data->email)) {
             $this->sendError("Email already exists", 409);
             return;
         }
-        
-        // Set user properties.
-        $this->user->email = $data->email;
-        $this->user->password = password_hash($data->password, PASSWORD_DEFAULT);
-        $this->user->first_name = $data->first_name;
-        $this->user->last_name = $data->last_name;
-        // Removed: $this->user->course = $data->course;
-        $this->user->year_level = $data->year_level;
-        $this->user->admission_year = $data->admission_year;
-        
-        if ($this->user->create()) {
-            // Generate a verification token.
-            $verifyToken = $this->generateToken(16);
-            // Update the user record with the verification token.
-            $stmt = $this->db->prepare("UPDATE users SET email_verification_token = ? WHERE email = ?");
-            $stmt->execute([$verifyToken, $data->email]);
-            
-            // Prepare verification email.
+    
+        // Hash password
+        $hashedPassword = password_hash($data->password, PASSWORD_DEFAULT);
+    
+        // Generate email verification token
+        $verifyToken = $this->generateToken(16);
+    
+        // Insert user into the database
+        $stmt = $this->db->prepare("INSERT INTO users (email, password, first_name, last_name, email_verification_token, email_verified) 
+                                    VALUES (?, ?, ?, ?, ?, 0)");
+    
+        if ($stmt->execute([$data->email, $hashedPassword, $data->first_name, $data->last_name, $verifyToken])) {
+    
+            // Prepare verification email
             $subject = "Verify Your Email Address";
             $body = "Your verification token is: " . $verifyToken . "\n\n" .
                     "Use this token in Postman to verify your email by sending a GET request to: \n" .
-                    "http://localhost:8000/auth/verify?token=" . $verifyToken;
-            
+                    "http://192.168.18.138:8000/auth/verify?token=" . $verifyToken;
+    
             $mail = new PHPMailer(true);
             try {
                 $mail->isSMTP();
-                $mail->Host       = 'smtp.gmail.com';
+                $mail->Host       = '';      
                 $mail->SMTPAuth   = true;
-                $mail->Username   = '';
-                $mail->Password   = '';
-                $mail->SMTPSecure = 'TLS';
-                $mail->Port       = 587;
+                $mail->Username   = ''; 
+                $mail->Password   = '';      
+                $mail->SMTPSecure = 'TLS';                  
+                $mail->Port       = 587;   
                 $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
                 $mail->addAddress($data->email, $data->first_name . ' ' . $data->last_name);
-                $mail->isHTML(false);
+                $mail->isHTML(true);
                 $mail->Subject  = $subject;
-                $mail->Body     = $body;
+                $mail->Body     = nl2br($body);
                 $mail->send();
             } catch (Exception $e) {
                 error_log("PHPMailer Error: " . $mail->ErrorInfo);
             }
-            
+    
             http_response_code(201);
             echo json_encode([
                 'status'  => 'success',
@@ -202,6 +178,108 @@ class AuthController {
             $this->sendError('Unable to create user', 500);
         }
     }
+
+
+    
+    private function studentLogin() {
+        $data = json_decode(file_get_contents("php://input"));
+        $missing = [];
+    
+        if (empty($data->email)) { $missing[] = "email"; }
+        if (empty($data->password)) { $missing[] = "password"; }
+    
+        if (!empty($missing)) {
+            $this->sendError("Missing fields: " . implode(', ', $missing), 400);
+            return;
+        }
+    
+        $user = $this->user->getByEmail($data->email);
+    
+        if ($user && password_verify($data->password, $user['password'])) {
+            // Ensure user is a student
+            if ($user['role'] !== 'student') {
+                $this->sendError('Access denied. Only students can log in here.', 403);
+                return;
+            }
+    
+            // Ensure the email is verified
+            if (!$user['email_verified']) {
+                $this->sendError('Email not verified. Please verify your email before logging in.', 403);
+                return;
+            }
+    
+            // Remove sensitive fields
+            unset($user['password'], $user['email_verification_token'], $user['password_reset_token'], $user['password_reset_expires']);
+    
+            // Generate token
+            $stmt = $this->db->prepare("DELETE FROM user_sessions WHERE user_id = ?");
+            $stmt->execute([$user['user_id']]);
+    
+            $token = $this->generateToken();
+            $expiresAt = date('Y-m-d H:i:s', time() + 86400);
+            $deviceInfo = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown Device';
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'Unknown IP';
+            $lastActivity = date('Y-m-d H:i:s');
+            $isActive = 1;
+            $createdAt = date('Y-m-d H:i:s');
+    
+            $stmt = $this->db->prepare("INSERT INTO user_sessions 
+                (user_id, token, device_info, ip_address, last_activity, expires_at, is_active, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            
+            if (!$stmt->execute([$user['user_id'], $token, $deviceInfo, $ipAddress, $lastActivity, $expiresAt, $isActive, $createdAt])) {
+                $this->sendError('Could not generate token', 500);
+                return;
+            }
+    
+            http_response_code(200);
+            echo json_encode([
+                'status'  => 'success',
+                'message' => 'Login successful',
+                'token'   => $token,
+                'user'    => $user
+            ]);
+        } else {
+            $this->sendError('Invalid email or password', 401);
+        }
+    }
+    
+
+
+    // ----- STUDENT REGISTRATION FUNCTIONALITY -----
+    private function studentLogout() {
+        // Get token from request headers
+        $headers = getallheaders();
+        if (!isset($headers['Authorization'])) {
+            $this->sendError('Authorization token required', 401);
+            return;
+        }
+    
+        $token = str_replace('Bearer ', '', $headers['Authorization']);
+    
+        // Check if token exists
+        $stmt = $this->db->prepare("SELECT user_id FROM user_sessions WHERE token = ?");
+        $stmt->execute([$token]);
+        $session = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+        if (!$session) {
+            $this->sendError('Invalid or expired token', 401);
+            return;
+        }
+    
+        // Delete session
+        $stmt = $this->db->prepare("DELETE FROM user_sessions WHERE token = ?");
+        if ($stmt->execute([$token])) {
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Logged out successfully'
+            ]);
+        } else {
+            $this->sendError('Logout failed', 500);
+        }
+    }
+    
     
     // ----- RESEND VERIFICATION FUNCTIONALITY -----
     private function resendVerification() {
@@ -215,7 +293,7 @@ class AuthController {
             $this->sendError("No user found with that email", 404);
             return;
         }
-        if ($user['is_verified']) {
+        if ($user['email_verified']) {
             $this->sendError("Email is already verified", 400);
             return;
         }
@@ -235,12 +313,12 @@ class AuthController {
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
+            $mail->Host       = 'smtp.gmail.com';      
             $mail->SMTPAuth   = true;
-            $mail->Username   = '';
-            $mail->Password   = '';
-            $mail->SMTPSecure = 'TLS';
-            $mail->Port       = 587;
+            $mail->Username   = ''; 
+            $mail->Password   = '';      
+            $mail->SMTPSecure = 'TLS';                  
+            $mail->Port       = 587;   
             $mail->setFrom('no-reply@UpangLink.com', 'UPANG LINK');
             $mail->addAddress($data->email, $user['first_name'] . ' ' . $user['last_name']);
             $mail->isHTML(false);
@@ -268,7 +346,7 @@ class AuthController {
         $stmt->execute([$token]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($user) {
-            $stmt = $this->db->prepare("UPDATE users SET is_verified = 1, email_verification_token = NULL WHERE user_id = ?");
+            $stmt = $this->db->prepare("UPDATE users SET email_verified = 1, email_verification_token = NULL WHERE user_id = ?");
             if ($stmt->execute([$user['user_id']])) {
                 echo json_encode([
                     'status'  => 'success',
@@ -456,8 +534,6 @@ class AuthController {
         if (empty($data->email)) { $missing[] = "email"; }
         if (empty($data->first_name)) { $missing[] = "first_name"; }
         if (empty($data->last_name)) { $missing[] = "last_name"; }
-        if (empty($data->year_level)) { $missing[] = "year_level"; }
-        if (empty($data->admission_year)) { $missing[] = "admission_year"; }
         if (!empty($missing)) {
             $this->sendError("Missing fields for update: " . implode(', ', $missing), 400);
             return;
@@ -467,8 +543,6 @@ class AuthController {
         $this->user->first_name = $data->first_name;
         $this->user->last_name = $data->last_name;
         // Removed: $this->user->course = $data->course;
-        $this->user->year_level = $data->year_level;
-        $this->user->admission_year = $data->admission_year;
     
         if ($this->user->update()) {
             http_response_code(200);
@@ -552,19 +626,19 @@ class AuthController {
         }
         
         // Check for user tokens.
-        $stmt = $this->db->prepare("SELECT user_id AS id, expires_at FROM auth_tokens WHERE token = ?");
+        $stmt = $this->db->prepare("SELECT user_id AS id, expires_at FROM user_sessions WHERE token = ?");
         $stmt->execute([$token]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row) {
             $currentTime = new DateTime();
             $expiresAt = new DateTime($row['expires_at']);
             if ($currentTime > $expiresAt) {
-                $del = $this->db->prepare("DELETE FROM auth_tokens WHERE token = ?");
+                $del = $this->db->prepare("DELETE FROM user_sessions WHERE token = ?");
                 $del->execute([$token]);
                 return false;
             }
             $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
-            $updateStmt = $this->db->prepare("UPDATE auth_tokens SET expires_at = ? WHERE token = ?");
+            $updateStmt = $this->db->prepare("UPDATE user_sessions SET expires_at = ? WHERE token = ?");
             $updateStmt->execute([$newExpiresAt, $token]);
             return ['id' => $row['id'], 'type' => 'user'];
         }

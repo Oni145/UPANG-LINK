@@ -4,12 +4,10 @@ class User {
     private $table_name = "users";
 
     public $user_id;
-    public $email; // Email property
+    public $email; 
     public $password;
     public $first_name;
     public $last_name;
-    public $year_level;
-    public $admission_year;
     public $created_at;
     public $updated_at;
 
@@ -33,8 +31,8 @@ class User {
         }
 
         $query = "INSERT INTO " . $this->table_name . "
-                (email, password, first_name, last_name, year_level, admission_year)
-                VALUES (:email, :password, :first_name, :last_name, :year_level, :admission_year)";
+                (email, password, first_name, last_name)
+                VALUES (:email, :password, :first_name, :last_name)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -42,8 +40,8 @@ class User {
         $stmt->bindParam(":password", $this->password);
         $stmt->bindParam(":first_name", $this->first_name);
         $stmt->bindParam(":last_name", $this->last_name);
-        $stmt->bindParam(":year_level", $this->year_level);
-        $stmt->bindParam(":admission_year", $this->admission_year);
+
+
 
         if ($stmt->execute()) {
             return true;
@@ -71,8 +69,6 @@ class User {
                   first_name = :first_name, 
                   last_name = :last_name, 
                   email = :email, 
-                  year_level = :year_level, 
-                  admission_year = :admission_year, 
                   updated_at = NOW() 
                   WHERE user_id = :user_id";
 
@@ -81,8 +77,6 @@ class User {
         $stmt->bindValue(":first_name", $this->first_name);
         $stmt->bindValue(":last_name", $this->last_name);
         $stmt->bindValue(":email", $this->email);
-        $stmt->bindValue(":year_level", $this->year_level);
-        $stmt->bindValue(":admission_year", $this->admission_year);
         $stmt->bindValue(":user_id", $this->user_id);
 
         return $stmt->execute();

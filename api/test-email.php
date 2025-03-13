@@ -10,16 +10,16 @@ $mail = new PHPMailer(true);
 try {
     //Server settings
     $mail->isSMTP();
-    $mail->Host       = 'smtp.gmail.com';      
+    $mail->Host       = '';      
     $mail->SMTPAuth   = true;
-    $mail->Username   = 'librariansystem1@gmail.com'; 
-    $mail->Password   = 'fyii qywz sobr wfks';      
+    $mail->Username   = ''; 
+    $mail->Password   = '';      
     $mail->SMTPSecure = 'TLS';                  
     $mail->Port       = 587;                     
 
     //Recipients
-    $mail->setFrom(' librariansystem1@gmail.com', 'UPANG ADMIN');
-    $mail->addAddress(' librariansystem1@gmail.com', 'Oni'); // Recipient's email.
+    $mail->setFrom('', 'UPANG ADMIN');
+    $mail->addAddress('', 'Oni'); // Recipient's email.
 
     // Content
     $mail->isHTML(true);

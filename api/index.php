@@ -4,13 +4,13 @@ session_start(); // Start session to persist rate-limiter data
 // Set CORS and content-type headers
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Platform");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Platform");
     exit(0);
 }
@@ -20,11 +20,12 @@ include_once __DIR__ . '/../config/Database.php';
 include_once __DIR__ . '/../models/User.php';
 include_once __DIR__ . '/../models/Request.php';
 include_once __DIR__ . '/../models/RequestType.php';
-include_once __DIR__ . '/../models/Notification.php';
+include_once __DIR__ . '/../models/AdminNotifications.php';  // Ensure Notification model is included
 include_once __DIR__ . '/../controllers/AdminController.php';
 include_once __DIR__ . '/../controllers/AuthController.php';
 include_once __DIR__ . '/../controllers/RequestController.php';
 include_once __DIR__ . '/../controllers/RequirementNoteController.php';
+include_once __DIR__ . '/../controllers/AdminNotificationsController.php';  // New Controller for Admin Notifications
 
 // Include the middleware pipeline class
 include_once __DIR__ . '/../middleware/MiddlewarePipeline.php';
@@ -37,25 +38,20 @@ if (!class_exists('RequestCounter')) {
 
         public static function checkAndIncrement() {
             $currentTime = time();
-            // Initialize the session storage for the counter if not already set.
             if (!isset($_SESSION['request_counter'])) {
                 $_SESSION['request_counter'] = [
                     'startTime' => $currentTime,
                     'count'     => 0
                 ];
             }
-            // Check if the current time window has expired.
             if (($currentTime - $_SESSION['request_counter']['startTime']) >= self::$window) {
-                // Reset the counter and update the window start time.
                 $_SESSION['request_counter']['startTime'] = $currentTime;
                 $_SESSION['request_counter']['count'] = 0;
             }
-            // If the limit is reached, return false.
             if ($_SESSION['request_counter']['count'] >= self::$limit) {
                 error_log("Rate limit exceeded. Total requests in the last hour: " . $_SESSION['request_counter']['count']);
                 return false;
             }
-            // Increment the counter and return true.
             $_SESSION['request_counter']['count']++;
             error_log("Request count incremented. Total: " . $_SESSION['request_counter']['count']);
             return true;
@@ -71,7 +67,6 @@ $db = $database->getConnection();
 $request_uri = urldecode($_SERVER['REQUEST_URI']);
 $uri_parts   = parse_url($request_uri);
 $path        = $uri_parts['path'];
-// Set your base path as deployed (adjust if needed)
 $base_path   = '/UPANG LINK';
 $endpoint    = str_replace($base_path, '', $path);
 $uri         = explode('/', trim($endpoint, '/'));
@@ -88,11 +83,13 @@ if (!isset($uri[0]) || empty($uri[0])) {
         'status'    => 'success',
         'message'   => 'Welcome to UPANG LINK API',
         'endpoints' => [
-            'auth'     => '/auth',
             'admin'    => '/admin',
             'requests' => '/requests',
-            'users'    => '/users',
-            'notes'    => '/notes or /requests/notes'
+            'students' => [
+                'register' => '/auth/student/register',
+                'login'    => '/auth/student/login',
+            ],
+            'notes'    => '/notes or /requests/notes',
         ]
     ]);
     exit();
@@ -105,29 +102,27 @@ $controller    = null;
 switch ($uri[0]) {
     case 'admin':
         $controller = new AdminController($db);
-        array_unshift($uri, 'auth'); // Prepend to match expected URI for admin auth
+        array_unshift($uri, 'auth');
         break;
 
     case 'auth':
         $controller = new AuthController($db);
-        array_shift($uri); // Remove 'auth'
+        array_shift($uri);
         break;
 
     case 'requests':
-        // Check if it's a nested notes route: /requests/notes
         if (isset($uri[1]) && strtolower($uri[1]) === 'notes') {
             $controller = new RequirementNoteController($db);
-            array_shift($uri); // Remove 'requests'
-            array_shift($uri); // Remove 'notes'
+            array_shift($uri);
+            array_shift($uri);
         } else {
             $controller = new RequestController($db);
         }
         break;
     
     case 'notes':
-        // Dedicated route for notes: /notes
         $controller = new RequirementNoteController($db);
-        array_shift($uri); // Remove 'notes'
+        array_shift($uri);
         break;
 
     default:
@@ -155,7 +150,6 @@ $pipeline = new MiddlewarePipeline($finalHandler);
 
 // Middleware 1: Log the request endpoint.
 $pipeline->add(function($request, $next) {
-    // Check if 'endpoint' and its first element are set to avoid warnings.
     if (isset($request['endpoint'][0])) {
         error_log("Middleware Log: Processing endpoint " . implode('/', $request['endpoint']));
     }
@@ -178,7 +172,7 @@ $pipeline->add(function($request, $next) {
     return $next($request);
 });
 
-// Middleware 3: Rate/Count only POST requests for creating a request (excluding posting notes).
+// Middleware 3: Rate-limit only POST requests for creating a request (excluding posting notes).
 $pipeline->add(function($request, $next) {
     if (isset($request['endpoint'][0]) && $request['endpoint'][0] === 'requests' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!isset($request['endpoint'][1]) || strtolower($request['endpoint'][1]) !== 'notes') {

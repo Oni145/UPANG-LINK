@@ -145,6 +145,18 @@ CREATE TABLE request_requirement_notes (
     FOREIGN KEY (admin_id) REFERENCES admins(admin_id)
 );
 
+CREATE TABLE admin_notifications (
+    notification_id INT PRIMARY KEY AUTO_INCREMENT,
+    admin_id INT NOT NULL,  -- Reference to the admin who is the recipient
+    user_id INT NOT NULL,   -- Reference to the user who triggered the notification
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+
 -- Insert default categories
 INSERT INTO categories (name, description) VALUES
 ('Academic Documents', 'Transcripts, certificates, and other academic records'),

@@ -1,5 +1,14 @@
 <?php
-header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Credentials: true');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 require_once __DIR__ . '/../models/Admin.php';
 // Include PHPMailer autoloader (adjust the path if necessary)
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -18,6 +27,9 @@ class AdminController {
 
     public function handleRequest($method, $uri) {
         try {
+            error_log("Request Method: $method");
+            error_log("Request URI: " . implode('/', $uri));
+    
             if ($method === 'POST' && isset($uri[2])) {
                 switch ($uri[2]) {
                     case 'login':
@@ -35,15 +47,39 @@ class AdminController {
                     case 'reset_password':
                         $this->resetPassword();
                         break;
+                    case 'notifications':
+                        if (isset($uri[3]) && $uri[3] === 'mark_all_as_read') {
+                            $this->markAllNotificationsAsRead();
+                        } else {
+                            $this->sendError("Invalid endpoint for notifications", 400);
+                        }
+                        break;
                     default:
                         $this->sendError("Invalid endpoint or method", 400);
                 }
-            } else if ($method === 'GET') {
-                if (isset($uri[2]) && $uri[2] === 'users') {
-                    $adminId = isset($uri[3]) ? $uri[3] : null;
-                    $this->getUsers($adminId);
-                } else {
-                    $this->sendError("Invalid endpoint or method", 400);
+            } else if ($method === 'GET' && isset($uri[2])) {
+                switch ($uri[2]) {
+                    case 'users':
+                        $this->getUsers();  // Add this line to handle /admin/users
+                        break;
+                    case 'notifications':
+                        if (isset($uri[3]) && $uri[3] === 'read') {
+                            $this->getReadNotifications();
+                        } else if (isset($uri[3]) && $uri[3] === 'unread') {
+                            $this->getUnreadNotifications();
+                        } else {
+                            $this->getNotifications();
+                        }
+                        break;
+                    case 'notification':
+                        if (isset($uri[3])) {
+                            $this->getNotificationById($uri[3]);
+                        } else {
+                            $this->sendError("Notification ID is required", 400);
+                        }
+                        break;
+                    default:
+                        $this->sendError("Invalid endpoint or method", 400);
                 }
             } else {
                 $this->sendError("Invalid endpoint or method", 400);
@@ -52,7 +88,155 @@ class AdminController {
             $this->sendError("Server error: " . $e->getMessage(), 500);
         }
     }
-
+    
+    
+    
+    
+    // ✅ Mark All Notifications as Read
+    public function markAllNotificationsAsRead() {
+        try {
+            $adminId = $this->validateToken();
+            if (!$adminId) return;
+    
+            // Update all notifications for the admin to 'read'
+            $stmt = $this->db->prepare("UPDATE admin_notifications SET is_read = 1 WHERE admin_id = ?");
+            $stmt->execute([$adminId]);
+    
+            echo json_encode([
+                "status" => "success",
+                "message" => "All notifications marked as read successfully"
+            ]);
+        } catch (Exception $e) {
+            $this->sendError("Error marking all notifications as read: " . $e->getMessage(), 500);
+        }
+    }
+    
+    // ✅ Get All Notifications
+    public function getNotifications() {
+        try {
+            $adminId = $this->validateToken();
+            if (!$adminId) return;
+    
+            $stmt = $this->db->prepare("SELECT * FROM admin_notifications WHERE admin_id = ?");
+            $stmt->execute([$adminId]);
+            $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            if (empty($notifications)) {
+                echo json_encode(["status" => "success", "message" => "No notifications found"]);
+                return;
+            }
+    
+            echo json_encode(["status" => "success", "notifications" => $notifications]);
+        } catch (Exception $e) {
+            $this->sendError("Error fetching notifications: " . $e->getMessage(), 500);
+        }
+    }
+    
+    // ✅ Get Only Read Notifications
+    public function getReadNotifications() {
+        try {
+            $adminId = $this->validateToken();
+            if (!$adminId) return;
+    
+            $stmt = $this->db->prepare("SELECT * FROM admin_notifications WHERE admin_id = ? AND is_read = 1");
+            $stmt->execute([$adminId]);
+            $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            if (empty($notifications)) {
+                echo json_encode(["status" => "success", "message" => "No read notifications found"]);
+                return;
+            }
+    
+            echo json_encode(["status" => "success", "notifications" => $notifications]);
+        } catch (Exception $e) {
+            $this->sendError("Error fetching read notifications: " . $e->getMessage(), 500);
+        }
+    }
+    
+    // ✅ Get Only Unread Notifications
+    public function getUnreadNotifications() {
+        try {
+            $adminId = $this->validateToken();
+            if (!$adminId) return;
+    
+            $stmt = $this->db->prepare("SELECT * FROM admin_notifications WHERE admin_id = ? AND is_read = 0");
+            $stmt->execute([$adminId]);
+            $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            if (empty($notifications)) {
+                echo json_encode(["status" => "success", "message" => "No unread notifications found"]);
+                return;
+            }
+    
+            echo json_encode(["status" => "success", "notifications" => $notifications]);
+        } catch (Exception $e) {
+            $this->sendError("Error fetching unread notifications: " . $e->getMessage(), 500);
+        }
+    }
+    
+    // ✅ Toggle Read/Unread Status
+    public function toggleNotificationReadStatus($notificationId) {
+        $adminId = $this->validateToken();
+        if (!$adminId) return;
+    
+        $stmt = $this->db->prepare("SELECT is_read FROM admin_notifications WHERE notification_id = ?");
+        $stmt->execute([$notificationId]);
+        $notification = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+        if (!$notification) {
+            $this->sendError("Notification not found", 404);
+            return;
+        }
+    
+        $newStatus = ($notification['is_read'] == 1) ? 0 : 1;
+    
+        $updateStmt = $this->db->prepare("UPDATE admin_notifications SET is_read = ? WHERE notification_id = ?");
+        $updateStmt->execute([$newStatus, $notificationId]);
+    
+        echo json_encode([
+            "status" => "success",
+            "message" => "Notification read status toggled successfully",
+            "data" => ["notification_id" => $notificationId, "is_read" => $newStatus]
+        ]);
+    }
+    
+    // ✅ Validate Token and Return Admin ID
+    private function validateToken() {
+        $token = $this->getBearerToken();
+    
+        if (!$token) {
+            $this->sendError("Token is required", 401);
+            return false;
+        }
+    
+        $stmt = $this->db->prepare("SELECT admin_id FROM admin_tokens WHERE token = ?");
+        $stmt->execute([$token]);
+        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+        if (!$admin) {
+            $this->sendError("Invalid or expired token", 401);
+            return false;
+        }
+    
+        return $admin['admin_id'];
+    }
+    
+    // ✅ Extract Token from Request Headers
+    private function getBearerToken() {
+        $headers = getallheaders();
+        if (!isset($headers['Authorization'])) {
+            return null;
+        }
+    
+        $matches = [];
+        if (preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
+            return $matches[1];
+        }
+    
+        return null;
+    }
+    
+  
     /**
      * Login: Validates required fields, checks credentials, generates a token,
      * and returns a success response along with token details.

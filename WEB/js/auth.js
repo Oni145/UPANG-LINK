@@ -1,18 +1,38 @@
-// ----- COMMON CONSTANTS AND HELPER FUNCTIONS -----
-const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/';
-
 /**
  * Returns common headers for authenticated requests using the provided token.
  * @param {string} token - The user token.
  * @returns {Object} The headers object.
  */
-function getAuthHeaders(token) {
+/**
+ * Redirects to index.html if a token exists (used on login/signup pages).
+ */
+function checkTokenAndRedirect() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        window.location.href = "./index.html"; // Redirect if already logged in
+    }
+}
+
+/**
+ * Returns common headers for authenticated requests.
+ * Ensures user is authenticated before returning headers.
+ * @returns {Object} The headers object.
+ */
+function getAuthHeaders() {
+    checkAuthAndRedirect(); // Ensure user is authenticated
+    const token = localStorage.getItem('token'); // Get token
     return {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': `Bearer ${token}`
     };
 }
+
+// ---- Usage ----
+// Call `checkTokenAndRedirect();` on login/signup pages.
+
+
+
 
 // ----- LOGIN FUNCTIONALITY -----
 document.getElementById('loginForm').addEventListener('submit', async function(event) {
@@ -23,7 +43,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const password = document.getElementById('password').value;
 
     // Set the API endpoint to admin login only
-    let apiUrl = API_BASE_URL + 'admin/login';
+    let apiUrl = API_BASE_URL + '/admin/login';
 
     try {
         const response = await fetch(apiUrl, {
@@ -74,4 +94,6 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
       
       // Handle login logic here, such as redirecting the user or showing an error
     }, 3000); // Simulate 3 seconds delay
+
+    
 });

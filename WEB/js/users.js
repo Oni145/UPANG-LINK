@@ -1,30 +1,42 @@
 (function() {
-  // Base URL for API calls
-  const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK';
-
   /**
    * Returns headers for authenticated requests.
    */
-  function getAuthHeaders(token) {
+  function checkTokenAndRedirect() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = "./login.html"; // Change to your actual login page
+    }
+  }
+  
+  /**
+   * Returns common headers for authenticated requests.
+   * Ensures user is authenticated before returning headers.
+   * @returns {Object} The headers object.
+   */
+  function getAuthHeaders() {
+    checkTokenAndRedirect(); // Check for token
+    const token = localStorage.getItem('token'); // Get the token after the check
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Authorization': `Bearer ${token}`
     };
   }
-
+  
+  // Example usage
+  const headers = getAuthHeaders();
+  
   /**
-   * Displays a loading indicator.
+   * Displays the loading indicator.
    */
   function showLoading() {
     const loadingEl = document.getElementById('loadingIndicator');
-    const loadingLogo = document.getElementById('loadingLogo');
-    if (loadingEl && loadingLogo) {
+    if (loadingEl) {
       loadingEl.style.display = 'flex';
-      loadingLogo.style.display = 'block';
     }
   }
-
+  
   /**
    * Hides the loading indicator.
    */
@@ -34,33 +46,7 @@
       loadingEl.style.display = 'none';
     }
   }
-
-  /**
-   * Displays a global error alert.
-   */
-  function showErrorAlert(message) {
-    let errorContainer = document.getElementById('errorContainer');
-    if (!errorContainer) {
-      errorContainer = document.createElement('div');
-      errorContainer.id = 'errorContainer';
-      errorContainer.className = 'alert alert-danger';
-      errorContainer.style.position = 'fixed';
-      errorContainer.style.top = '20px';
-      errorContainer.style.right = '20px';
-      errorContainer.style.zIndex = '10000';
-      errorContainer.style.padding = '10px 20px';
-      errorContainer.style.border = '1px solid red';
-      errorContainer.style.backgroundColor = '#f8d7da';
-      errorContainer.style.color = '#721c24';
-      document.body.appendChild(errorContainer);
-    }
-    errorContainer.textContent = message;
-    errorContainer.style.display = 'block';
-    setTimeout(() => {
-      errorContainer.style.display = 'none';
-    }, 5000);
-  }
-
+  
   /**
    * Retrieves the token from localStorage.
    */
@@ -79,31 +65,25 @@
    * Fetches the logged-in admin's info from /auth/users and displays the username.
    */
   async function displayUserName() {
-    const token = getToken();
-    if (!token) {
-      console.error("No token found.");
-      return;
-    }
-    const endpoint = `${API_BASE_URL}/auth/users`;
+    const token = localStorage.getItem('token');
+    if (!token) return console.error("No token found in localStorage.");
     try {
+      const endpoint = `${API_BASE_URL}/admin/users`;
       const response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
       const result = await response.json();
-      if (response.ok && result.status === 'success' && result.data.length > 0) {
-        // Use the first user record for admin info.
-        const currentUser = result.data[0];
-        const nameEl = document.getElementById('userFullName');
-        if (nameEl) {
-          // Prefer username if available.
-          // Note: Removed course and block. Only first name is used now.
-          const displayName = currentUser.username || `${currentUser.first_name || ''}`.trim();
-          nameEl.textContent = displayName;
-        }
+      if (response.ok && result.status === 'success') {
+        window.currentUserRole = 'admin';
       } else {
-        throw new Error("Unable to fetch admin details.");
+        throw new Error("Unable to fetch admin user details.");
+      }
+      const currentUser = result.data[0];
+      const userFullNameEl = document.getElementById('userFullName');
+      if (userFullNameEl) {
+        const displayName = currentUser.username || `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
+        userFullNameEl.textContent = displayName;
       }
     } catch (error) {
-      console.error("Error fetching admin details:", error);
-      showErrorAlert(error.message);
+      console.error("Error fetching user details:", error);
     }
   }
 
@@ -151,7 +131,6 @@
   /**
    * Renders users into the table body (using the existing <tbody id="usersTableBody">).
    * Only the following columns are displayed:
-   * User ID, Name, Email, Year Level, Admission Year.
    */
   function renderUsers(users) {
     const tbody = document.getElementById('usersTableBody');
@@ -165,8 +144,6 @@
           <td>${user.user_id || 'N/A'}</td>
           <td>${user.first_name || 'N/A'} ${user.last_name || ''}</td>
           <td>${user.email || 'N/A'}</td>
-          <td>${user.year_level || 'N/A'}</td>
-          <td>${user.admission_year || 'N/A'}</td>
         </tr>
       `).join('');
     }

@@ -1,26 +1,58 @@
-// Base URL for the API without a trailing slash
-const API_BASE_URL = 'http://localhost:8000';
 
 // Mapping for request type IDs to names
 const requestTypeNames = {
   1: 'TOR',
   2: 'ID',
-  3: 'Certificate',
-  4: 'Others',
+  3: 'New Student ID',
+  4: 'ID Replacement',
+  5: 'PE Uniform Request',
+  6: 'School Uniform Request',
   7: 'Course Module Request'
 };
 
+function checkTokenAndRedirect() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = "./login.html"; // Change to your actual login page
+  }
+}
+
 /**
  * Returns common headers for authenticated requests.
- * @param {string} token - The user token.
+ * Ensures user is authenticated before returning headers.
  * @returns {Object} The headers object.
  */
-function getAuthHeaders(token) {
+function getAuthHeaders() {
+  checkTokenAndRedirect(); // Check for token
+  const token = localStorage.getItem('token'); // Get the token after the check
   return {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Authorization': `Bearer ${token}`
   };
+}
+
+// Example usage
+const headers = getAuthHeaders();
+
+/**
+ * Displays the loading indicator.
+ */
+function showLoading() {
+  const loadingEl = document.getElementById('loadingIndicator');
+  if (loadingEl) {
+    loadingEl.style.display = 'flex';
+  }
+}
+
+/**
+ * Hides the loading indicator.
+ */
+function hideLoading() {
+  const loadingEl = document.getElementById('loadingIndicator');
+  if (loadingEl) {
+    loadingEl.style.display = 'none';
+  }
 }
 
 /**
@@ -147,7 +179,7 @@ function displayRequestsPage(page) {
  */
 function getStatusClass(status) {
   const classes = {
-    'pending': 'status-pending',
+    'pending': 'status-PENDING',
     'approved': 'status-approved',
     'rejected': 'status-rejected',
     'in_progress': 'status-in_progress',
@@ -180,9 +212,8 @@ function displayRequests(requests, usersData) {
         <td>${user.first_name} ${user.last_name}</td>
         <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
         <td>
-          <span class="badge ${getStatusClass(request.status)}">
-            ${request.status}
-          </span>
+<span id="status-badge" class="badge"> ${request.status}
+</span>
         </td>
         <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
         <td>
@@ -279,7 +310,6 @@ function viewRequest(requestId) {
   let modalBodyContent = `
     <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
     <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-    <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
     <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
     <p><strong>Additional Information:</strong> ${request.details || 'No additional details available.'}</p>`;
   
@@ -314,7 +344,7 @@ function viewRequest(requestId) {
     modalTitleEl.innerHTML = modalTitle;
     modalBodyEl.innerHTML = modalBodyContent;
     const statusSelectEl = document.getElementById('statusSelect');
-    if (statusSelectEl && ['approved', 'in_progress', 'completed', 'rejected'].includes(request.status)) {
+    if (statusSelectEl && ['APPROVED', 'IN PROGRESS', 'COMPLETED', 'REJECTIN'].includes(request.status)) {
       statusSelectEl.value = request.status;
     }
     openModal();
@@ -706,8 +736,9 @@ class Dashboard {
           <td>${user.first_name} ${user.last_name}</td>
           <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
           <td>
-            <span class="badge status-${request.status}">
-              ${request.status}
+<span class="badge status-${request.status} fs-6 py-8 px-6">
+    ${request.status}
+</span>
             </span>
           </td>
           <td>${new Date(request.submitted_at).toLocaleDateString()}</td>

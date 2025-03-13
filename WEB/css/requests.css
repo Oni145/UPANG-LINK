@@ -69,8 +69,8 @@ body {
   font-size: 1.5rem;
 }
 .sidebar-header .subtitle {
-  font-size: 0.9rem;
-  color: #777;
+  font-size: 1rem;
+  color: green;
 }
 .sidebar-menu {
   list-style: none;
@@ -130,9 +130,8 @@ body {
 }
 .user-info button {
   padding: 5px 10px;
-  background: #e74c3c;
   border: none;
-  color: #fff;
+  color: black;
   border-radius: 3px;
   cursor: pointer;
 }
@@ -171,6 +170,8 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
+  text-transform: uppercase;
+
 }
 table th, table td {
   padding: 10px;
@@ -186,6 +187,7 @@ table td:nth-child(3),
 table td:nth-child(5)
 table td:nth-child(2) {
   text-align: center;
+  
 }
 
 table td:nth-child(1) {
@@ -239,15 +241,18 @@ table td:nth-child(5) div {
   align-items: center;
 }
 .modal-header h5 {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
 }
 .modal-body {
-  padding: 15px;
+  padding: 20px;
   font-size: 1.2rem;
-  line-height: 1.5;
+  line-height: 2;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 40px;
+  text-transform: uppercase;
+  font-style: bold;
+
 }
 
 /* Buttons */
@@ -259,13 +264,19 @@ table td:nth-child(5) div {
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
+  
 }
 .btn-primary {
   background: green;
   color: #fff;
-  padding: 10px 20px;
-  font-size: 0.9rem;
+  padding: 10px 30px;
+  font-size: 1rem;
+  display: flex;  /* Make it a flex container */
+  justify-content: center; /* Center content inside */
+  align-items: center; /* Align text vertically */
 }
+
+
 .modal-footer .btn-primary {
   margin: 0;
 }
@@ -288,13 +299,22 @@ table td:nth-child(5) div {
   align-items: center;
   gap: 10px;
   justify-content: center;
+  font-style: bold;
+
+
 }
 #statusSelect,
 .modal-footer .btn {
+  width: 100%;
   height: 50px;
   padding: 0 10px;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+  border-radius: 5px;
+  font-style: bold;
+  text-transform: uppercase;
+
 }
+
 
 /* Status Badges */
 .badge {
@@ -303,6 +323,7 @@ table td:nth-child(5) div {
   border-radius: 3px;
   font-size: 1rem;
   color: #fff;
+  text-transform: uppercase;
 }
 .status-pending { background: #ffc107; }
 .status-approved { background: #28a745; }
@@ -328,7 +349,7 @@ table td:nth-child(5) div {
   background: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 3px;
-  padding: 10px;
+  padding: 20px;
   margin-bottom: 10px;
 }
 .attached-file .file-info {
@@ -341,17 +362,20 @@ table td:nth-child(5) div {
   color: #28a745;
 }
 .attached-file .file-actions a.btn-view {
-  background: #007bff;
-  color: #fff;
+  background: transparent;
+  color: #28a745;
   padding: 5px 10px;
+  border: 2px solid #28a745;
   border-radius: 3px;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   margin-right: 5px;
-  transition: background 0.3s;
+  text-transform: uppercase;
+  transition: background 0.3s, color 0.3s;
 }
 .attached-file .file-actions a.btn-view:hover {
-  background: #0069d9;
+  background: #28a745;
+  color: white;
 }
 .attached-file .file-actions a.btn-download {
   background: transparent;
@@ -360,8 +384,9 @@ table td:nth-child(5) div {
   border: 2px solid #28a745;
   border-radius: 3px;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   margin-right: 5px;
+  text-transform: uppercase;
   transition: background 0.3s, color 0.3s;
 }
 .attached-file .file-actions a.btn-download:hover {
@@ -397,10 +422,10 @@ table td:nth-child(5) div {
   font-family: 'Roboto', sans-serif;
   background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
   border-left: 5px solid #2e7d32;
-  padding: 20px 25px;
+  padding: 10px 25px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  margin-top: 20px;
+  margin-top: 1px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .admin-comment-container:hover {
@@ -424,21 +449,6 @@ table td:nth-child(5) div {
 }
 
 /* Collapsed state: restrict height and add fade effect */
-.admin-comment-container.collapsed {
-  max-height: 100px;
-  overflow: hidden;
-  position: relative;
-}
-.admin-comment-container.collapsed::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 30px;
-  background: linear-gradient(to top, white, transparent);
-}
-
 /* Toggle Button Styling */
 #toggleCommentBtn {
   display: block;
@@ -456,8 +466,8 @@ table td:nth-child(5) div {
 .status_in_progress {
   background: #17a2b8;
   color: #fff;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: 0.2rem;
 }
 
 /* Responsive Styles */
@@ -485,3 +495,114 @@ table td:nth-child(5) div {
   color: #fff;
   border-left: 4px solid #fff;
 }
+
+
+#displayCommentText {
+  cursor: pointer;
+}
+
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.dialog-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.notification-content {
+  max-height: 300px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.notification-item {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.close-btn {
+  background: red;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+
+.notifications {
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  width: 250px;
+  background: white;
+  color: black;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  display: none; /* Hidden by default */
+  z-index: 1000;
+}
+
+
+.icon-btn {
+  margin-right: 15px; /* Adds space between icon and other elements */
+  padding: 5px;
+}
+
+.notif-badge {
+  background-color: red;
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 50%;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+.dropdown {
+  position: absolute;
+  top: 40px; /* Adjust based on your design */
+  right: 0;
+  width: 150px;
+  background: white;
+  color: black;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  display: none; /* Hidden by default */
+  z-index: 1000;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: black; /* Ensure the icon is black */
+}
+
+

@@ -1,19 +1,32 @@
-// Base URL for the API without a trailing slash
-const API_BASE_URL = 'http://localhost:8000';
-
 // Mapping for request type IDs to names
 const requestTypeNames = {
   1: 'TOR',
   2: 'ID',
-  3: 'Certificate',
-  4: 'Others',
+  3: 'New Student ID',
+  4: 'ID Replacement',
+  5: 'PE Uniform Request',
+  6: 'School Uniform Request',
   7: 'Course Module Request'
 };
 
 /**
  * Returns common headers for authenticated requests.
  */
-function getAuthHeaders(token) {
+function checkTokenAndRedirect() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = "./login.html"; // Change to your actual login page
+  }
+}
+
+/**
+ * Returns common headers for authenticated requests.
+ * Ensures user is authenticated before returning headers.
+ * @returns {Object} The headers object.
+ */
+function getAuthHeaders() {
+  checkTokenAndRedirect(); // Check for token
+  const token = localStorage.getItem('token'); // Get the token after the check
   return {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -21,12 +34,17 @@ function getAuthHeaders(token) {
   };
 }
 
+// Example usage
+const headers = getAuthHeaders();
+
 /**
  * Displays the loading indicator.
  */
 function showLoading() {
   const loadingEl = document.getElementById('loadingIndicator');
-  if (loadingEl) loadingEl.style.display = 'flex';
+  if (loadingEl) {
+    loadingEl.style.display = 'flex';
+  }
 }
 
 /**
@@ -34,8 +52,11 @@ function showLoading() {
  */
 function hideLoading() {
   const loadingEl = document.getElementById('loadingIndicator');
-  if (loadingEl) loadingEl.style.display = 'none';
+  if (loadingEl) {
+    loadingEl.style.display = 'none';
+  }
 }
+
 
 /**
  * Fetches and displays the logged-in admin's name.
@@ -87,21 +108,34 @@ async function loadRequestsUsingPagination() {
   if (!token) return console.error("No token found in localStorage.");
   try {
     showLoading();
+    
     const [requestsResponse, usersResponse] = await Promise.all([
       fetch(`${API_BASE_URL}/requests/`, { headers: getAuthHeaders(token) }),
       fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(token) })
     ]);
-    if (!requestsResponse.ok || !usersResponse.ok)
+
+    if (!requestsResponse.ok || !usersResponse.ok) {
       return console.error("Error fetching data from the API.");
+    }
+
     const requestsData = await requestsResponse.json();
     const usersData = await usersResponse.json();
-    if (requestsData.status !== 'success' || usersData.status !== 'success')
+
+    if (requestsData.status !== 'success' || usersData.status !== 'success') {
       return console.error("Error in data response");
-    allRequests = [...requestsData.data].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+    }
+
+    // Filter only "pending" status requests
+    allRequests = requestsData.data
+      .filter(request => request.status === "pending")
+      .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+
     allUsersData = usersData.data;
     displayData = allRequests;
+    
     totalPages = Math.ceil(displayData.length / itemsPerPage);
     currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
     displayRequestsPage(currentPage);
     updatePaginationControls(currentPage);
   } catch (error) {
@@ -112,10 +146,10 @@ async function loadRequestsUsingPagination() {
 }
 
 /**
- * Returns the array of requests to display.
+ * Returns the array of "pending" requests to display.
  */
 function getDisplayData() {
-  return displayData;
+  return displayData; // Already filtered in loadRequestsUsingPagination()
 }
 
 /**
@@ -143,34 +177,44 @@ function getStatusClass(status) {
 }
 
 /**
- * Renders the list of requests into the table.
+ * Renders the list of "pending" requests into the table.
  */
 function displayRequests(requests, usersData) {
   const userMap = {};
   usersData.forEach(user => { userMap[user.user_id] = user; });
+
   const tbody = document.getElementById('requestsTableBody');
   if (!tbody) return console.error("requestsTableBody element not found.");
+
   if (!requests || requests.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No requests to display</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No pending requests to display</td></tr>`;
     return;
   }
+
   tbody.innerHTML = requests.map(request => {
     const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+    const formattedRequestId = String(request.request_id).padStart(2, '0'); // Ensures "01", "02", etc.
+
     return `<tr>
-          <td>${user.first_name} ${user.last_name}</td>
-          <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
+          <td>${user.first_name} ${user.last_name}</td> <!-- Name -->
+          <td>${formattedRequestId}</td> <!-- Request Number with leading zero -->
+          <td>${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
           <td>
             <span class="badge ${getStatusClass(request.status)}">${request.status}</span>
-          </td>
-          <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
+          </td> <!-- Status -->
+          <td>${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
           <td>
-            <div style="display: flex; gap: 5px;">
-              <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">View</button>
+            <div style="display: flex; justify-content: center; gap: 5px;">
+              <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button>
             </div>
-          </td>
+          </td> <!-- Action -->
         </tr>`;
   }).join('');
 }
+
+
+
+
 
 /**
  * Updates pagination controls.
@@ -178,13 +222,18 @@ function displayRequests(requests, usersData) {
 function updatePaginationControls(currentPage) {
   const dataToDisplay = getDisplayData();
   totalPages = Math.ceil(dataToDisplay.length / itemsPerPage);
+
   const paginationContainer = document.getElementById('paginationContainer');
   if (!paginationContainer) return console.error("paginationContainer element not found.");
+
   let controlsHtml = '';
   if (currentPage > 1) controlsHtml += `<button id="prevPage" class="btn btn-secondary">Previous</button>`;
   controlsHtml += `<span style="margin: 0 10px;">Page ${currentPage} of ${totalPages}</span>`;
   if (currentPage < totalPages) controlsHtml += `<button id="nextPage" class="btn btn-secondary">Next</button>`;
+
   paginationContainer.innerHTML = controlsHtml;
+
+  // Attach event listeners for pagination
   const prevPageButton = document.getElementById('prevPage');
   if (prevPageButton) {
     prevPageButton.addEventListener('click', () => {
@@ -197,6 +246,7 @@ function updatePaginationControls(currentPage) {
       }
     });
   }
+
   const nextPageButton = document.getElementById('nextPage');
   if (nextPageButton) {
     nextPageButton.addEventListener('click', () => {
@@ -211,9 +261,6 @@ function updatePaginationControls(currentPage) {
   }
 }
 
-/**
- * Helper function to build a styled attached file element.
- */
 function buildFileLink(file, label) {
   const displayText = label || file.file_name;
   return `<div class="attached-file">
@@ -233,34 +280,41 @@ function buildFileLink(file, label) {
  */
 function viewRequest(requestId) {
   showLoading();
+  
   const request = allRequests.find(r => r.request_id == requestId);
   if (!request) {
     console.error("Request not found!");
     hideLoading();
     return;
   }
+
   const user = allUsersData.find(u => u.user_id == request.user_id);
-  const modalTitle = `Ticket Details - Request #${request.request_id}`;
+  const modalTitle = `TICKET DETAILS - REQUEST #${request.request_id}`;
   
   // Ticket Details Section
   let ticketDetailsHTML = `<div class="ticket-details">
-        <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-        <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-        <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
-        <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+        <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+        <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+        <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
+        <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
       </div>`;
+
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
   document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+
+
+
+
   
   // Attached Files Section
   const fileLabels = {
-    "Clearance": "Clearance Form",
-    "RequestLetter": "Request Letter",
-    "StudentID": "Student ID",
-    "1x1_id_picture_(white_background,_formal_attire)": "1x1 ID Picture",
-    "RegistrationForm": "Registration Form",
-    "IDPicture": "ID Picture",
-    "ProfessorApproval": "Professor Approval"
+    "Clearance": "CLEARANCE FORM",
+    "RequestLetter": "REQUEST LETTER",
+    "StudentID": "STUDENT ID",
+    "1x1_id_picture_(white_background,_formal_attire)": "1x1 ID PICTURE",
+    "RegistrationForm": "REGISTRATION FORM",
+    "IDPicture": "ID PICTURE",
+    "ProfessorApproval": "PROFESSOR APPROVAL"
   };
   let fileLinks = '';
   for (const key in fileLabels) {
@@ -272,7 +326,7 @@ function viewRequest(requestId) {
   }
   const ticketFilesEl = document.getElementById('ticketFiles');
   if (fileLinks) {
-    ticketFilesEl.innerHTML = `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`;
+    ticketFilesEl.innerHTML = `<div class="attached-files"><h3>ATTACHED FILES</h3>${fileLinks}</div>`;
   } else {
     ticketFilesEl.innerHTML = '';
   }
@@ -280,7 +334,6 @@ function viewRequest(requestId) {
   // Inline Comment Editing Section
   const displayCommentTextEl = document.getElementById('displayCommentText');
   const editCommentTextarea = document.getElementById('editCommentTextarea');
-  const editCommentBtn = document.getElementById('editCommentBtn');
   const saveTicketCommentBtn = document.getElementById('saveTicketCommentBtn');
   const updateTicketCommentBtn = document.getElementById('updateTicketCommentBtn');
   const cancelEditCommentBtn = document.getElementById('cancelEditCommentBtn');
@@ -289,7 +342,7 @@ function viewRequest(requestId) {
   if (request.note && request.note.trim() !== "") {
     displayCommentTextEl.textContent = request.note;
   } else {
-    displayCommentTextEl.textContent = "No comment available.";
+    displayCommentTextEl.textContent = "Add comment here.";
   }
   editCommentTextarea.value = request.note || '';
   
@@ -301,8 +354,6 @@ function viewRequest(requestId) {
   cancelEditCommentBtn.style.display = 'none';
   
   // Replace buttons to avoid duplicate bindings.
-  const newEditBtn = editCommentBtn.cloneNode(true);
-  editCommentBtn.parentNode.replaceChild(newEditBtn, editCommentBtn);
   const newSaveBtn = saveTicketCommentBtn.cloneNode(true);
   saveTicketCommentBtn.parentNode.replaceChild(newSaveBtn, saveTicketCommentBtn);
   const newUpdateBtn = updateTicketCommentBtn.cloneNode(true);
@@ -310,22 +361,23 @@ function viewRequest(requestId) {
   const newCancelBtn = cancelEditCommentBtn.cloneNode(true);
   cancelEditCommentBtn.parentNode.replaceChild(newCancelBtn, cancelEditCommentBtn);
   
-  // When "Edit Comment" is clicked, switch to edit mode.
-  newEditBtn.addEventListener('click', () => {
-    editCommentTextarea.value = (displayCommentTextEl.textContent.trim() === "No comment available.") ? "" : displayCommentTextEl.textContent;
-    displayCommentTextEl.style.display = 'none';
-    editCommentTextarea.style.display = 'block';
-    newCancelBtn.style.display = 'inline-block';
-    newEditBtn.style.display = 'none';
-    // Show "Update" button if a comment exists, otherwise "Save".
-    if (request.note && request.note.trim() !== "") {
+  // Make the comment itself clickable for editing
+displayCommentTextEl.addEventListener('click', () => {
+  editCommentTextarea.value = (displayCommentTextEl.textContent.trim() === "Add comment here.") ? "" : displayCommentTextEl.textContent;
+  displayCommentTextEl.style.display = 'none';
+  editCommentTextarea.style.display = 'block';
+  newCancelBtn.style.display = 'inline-block';
+
+  // Show "Update" button if a comment exists, otherwise "Save".
+  if (request.note && request.note.trim() !== "") {
       newUpdateBtn.style.display = 'inline-block';
       newSaveBtn.style.display = 'none';
-    } else {
+  } else {
       newSaveBtn.style.display = 'inline-block';
       newUpdateBtn.style.display = 'none';
-    }
-  });
+  }
+});
+
   
   // When "Cancel" is clicked, revert back to display mode.
   newCancelBtn.addEventListener('click', () => {
@@ -334,7 +386,6 @@ function viewRequest(requestId) {
     newUpdateBtn.style.display = 'none';
     newCancelBtn.style.display = 'none';
     displayCommentTextEl.style.display = 'block';
-    newEditBtn.style.display = 'inline-block';
   });
   
   // When "Save Comment" is clicked (for new comments)
@@ -395,6 +446,8 @@ function closeModal() {
   const modal = document.getElementById('ticketModal');
   if (modal) modal.classList.remove('active');
 }
+
+
 
 /**
  * Sends a PUT request to update the ticket status and refreshes data.
@@ -530,12 +583,18 @@ document.addEventListener('DOMContentLoaded', () => {
         displayData = allRequests;
       } else {
         displayData = allRequests.filter(request => {
+          const requestNumber = String(request.request_id || "").padStart(2, "0").toLowerCase(); // Ensure request_id is treated as a string
           const status = (request.status || "").toLowerCase();
           const date = new Date(request.submitted_at).toLocaleDateString().toLowerCase();
           const type = (requestTypeNames[request.type_id] || "").toLowerCase();
           const user = allUsersData.find(u => u.user_id === request.user_id);
           const name = user ? ((user.first_name || "") + " " + (user.last_name || "")).toLowerCase() : "";
-          return status.includes(query) || date.includes(query) || type.includes(query) || name.includes(query);
+  
+          return requestNumber.includes(query) || // Search by request number
+                 status.includes(query) ||
+                 date.includes(query) ||
+                 type.includes(query) ||
+                 name.includes(query);
         });
       }
       currentPage = 1;
@@ -544,6 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updatePaginationControls(currentPage);
     });
   }
+  
   
   // Bind the update status button
   const updateStatusBtn = document.getElementById("updateStatusBtn");

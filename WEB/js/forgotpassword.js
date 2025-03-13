@@ -1,8 +1,4 @@
 // forgotpassword.js
-
-// Declare the API base URL only here.
-const API_BASE_URL = 'http://localhost:8000/UPANG%20LINK/';
-
 document.getElementById('forgotPasswordForm').addEventListener('submit', async function(event) {
     event.preventDefault();
 

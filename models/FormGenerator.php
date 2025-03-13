@@ -17,34 +17,38 @@ class FormGenerator {
         if ($result) {
             // Decode the requirements JSON.
             $requirements = json_decode($result['requirements'], true);
-            if (!$requirements) {
+            if (!is_array($requirements)) {
                 $requirements = [];
             }
-            
+    
+            $fields = [];
+    
             // Check if the requirements is structured as an object with a "fields" key.
             if (isset($requirements['fields']) && is_array($requirements['fields'])) {
                 $fields = $requirements['fields'];
             } elseif (is_array($requirements)) {
-                // If it's a plain array (e.g. ["Valid student ID"]), map each element.
+                // Process plain array elements
                 $fields = array_map(function($req) {
+                    if (!is_string($req)) {
+                        return null; // Skip non-string values
+                    }
+    
                     $lower_req = strtolower($req);
-                    // If the requirement is "1x1 ID Picture (white background, formal attire)", use "id_picture"
+                    $name = strtolower(str_replace(' ', '_', $req));
+    
+                    // Special case: "1x1 ID Picture"
                     if (strpos($lower_req, '1x1 id picture') !== false) {
                         $name = 'id_picture';
-                    } else {
-                        $name = strtolower(str_replace(' ', '_', $req));
                     }
-                    
+    
                     $type = 'text';  // Default field type.
                     $allowed_types = '';
-                    
-                    // Check if the requirement should be a file upload.
+    
+                    // Determine file upload types
                     if (strpos($lower_req, 'student id') !== false) {
-                        // For "Valid student ID", allow only image formats.
                         $type = 'file';
                         $allowed_types = 'jpg,png,jpeg';
                     } elseif (strpos($lower_req, 'registration form') !== false) {
-                        // For "Registration Form", only allow PDFs.
                         $type = 'file';
                         $allowed_types = 'pdf';
                     } elseif (
@@ -57,7 +61,7 @@ class FormGenerator {
                         $type = 'file';
                         $allowed_types = 'pdf,jpg,png,doc,docx';
                     }
-                    
+    
                     return [
                         'name' => $name,
                         'label' => $req,
@@ -66,10 +70,11 @@ class FormGenerator {
                         'allowed_types' => $allowed_types
                     ];
                 }, $requirements);
-            } else {
-                $fields = [];
+    
+                // Remove null values (non-string cases)
+                $fields = array_filter($fields);
             }
-            
+    
             // Separate required and optional fields.
             $required_fields = array_filter($fields, function($field) {
                 return is_array($field) && isset($field['required']) && $field['required'] === true;
@@ -77,19 +82,22 @@ class FormGenerator {
             $optional_fields = array_filter($fields, function($field) {
                 return is_array($field) && isset($field['required']) && $field['required'] === false;
             });
-            
+    
             return [
                 'request_type'    => $result['name'],
                 'processing_time' => $result['processing_time'],
                 'form_data'       => [
                     'required_fields' => array_values($required_fields),
                     'optional_fields' => array_values($optional_fields),
-                    'instructions'    => isset($requirements['instructions']) ? $requirements['instructions'] : ""
+                    'instructions'    => isset($requirements['instructions']) && is_string($requirements['instructions']) 
+                        ? $requirements['instructions'] 
+                        : ""
                 ]
             ];
         }
         return false;
     }
+    
     
     // Validate the submission against the required fields.
     public function validateSubmission($type_id, $data, $files) {
