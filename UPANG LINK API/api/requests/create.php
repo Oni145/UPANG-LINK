@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         // Handle file uploads if any
-        $upload_dir = API_ROOT . '/uploads/';
+        $upload_dir = dirname(API_ROOT) . '/uploads/';
         if (!file_exists($upload_dir)) {
             mkdir($upload_dir, 0777, true);
         }

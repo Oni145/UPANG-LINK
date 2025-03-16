@@ -93,7 +93,8 @@ data class Request(
     val processing_time: String,
     val first_name: String,
     val last_name: String,
-    val category_name: String
+    val category_name: String,
+    val tracking_number: String? = null
 ) : Parcelable {
     fun parseRequirements(): RequirementsData {
         return try {
@@ -101,10 +102,36 @@ data class Request(
             // First parse the outer JSON string
             val requirementsMap = gson.fromJson(requirements, Map::class.java)
             
-            // Handle fields if present
-            val fields = (requirementsMap["fields"] as? List<*>)?.firstOrNull() as? String
-            val parsedFields = if (fields != null) {
-                gson.fromJson<List<RequirementField>>(fields, object : TypeToken<List<RequirementField>>() {}.type)
+            // Handle fields if present - FIXED: fields is a direct List<Map>, not a String
+            val fieldsArray = requirementsMap["fields"] as? List<*>
+            val parsedFields = if (fieldsArray != null) {
+                fieldsArray.mapNotNull { fieldItem ->
+                    try {
+                        val fieldMap = fieldItem as? Map<*, *>
+                        if (fieldMap != null) {
+                            // Parse options for dropdown/select fields
+                            @Suppress("UNCHECKED_CAST")
+                            val options = if (fieldMap["type"]?.toString()?.equals("select", ignoreCase = true) == true) {
+                                (fieldMap["options"] as? List<*>)?.map { it.toString() }
+                            } else {
+                                null
+                            }
+                            
+                            RequirementField(
+                                name = fieldMap["name"]?.toString() ?: "",
+                                label = fieldMap["label"]?.toString() ?: "",
+                                type = fieldMap["type"]?.toString() ?: "text",
+                                required = fieldMap["required"] as? Boolean ?: false,
+                                description = fieldMap["description"]?.toString(),
+                                allowed_types = fieldMap["allowed_types"]?.toString(),
+                                options = options
+                            )
+                        } else null
+                    } catch (e: Exception) {
+                        android.util.Log.e("Request", "Error parsing field: $fieldItem", e)
+                        null
+                    }
+                }
             } else {
                 null
             }
@@ -158,10 +185,36 @@ data class RequestType(
         return try {
             val gson = Gson()
             
-            // Handle fields if present
-            val fields = (requirements["fields"] as? List<*>)?.firstOrNull() as? String
-            val parsedFields = if (fields != null) {
-                gson.fromJson<List<RequirementField>>(fields, object : TypeToken<List<RequirementField>>() {}.type)
+            // Handle fields if present - FIXED: fields is a direct List<Map>, not a String
+            val fieldsArray = requirements["fields"] as? List<*>
+            val parsedFields = if (fieldsArray != null) {
+                fieldsArray.mapNotNull { fieldItem ->
+                    try {
+                        val fieldMap = fieldItem as? Map<*, *>
+                        if (fieldMap != null) {
+                            // Parse options for dropdown/select fields
+                            @Suppress("UNCHECKED_CAST")
+                            val options = if (fieldMap["type"]?.toString()?.equals("select", ignoreCase = true) == true) {
+                                (fieldMap["options"] as? List<*>)?.map { it.toString() }
+                            } else {
+                                null
+                            }
+                            
+                            RequirementField(
+                                name = fieldMap["name"]?.toString() ?: "",
+                                label = fieldMap["label"]?.toString() ?: "",
+                                type = fieldMap["type"]?.toString() ?: "text",
+                                required = fieldMap["required"] as? Boolean ?: false,
+                                description = fieldMap["description"]?.toString(),
+                                allowed_types = fieldMap["allowed_types"]?.toString(),
+                                options = options
+                            )
+                        } else null
+                    } catch (e: Exception) {
+                        android.util.Log.e("RequestType", "Error parsing field: $fieldItem", e)
+                        null
+                    }
+                }
             } else {
                 null
             }
@@ -204,3 +257,39 @@ data class RequirementsData(
     val required_docs: List<String>? = null,
     val instructions: String? = null
 ) : Parcelable 
+
+// Adding missing model classes
+data class RequestDetails(
+    val id: String,
+    val document_type: String,
+    val purpose: String,
+    val status: String,
+    val submitted_at: String,
+    val updated_at: String,
+    val can_edit: Boolean,
+    val submissions: List<RequirementSubmission>? = null
+) {
+    fun parseRequirements(): RequirementsData {
+        return try {
+            RequirementsData()
+        } catch (e: Exception) {
+            RequirementsData()
+        }
+    }
+}
+
+data class RequirementSubmission(
+    val requirement_id: String,
+    val file_path: String?,
+    val submission_status: String
+)
+
+data class RequestUpdateData(
+    val purpose: String,
+    val requirements: List<RequirementUpdateItem>
+)
+
+data class RequirementUpdateItem(
+    val id: String,
+    val value: String
+) 

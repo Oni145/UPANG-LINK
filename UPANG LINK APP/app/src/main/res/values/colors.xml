@@ -53,6 +53,7 @@
     <color name="gray_100">#F5F5F5</color>
     <color name="gray_200">#EEEEEE</color>
     <color name="gray_300">#E0E0E0</color>
+    <color name="gray_light">#BDBDBD</color>
     <color name="gray_600">#757575</color>
     <color name="gray_800">#424242</color>
 
@@ -75,4 +76,9 @@
     <color name="status_progress_bg">#E8F4FD</color>
     <color name="status_completed_bg">#E6F4EA</color>
     <color name="status_rejected_bg">#FEECEB</color>
+
+    <color name="colorPrimary">#4CAF50</color>
+    <color name="colorPrimaryDark">#388E3C</color>
+    <color name="colorPrimaryLight">#C8E6C9</color>
+    <color name="colorAccent">#FF9800</color>
 </resources> 

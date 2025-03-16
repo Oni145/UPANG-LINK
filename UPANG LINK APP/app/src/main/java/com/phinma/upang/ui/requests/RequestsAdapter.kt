@@ -17,16 +17,8 @@ import java.text.ParseException
 import android.view.View
 
 class RequestsAdapter(
-    private val onItemClick: (Request) -> Unit,
-    private val onCancelClick: (Request) -> Unit
+    private val onItemClick: (Request) -> Unit
 ) : ListAdapter<Request, RequestsAdapter.RequestViewHolder>(RequestDiffCallback()) {
-
-    inner class RequestViewHolder(
-        val binding: ItemRequestBinding
-    ) : RecyclerView.ViewHolder(binding.root)
-
-    private val displayDateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-    private val apiDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RequestViewHolder {
         val binding = ItemRequestBinding.inflate(
@@ -39,87 +31,134 @@ class RequestsAdapter(
 
     override fun onBindViewHolder(holder: RequestViewHolder, position: Int) {
         val request = getItem(position)
-        with(holder.binding) {
-            // Show tracking number if available
-            if (!request.id.isNullOrEmpty()) {
-                requestTrackingNumber.text = request.id
-                requestTrackingNumber.visibility = View.VISIBLE
-            } else {
-                requestTrackingNumber.visibility = View.GONE
-            }
-            
-            // Safely handle potentially null type
-            requestTitle.text = request.type?.name ?: request.document_type
-            
-            // Hide description if not needed
-            if (request.purpose.isNullOrEmpty()) {
-                requestDescription.visibility = View.GONE
-            } else {
-                requestDescription.visibility = View.VISIBLE
-                requestDescription.text = request.purpose
-            }
-
-            // Format the date safely
-            val formattedDate = try {
-                val date = apiDateFormat.parse(request.submitted_at)
-                date?.let { displayDateFormat.format(it) } ?: "Date not available"
-            } catch (e: ParseException) {
-                "Date not available"
-            }
-            requestDate.text = formattedDate
-
-            // Set processing time
-            processingTime.text = "Processing Time: ${request.processing_time ?: "5-7 working days"}"
-
-            // Use the status directly, defaulting to PENDING if null
-            updateStatusViews(request.status ?: RequestStatus.PENDING, holder)
-
-            root.setOnClickListener {
-                onItemClick(request)
-            }
-
-            cancelButton.setOnClickListener {
-                onCancelClick(request)
-            }
-        }
+        holder.bind(request)
     }
 
-    private fun updateStatusViews(status: RequestStatus, holder: RequestViewHolder) {
-        with(holder.binding) {
-            when (status) {
+    inner class RequestViewHolder(private val binding: ItemRequestBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        init {
+            binding.root.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onItemClick(getItem(position))
+                }
+            }
+            
+            // Remove cancel button click listener
+            // Always hide the cancel button
+            binding.cancelButton.visibility = View.GONE
+        }
+
+        fun bind(request: Request) {
+            binding.apply {
+                requestTitle.text = request.request_type
+                
+                // Set tracking number if available
+                if (request.tracking_number != null && request.tracking_number.isNotEmpty()) {
+                    requestTrackingNumber.text = request.tracking_number
+                    requestTrackingNumber.isVisible = true
+                } else {
+                    // Use the ID as fallback
+                    requestTrackingNumber.text = request.id
+                    requestTrackingNumber.isVisible = true
+                }
+                
+                // Format and set the date
+                try {
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                    val displayFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                    
+                    val date = dateFormat.parse(request.submitted_at)
+                    date?.let {
+                        requestDate.text = displayFormat.format(it)
+                    }
+                } catch (e: ParseException) {
+                    requestDate.text = request.submitted_at
+                }
+                
+                // Set status and update UI based on status
+                updateStatusViews(request.status ?: RequestStatus.PENDING)
+                
+                // Debug log to see what values we're getting from the API
+                android.util.Log.d("RequestsAdapter", "Request type: ${request.request_type}")
+                android.util.Log.d("RequestsAdapter", "Request type object: ${request.type}")
+                android.util.Log.d("RequestsAdapter", "Processing time from type: ${request.type?.processing_time}")
+                android.util.Log.d("RequestsAdapter", "Processing time from request: ${request.processing_time}")
+                
+                // Get processing time from the API response or use fallback mapping
+                val processingTimeValue = when {
+                    // First priority: Use the processing_time from the type object if available
+                    request.type != null && !request.type.processing_time.isNullOrEmpty() -> {
+                        android.util.Log.d("RequestsAdapter", "Using processing time from type object: ${request.type.processing_time}")
+                        request.type.processing_time
+                    }
+                    // Second priority: Use the processing_time directly from the request if available
+                    !request.processing_time.isNullOrEmpty() && request.processing_time != "null" -> {
+                        android.util.Log.d("RequestsAdapter", "Using processing time from request: ${request.processing_time}")
+                        request.processing_time
+                    }
+                    // Third priority: Use fallback mapping based on request type
+                    else -> {
+                        android.util.Log.d("RequestsAdapter", "Using fallback mapping for processing time")
+                        when (request.request_type) {
+                            "Course Module Request" -> "1-2 working days"
+                            "Transcript of Records" -> "5-7 working days"
+                            "Certificate of Grades" -> "3-5 working days"
+                            "Certificate of Enrollment" -> "1-2 working days"
+                            "Certificate of Good Moral" -> "3-5 working days"
+                            "Certificate of Graduation" -> "3-5 working days"
+                            "Enrollment Certificate" -> "2-3 working days"
+                            "ID Replacement" -> "5-7 working days"
+                            "New Student ID" -> "5-7 working days"
+                            "PE Uniform Request" -> "3-5 working days"
+                            "School Uniform Request" -> "3-5 working days"
+                            else -> "5-7 working days" // Default
+                        }
+                    }
+                }
+                
+                processingTime.text = "Processing Time: $processingTimeValue"
+                
+                // Always hide the cancel button
+                cancelButton.visibility = View.GONE
+            }
+        }
+        
+        private fun updateStatusViews(status: RequestStatus) {
+            val (colorRes, text) = when (status) {
                 RequestStatus.PENDING -> {
-                    requestStatus.text = "Pending"
-                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.warning))
-                    requestStatus.chipBackgroundColor = ContextCompat.getColorStateList(root.context, R.color.status_pending_bg)
+                    Pair(R.color.status_pending, "Pending")
                 }
                 RequestStatus.IN_PROGRESS -> {
-                    requestStatus.text = "In Progress"
-                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.info))
-                    requestStatus.chipBackgroundColor = ContextCompat.getColorStateList(root.context, R.color.status_progress_bg)
+                    Pair(R.color.status_pending, "In Progress")
                 }
                 RequestStatus.COMPLETED -> {
-                    requestStatus.text = "Completed"
-                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.success))
-                    requestStatus.chipBackgroundColor = ContextCompat.getColorStateList(root.context, R.color.status_completed_bg)
+                    Pair(R.color.status_approved, "Completed")
                 }
                 RequestStatus.REJECTED -> {
-                    requestStatus.text = "Rejected"
-                    requestStatus.setTextColor(ContextCompat.getColor(root.context, R.color.error))
-                    requestStatus.chipBackgroundColor = ContextCompat.getColorStateList(root.context, R.color.status_rejected_bg)
+                    Pair(R.color.status_rejected, "Rejected")
                 }
             }
-            // Show cancel button only for pending requests
-            cancelButton.isVisible = status == RequestStatus.PENDING
+
+            binding.apply {
+                requestStatus.text = text
+                requestStatus.setTextColor(ContextCompat.getColor(root.context, colorRes))
+                // The statusIndicator is not in the layout, so we'll skip setting it
+                
+                // Always hide the cancel button regardless of status
+                cancelButton.visibility = View.GONE
+            }
         }
     }
+}
 
-    private class RequestDiffCallback : DiffUtil.ItemCallback<Request>() {
-        override fun areItemsTheSame(oldItem: Request, newItem: Request): Boolean {
-            return oldItem.id == newItem.id
-        }
+class RequestDiffCallback : DiffUtil.ItemCallback<Request>() {
+    override fun areItemsTheSame(oldItem: Request, newItem: Request): Boolean {
+        return oldItem.id == newItem.id
+    }
 
-        override fun areContentsTheSame(oldItem: Request, newItem: Request): Boolean {
-            return oldItem == newItem
-        }
+    override fun areContentsTheSame(oldItem: Request, newItem: Request): Boolean {
+        return oldItem == newItem
     }
 } 

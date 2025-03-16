@@ -74,31 +74,19 @@
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="4dp"
                 android:minHeight="36dp"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="4dp"
+                android:visibility="gone" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/requestDescription"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/requestTitle"
-            tools:text="For employment purposes at Company XYZ" />
 
         <LinearLayout
             android:id="@+id/dateContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/requestDescription">
+            app:layout_constraintTop_toBottomOf="@id/requestTitle">
 
             <TextView
                 android:id="@+id/requestDate"
@@ -112,7 +100,7 @@
                 android:id="@+id/processingTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:textColor="?android:textColorSecondary"
                 android:textSize="14sp"
                 tools:text="Processing Time: 3-5 working days" />

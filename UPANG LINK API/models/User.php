@@ -309,4 +309,37 @@ class User {
 
         return $stmt->execute();
     }
+
+    public function verifyPassword($password) {
+        // Get user by ID
+        $query = "SELECT password FROM " . $this->table_name . " WHERE user_id = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->user_id);
+        $stmt->execute();
+        
+        if ($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            // Verify password
+            return password_verify($password, $row['password']);
+        }
+        
+        return false;
+    }
+    
+    public function changePassword($new_password) {
+        // Hash the new password
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        
+        // Update the password
+        $query = "UPDATE " . $this->table_name . "
+                SET password = :password,
+                    updated_at = NOW()
+                WHERE user_id = :user_id";
+                
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":password", $hashed_password);
+        $stmt->bindParam(":user_id", $this->user_id);
+        
+        return $stmt->execute();
+    }
 } 

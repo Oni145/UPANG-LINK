@@ -1,0 +1,14 @@
+# Prevent direct access to SQL files
+<Files "*.sql">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Allow access to the setup.php file
+<Files "setup.php">
+    Order allow,deny
+    Allow from all
+</Files>
+
+# Disable directory listing
+Options -Indexes 

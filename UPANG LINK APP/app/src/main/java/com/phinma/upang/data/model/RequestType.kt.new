@@ -1,0 +1,95 @@
+package com.phinma.upang.data.model
+
+import android.os.Parcelable
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import com.google.gson.reflect.TypeToken
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
+
+@Parcelize
+data class RequestType(
+    @SerializedName("type_id") val type_id: Int,
+    @SerializedName("category_id") val category_id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("description") val description: String,
+    @SerializedName("requirements") val requirements: @RawValue Map<String, Any>,
+    @SerializedName("processing_time") val processing_time: String,
+    @SerializedName("is_active") val is_active: Int,
+    @SerializedName("category_name") val category_name: String
+) : Parcelable {
+    override fun toString(): String {
+        return name
+    }
+    
+    fun parseRequirements(): RequirementsData {
+        return try {
+            val gson = Gson()
+            
+            // Handle fields if present
+            val fields = requirements["fields"] as? List<*>
+            val parsedFields = if (fields != null) {
+                fields.mapNotNull { field ->
+                    when (field) {
+                        is Map<*, *> -> {
+                            // Direct map object
+                            RequirementField(
+                                name = field["name"]?.toString() ?: "",
+                                label = field["label"]?.toString() ?: "",
+                                type = field["type"]?.toString() ?: "text",
+                                required = field["required"] as? Boolean ?: false,
+                                description = field["description"]?.toString(),
+                                allowed_types = field["allowed_types"]?.toString(),
+                                options = (field["options"] as? List<*>)?.map { it.toString() }
+                            )
+                        }
+                        is String -> {
+                            // JSON string that needs parsing
+                            try {
+                                val fieldMap = gson.fromJson<Map<String, Any>>(field, object : TypeToken<Map<String, Any>>() {}.type)
+                                RequirementField(
+                                    name = fieldMap["name"]?.toString() ?: "",
+                                    label = fieldMap["label"]?.toString() ?: "",
+                                    type = fieldMap["type"]?.toString() ?: "text",
+                                    required = fieldMap["required"] as? Boolean ?: false,
+                                    description = fieldMap["description"]?.toString(),
+                                    allowed_types = fieldMap["allowed_types"]?.toString(),
+                                    options = (fieldMap["options"] as? List<*>)?.map { it.toString() }
+                                )
+                            } catch (e: Exception) {
+                                android.util.Log.e("RequestType", "Error parsing field JSON: ${e.message}")
+                                null
+                            }
+                        }
+                        else -> null
+                    }
+                }
+            } else {
+                null
+            }
+            
+            // Handle required_docs if present
+            @Suppress("UNCHECKED_CAST")
+            val requiredDocs = requirements["required_docs"] as? List<String>
+            
+            // Handle instructions
+            val instructions = requirements["instructions"] as? String
+            
+            RequirementsData(
+                fields = parsedFields,
+                required_docs = requiredDocs,
+                instructions = instructions
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("RequestType", "Error parsing requirements: ${e.message}")
+            RequirementsData()
+        }
+    }
+}
+
+@Parcelize
+data class RequirementsData(
+    val fields: List<RequirementField>? = null,
+    val required_docs: List<String>? = null,
+    val instructions: String? = null
+) : Parcelable 

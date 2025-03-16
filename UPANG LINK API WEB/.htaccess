@@ -1,0 +1,42 @@
+RewriteEngine On
+
+# Handle CORS preflight requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# Redirect all requests to the API index.php file
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+
+# Serve static files from the WEB directory
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ WEB/$1 [QSA,L]
+
+# PHP settings
+<IfModule mod_php7.c>
+    # Turn off display errors in production
+    php_flag display_errors Off
+    # Log errors instead
+    php_flag log_errors On
+    php_value error_log "error_log.txt"
+    
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value upload_max_filesize 20M
+    php_value post_max_size 20M
+</IfModule>
+
+<IfModule mod_php8.c>
+    # Turn off display errors in production
+    php_flag display_errors Off
+    # Log errors instead
+    php_flag log_errors On
+    php_value error_log "error_log.txt"
+    
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value upload_max_filesize 20M
+    php_value post_max_size 20M
+</IfModule> 

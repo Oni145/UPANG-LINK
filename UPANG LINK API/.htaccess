@@ -23,6 +23,24 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^UPANG%20LINK%20API/api/requests/types/?$ UPANG%20LINK%20API/api/requests/types.php [QSA,L]
 
+# Rewrite request details endpoint with tracking number
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^UPANG%20LINK%20API/api/requests/(REQ-[0-9]{8}-[0-9]{4})$ UPANG%20LINK%20API/api/requests/details.php?id=$1 [QSA,L]
+RewriteRule ^UPANG%20LINK%20API/api/requests/(REQ-[0-9]{4}-[0-9]{3})$ UPANG%20LINK%20API/api/requests/details.php?id=$1 [QSA,L]
+
+# Rewrite request details with type endpoint with tracking number
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^UPANG%20LINK%20API/api/requests/details/(REQ-[0-9]{8}-[0-9]{4})$ UPANG%20LINK%20API/api/requests/requestdetails.php?id=$1 [QSA,L]
+RewriteRule ^UPANG%20LINK%20API/api/requests/details/(REQ-[0-9]{4}-[0-9]{3})$ UPANG%20LINK%20API/api/requests/requestdetails.php?id=$1 [QSA,L]
+
+# Rewrite request form endpoint with tracking number (includes type details for form filling)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^UPANG%20LINK%20API/api/requests/form/(REQ-[0-9]{8}-[0-9]{4})$ UPANG%20LINK%20API/api/requests/requestform.php?id=$1 [QSA,L]
+RewriteRule ^UPANG%20LINK%20API/api/requests/form/(REQ-[0-9]{4}-[0-9]{3})$ UPANG%20LINK%20API/api/requests/requestform.php?id=$1 [QSA,L]
+
 # Default rewrite for other PHP files
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

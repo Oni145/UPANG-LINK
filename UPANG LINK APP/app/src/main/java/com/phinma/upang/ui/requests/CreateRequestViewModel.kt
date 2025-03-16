@@ -136,7 +136,8 @@ class CreateRequestViewModel @Inject constructor(
                             if (fieldMap != null) {
                                 // Parse options for dropdown fields
                                 @Suppress("UNCHECKED_CAST")
-                                val options = if (fieldMap["type"]?.toString()?.equals("dropdown", ignoreCase = true) == true) {
+                                val options = if (fieldMap["type"]?.toString()?.equals("select", ignoreCase = true) == true ||
+                                                 fieldMap["type"]?.toString()?.equals("dropdown", ignoreCase = true) == true) {
                                     (fieldMap["options"] as? List<*>)?.map { it.toString() }
                                 } else {
                                     null
@@ -164,28 +165,22 @@ class CreateRequestViewModel @Inject constructor(
                         requestTypesWithRequiredFields[requestType.type_id] = true
                         Log.d("CreateRequestVM", "Loaded ${fields.size} requirements")
                     } else {
-                        _requirements.value = emptyList()
-                        _requirementsNeeded.value = false
-                        requestTypesWithRequiredFields[requestType.type_id] = false
-                        Log.d("CreateRequestVM", "No requirements found")
+                        // If no fields were parsed, create default requirements
+                        createDefaultStudentIdRequirement(requestType)
                     }
                 } else {
-                    _requirements.value = emptyList()
-                    _requirementsNeeded.value = false
-                    requestTypesWithRequiredFields[requestType.type_id] = false
-                    Log.d("CreateRequestVM", "No requirements array found")
+                    // No fields array or empty fields array
+                    Log.d("CreateRequestVM", "No fields array found in requirements")
+                    createDefaultStudentIdRequirement(requestType)
                 }
             } else {
-                _requirements.value = emptyList()
-                _requirementsNeeded.value = false
-                requestTypesWithRequiredFields[requestType.type_id] = false
-                Log.d("CreateRequestVM", "No requirements map found")
+                // No fields key in requirements map
+                Log.d("CreateRequestVM", "No 'fields' key found in requirements map")
+                createDefaultStudentIdRequirement(requestType)
             }
         } catch (e: Exception) {
-            Log.e("CreateRequestVM", "Error parsing requirements: ${e.message}", e)
-            _requirements.value = emptyList()
-            _requirementsNeeded.value = false
-            requestTypesWithRequiredFields[requestType.type_id] = false
+            Log.e("CreateRequestVM", "Error loading requirements", e)
+            createDefaultStudentIdRequirement(requestType)
         } finally {
             _loading.value = false
         }

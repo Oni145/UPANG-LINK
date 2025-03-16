@@ -1,5 +1,6 @@
 package com.phinma.upang.ui.requests
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
@@ -39,14 +40,27 @@ class RequestDetailsViewModel @Inject constructor(
                 _loading.value = true
                 _errorMessage.value = null
 
+                // Validate tracking number format
+                if (!requestId.matches(Regex("REQ-\\d{8}-\\d{4}")) && !requestId.matches(Regex("REQ-\\d{4}-\\d{3}"))) {
+                    _errorMessage.value = "Invalid tracking number format. Expected format: REQ-YYYYMMDD-XXXX or REQ-YYYY-XXX"
+                    _loading.value = false
+                    return@launch
+                }
+
+                // Log the request ID for debugging
+                Log.d("RequestDetailsVM", "Getting request with ID: $requestId")
+
                 repository.getRequest(requestId)
                     .onSuccess { request ->
                         _request.value = request
+                        Log.d("RequestDetailsVM", "Successfully loaded request: ${request.id}")
                     }
                     .onFailure { error ->
+                        Log.e("RequestDetailsVM", "Failed to load request: ${error.message}")
                         _errorMessage.value = error.message ?: "Failed to load request"
                     }
             } catch (e: Exception) {
+                Log.e("RequestDetailsVM", "Exception loading request", e)
                 _errorMessage.value = e.message ?: "Failed to load request"
             } finally {
                 _loading.value = false
@@ -107,7 +121,13 @@ class RequestDetailsViewModel @Inject constructor(
                         getRequest(requestId) // Refresh request details
                     }
                     .onFailure { error ->
-                        _errorMessage.value = error.message ?: "Failed to cancel request"
+                        if (error.message?.contains("401", ignoreCase = true) == true || 
+                            error.message?.contains("Unauthorized", ignoreCase = true) == true) {
+                            _errorMessage.value = "Authentication error. Please log in again."
+                            // You might want to navigate to login screen or refresh token here
+                        } else {
+                            _errorMessage.value = error.message ?: "Failed to cancel request"
+                        }
                     }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to cancel request"

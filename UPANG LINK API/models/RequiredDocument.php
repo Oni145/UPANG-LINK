@@ -12,8 +12,8 @@ class RequiredDocument {
     public $uploaded_at;
     public $is_verified;
     
-    // Upload directory
-    private $upload_path = "../uploads/documents/";
+    // Upload directory - updated to use the new uploads directory at the root level
+    private $upload_path = "../../uploads/documents/";
     
     public function __construct($db) {
         $this->conn = $db;

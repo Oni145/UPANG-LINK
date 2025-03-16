@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UPANG LINK Admin</title>
+  <!-- Font Awesome CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link rel="stylesheet" href="../WEB/css/requests.css" />
+  <link rel="stylesheet" href="../WEB/css/notifications.css" />
+  <style>
+    /* Additional inline styles if needed */
+    /* Style for the toggle header with arrow icon */
+    .toggle-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+    .toggle-header h3 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+    .toggle-header i {
+      font-size: 1.2rem;
+      transition: transform 0.3s ease;
+    }
+    
+   
+  </style>
+</head>
+<body>
+  <!-- Loading Indicator -->
+  <div id="loadingIndicator">
+    <img id="loadingLogo" src="assets/phinma-logo.png" alt="Loading..." />
+  </div>
+
+  <div class="wrapper">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <img src="assets/upang-logo.png" alt="UPANG LINK" class="logo" />
+        <h3>UPANG LINK</h3>
+        <p class="subtitle">PHINMA Education Network</p>
+      </div>
+      <ul class="sidebar-menu">
+        <li><a href="index.html"><i class="fas fa-house" style="color:green;"></i> DASHBOARD</a></li>
+        <li><a href="requests.html"><i class="fas fa-file-lines" style="color:green;"></i> REQUESTS</a></li>
+        <li><a href="Approved.html"><i class="fas fa-file-lines" style="color:green;"></i> APPROVED</a></li>
+        <li><a href="In-progress.html"><i class="fas fa-file-lines" style="color:green;"></i> IN PROGRESS</a></li>
+        <li><a href="Complete.html"><i class="fas fa-file-lines" style="color:green;"></i>COMPLETE</a></li>
+        <li><a href="Rejected.html"><i class="fas fa-file-lines" style="color:green;"></i> REJECTED</a></li>
+        <li><a href="users.html"><i class="fas fa-users" style="color:green;"></i> USERS</a></li>
+      </ul>
+    </nav>
+
+    <!-- Page Content -->
+    <div id="content">
+    <!-- Top Navbar -->
+<header class="top-navbar">
+  <button id="toggleSidebar">&#9776;</button>
+  <div class="user-info">
+      <span id="userFullName">Admin User</span>
+
+      <!-- Profile Button with Dropdown -->
+      <div style="position: relative; display: inline-block;">
+          <button id="profileBtn" style="background: none; border: none; color: black; font-size: 20px; cursor: pointer;">
+              <i class="fa-regular fa-user"></i>
+          </button>
+
+          <div id="dropdownMenu" style="display: none; position: absolute; right: 0; background: white; color: black; box-shadow: 0px 4px 8px rgba(0,0,0,0.2); border-radius: 5px; min-width: 150px; padding: 10px; border: 1px solid #ddd;">
+              <button onclick="auth.logout()" style="background: none; border: none; color: black; width: 100%; text-align: left; cursor: pointer; padding: 8px; font-size: 14px;">
+                  <i class="fas fa-sign-out-alt"></i> Logout
+              </button>
+          </div>
+      </div>
+
+  <!-- Notification Bell -->
+<button id="notificationButton" class="bell-icon">
+  <i class="fa-regular fa-bell"></i>
+  <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+</button>
+<!-- Notification Dropdown -->
+<div id="notificationDialog" class="dropdown">
+  <div class="dropdown-header">
+      NOTIFICATIONS
+      <button id="closeDropdown">&times;</button>
+  </div>
+  <!-- Mark All as Read Button -->
+  <button id="markAllRead" class="mark-all-read">MARK ALL AS READ</button>
+  <!-- Notifications List -->
+  <ul id="notificationsList"></ul>
+</header>
+
+<script>
+  document.getElementById('profileBtn').addEventListener('click', function () {
+      var dropdown = document.getElementById('dropdownMenu');
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+  });
+
+  document.addEventListener('click', function (event) {
+      var dropdown = document.getElementById('dropdownMenu');
+      var profileBtn = document.getElementById('profileBtn');
+
+      if (!profileBtn.contains(event.target) && !dropdown.contains(event.target)) {
+          dropdown.style.display = 'none';
+      }
+  });
+</script>
+
+
+      <!-- Main Content -->
+      <main>
+        <div class="card">
+          <div class="card-header">
+            <span>Requests</span>
+            <div id="paginationContainer"></div>
+          </div>
+          <div class="card-body">
+            <input type="text" id="searchInput" placeholder="Search by status, date, request type..." />
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Request Type</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="requestsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Ticket Modal (with inline comment editing) -->
+  <div class="modal" id="ticketModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 id="ticketModalLabel">Ticket Details</h5>
+        <button type="button" class="btn-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <!-- Ticket details -->
+        <div id="ticketDetails"></div>
+        <!-- Inline Comment Editing Container -->
+        <div class="admin-comment-container" id="commentContainer">
+          <div class="toggle-header" id="toggleCommentHeader">
+            <h3>Admin Comment</h3>
+          </div>
+          <p id="displayCommentText">No comment available.</p>
+          <textarea id="editCommentTextarea" placeholder="Enter your comment here..." style="display: none;"></textarea>
+          <div id="commentActions">
+            <button id="saveTicketCommentBtn" class="btn btn-primary" style="display: none;">SAVE COMMENT</button>
+            <button id="updateTicketCommentBtn" class="btn btn-primary" style="display: none;">UPDATE COMMENT</button>
+            <button id="cancelEditCommentBtn" class="btn btn-secondary" style="display: none;">CANCEL</button>
+          </div>
+        </div>
+        <!-- Attached Files Section -->
+        <div id="ticketFiles"></div>
+      </div>
+      <div class="modal-footer">
+        <select id="statusSelect">
+          <option value="rejected">Reject</option>
+        </select>
+        <button id="updateStatusBtn" class="btn btn-primary">Update</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar active highlighting
+    document.addEventListener('DOMContentLoaded', () => {
+      const currentPage = window.location.pathname.split('/').pop();
+      const menuLinks = document.querySelectorAll('#sidebar .sidebar-menu li a');
+      menuLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPage) {
+          link.classList.add('active');
+          link.parentElement.classList.add('active');
+        } else {
+          link.classList.remove('active');
+          link.parentElement.classList.remove('active');
+        }
+      });
+    });
+  </script>
+  <!-- Include the external JavaScript file -->
+  <script src="./js/Requests tab/Complete.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/notifications.js"></script>
+</body>
+</html>

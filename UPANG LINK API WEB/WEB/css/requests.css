@@ -1,0 +1,608 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Global Styles */
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  color: #333;
+}
+
+/* Loading Indicator */
+#loadingIndicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* Spinning Logo */
+#loadingLogo {
+  animation: spin 2s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Wrapper Layout */
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+#sidebar {
+  width: 250px;
+  background: #fff;
+  color: #333;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+#sidebar.active {
+  left: 0;
+}
+.sidebar-header {
+  padding: 20px;
+  background: #fafafa;
+  text-align: center;
+  color: #28a745;
+}
+.sidebar-header .logo {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 10px;
+}
+.sidebar-header h3 {
+  margin-bottom: 5px;
+  font-size: 1.5rem;
+}
+.sidebar-header .subtitle {
+  font-size: 1rem;
+  color: green;
+}
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+}
+.sidebar-menu li {
+  border-bottom: 1px solid #ddd;
+}
+.sidebar-menu li a {
+  display: block;
+  padding: 15px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.3s, color 0.3s;
+}
+.sidebar-menu li a:hover {
+  background: #e6e6e6;
+  color: #000;
+}
+.sidebar-menu li a.active,
+.sidebar-menu li.active a {
+  background-color: #28a745 !important;
+  color: #fff !important;
+  border-left: 4px solid #fff;
+}
+
+/* Page Content */
+#content {
+  flex: 1;
+  padding: 20px;
+}
+
+/* Top Navbar */
+.top-navbar {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 10px 20px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+.top-navbar #toggleSidebar {
+  display: none;
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.user-info {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+.user-info span {
+  margin-right: 15px;
+  font-weight: bold;
+}
+.user-info button {
+  padding: 5px 10px;
+  border: none;
+  color: black;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.card-header {
+  padding: 15px;
+  background: #f7f7f7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+}
+.card-body {
+  padding: 15px;
+}
+.card-body input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
+/* Table */
+.table-responsive {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-transform: uppercase;
+
+}
+table th, table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+table th {
+  background: #f2f2f2;
+}
+/* Center the Status (3rd column) and Action (5th column) cells and headers */
+table th:nth-child(3),
+table th:nth-child(5),
+table td:nth-child(3),
+table td:nth-child(5)
+table td:nth-child(2) {
+  text-align: center;
+  
+}
+
+table td:nth-child(1) {
+  text-align: center;
+  font-size: 0.9rem;
+}
+table td:nth-child(2) {
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+table td:nth-child(4) {
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Ensure the inner div in the Action column centers its content */
+table td:nth-child(5) div {
+  display: flex;
+  justify-content: center;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.modal.active {
+  display: flex;
+}
+.modal-content {
+  background: #fff;
+  width: 90%;
+  max-width: 800px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.modal-header, .modal-footer {
+  padding: 10px 15px;
+  background: #f7f7f7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h5 {
+  font-size: 1.5rem;
+}
+.modal-body {
+  padding: 20px;
+  font-size: 1.2rem;
+  line-height: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  text-transform: uppercase;
+  font-style: bold;
+
+}
+
+/* Buttons */
+.btn {
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  
+}
+.btn-primary {
+  background: green;
+  color: #fff;
+  padding: 10px 30px;
+  font-size: 1rem;
+  display: flex;  /* Make it a flex container */
+  justify-content: center; /* Center content inside */
+  align-items: center; /* Align text vertically */
+}
+
+
+.modal-footer .btn-primary {
+  margin: 0;
+}
+.btn-secondary {
+  background: #95a5a6;
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+}
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* Modal Footer Controls */
+.modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  font-style: bold;
+
+
+}
+#statusSelect,
+.modal-footer .btn {
+  width: 100%;
+  height: 50px;
+  padding: 0 10px;
+  font-size: 1.2rem;
+  border-radius: 5px;
+  font-style: bold;
+  text-transform: uppercase;
+
+}
+
+
+/* Status Badges */
+.badge {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 3px;
+  font-size: 1rem;
+  color: #fff;
+  text-transform: uppercase;
+}
+.status-pending { background: #ffc107; }
+.status-approved { background: #28a745; }
+.status-rejected { background: #dc3545; }
+.status-in_progress { background: #17a2b8; }
+.status-completed { background: #007bff; }
+.status-secondary { background: #6c757d; }
+
+/* Attached Files Styling */
+.attached-files {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+.attached-files h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+.attached-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 20px;
+  margin-bottom: 10px;
+}
+.attached-file .file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.attached-file .file-info i {
+  font-size: 1.5rem;
+  color: #28a745;
+}
+.attached-file .file-actions a.btn-view {
+  background: transparent;
+  color: #28a745;
+  padding: 5px 10px;
+  border: 2px solid #28a745;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 1.2rem;
+  margin-right: 5px;
+  text-transform: uppercase;
+  transition: background 0.3s, color 0.3s;
+}
+.attached-file .file-actions a.btn-view:hover {
+  background: #28a745;
+  color: white;
+}
+.attached-file .file-actions a.btn-download {
+  background: transparent;
+  color: #28a745;
+  padding: 5px 10px;
+  border: 2px solid #28a745;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 1.2rem;
+  margin-right: 5px;
+  text-transform: uppercase;
+  transition: background 0.3s, color 0.3s;
+}
+.attached-file .file-actions a.btn-download:hover {
+  background: #28a745;
+  color: #fff;
+}
+
+/* Inline Comment Editing Styles */
+#commentContainer textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 1rem;
+  resize: vertical;
+}
+#commentActions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+/* Admin Comment Display Styles */
+#displayCommentText {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Expand/Collapse Admin Comment Section */
+.admin-comment-container {
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+  border-left: 5px solid #2e7d32;
+  padding: 10px 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin-top: 1px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.admin-comment-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+.admin-comment-container h3 {
+  font-size: 1.4rem;
+  color: #2e7d32;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.admin-comment-container p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #2e7d32;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Collapsed state: restrict height and add fade effect */
+/* Toggle Button Styling */
+#toggleCommentBtn {
+  display: block;
+  margin: 10px auto 0 auto;
+  padding: 8px 16px;
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Status In Progress */
+.status_in_progress {
+  background: #17a2b8;
+  color: #fff;
+  padding: 0.5rem 0.5rem;
+  border-radius: 0.2rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .top-navbar #toggleSidebar {
+    display: block;
+  }
+  #sidebar {
+    position: fixed;
+    left: -250px;
+    top: 0;
+    height: 100%;
+    z-index: 1100;
+  }
+  #sidebar.active {
+    left: 0;
+  }
+  #content {
+    padding: 20px 10px;
+  }
+}
+.sidebar-menu li a.active,
+.sidebar-menu li.active a {
+  background: #28a745;
+  color: #fff;
+  border-left: 4px solid #fff;
+}
+
+
+#displayCommentText {
+  cursor: pointer;
+}
+
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.dialog-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.notification-content {
+  max-height: 300px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.notification-item {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.close-btn {
+  background: red;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+
+.notifications {
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  width: 250px;
+  background: white;
+  color: black;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  display: none; /* Hidden by default */
+  z-index: 1000;
+}
+
+
+.icon-btn {
+  margin-right: 15px; /* Adds space between icon and other elements */
+  padding: 5px;
+}
+
+.notif-badge {
+  background-color: red;
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 50%;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+.dropdown {
+  position: absolute;
+  top: 40px; /* Adjust based on your design */
+  right: 0;
+  width: 150px;
+  background: white;
+  color: black;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  display: none; /* Hidden by default */
+  z-index: 1000;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: black; /* Ensure the icon is black */
+}
+
+

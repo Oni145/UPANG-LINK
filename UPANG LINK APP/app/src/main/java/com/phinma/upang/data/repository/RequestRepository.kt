@@ -2,6 +2,9 @@ package com.phinma.upang.data.repository
 
 import com.phinma.upang.data.model.*
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.util.Log
 
 interface RequestRepository {
     suspend fun getRequests(filter: RequestFilter? = null): Result<List<Request>>
@@ -13,4 +16,8 @@ interface RequestRepository {
     suspend fun deleteRequirement(requestId: String, requirementId: String): Result<Unit>
     suspend fun cancelRequest(id: String): Result<Unit>
     suspend fun getRequestStatistics(): Result<RequestStatistics>
+    
+    // Adding missing methods
+    suspend fun getRequestDetails(requestId: String): Result<RequestDetails>
+    suspend fun updateRequestDetails(requestId: String, updateData: RequestUpdateData): Result<Unit>
 } 

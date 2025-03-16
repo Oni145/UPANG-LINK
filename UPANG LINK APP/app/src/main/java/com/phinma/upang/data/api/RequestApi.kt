@@ -45,4 +45,13 @@ interface RequestApi {
 
     @GET("requests/statistics")
     suspend fun getRequestStatistics(): ApiResponse<RequestStatistics>
+
+    @GET("requests/{id}/details")
+    suspend fun getRequestDetails(@Path("id") id: String): ApiResponse<RequestDetails>
+
+    @PUT("requests/{id}")
+    suspend fun updateRequestDetails(
+        @Path("id") id: String,
+        @Body updateData: RequestUpdateData
+    ): ApiResponse<Unit>
 } 

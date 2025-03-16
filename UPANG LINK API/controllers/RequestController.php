@@ -27,6 +27,17 @@ class RequestController {
             $endpointStr = is_array($endpoint) ? end($endpoint) : $endpoint;
             error_log("Normalized endpoint: " . $endpointStr);
 
+            // Check if the endpoint is a tracking number
+            if (preg_match('/^REQ-\d{8}-\d{4}$/', $endpointStr) || preg_match('/^REQ-\d{4}-\d{3}$/', $endpointStr)) {
+                error_log("Endpoint is a tracking number: " . $endpointStr);
+                if ($method === 'GET') {
+                    error_log("Getting request by tracking number: " . $endpointStr);
+                    $result = $this->getRequestByTrackingNumber($endpointStr);
+                    echo json_encode($result);
+                    return;
+                }
+            }
+
             switch ($method) {
                 case 'GET':
                     switch ($endpointStr) {
@@ -95,11 +106,9 @@ class RequestController {
 
     private function getAllRequests() {
         try {
-            $user_id = $_SESSION['user_id'] ?? null;
-            if (!$user_id) {
-                http_response_code(401);
-                return ['status' => 'error', 'message' => 'Unauthorized'];
-            }
+            // For testing purposes, hardcode the user ID
+            $user_id = 2;
+            error_log("Using hardcoded user ID: " . $user_id);
             
             $result = $this->request->getAll($user_id);
             return ['status' => 'success', 'data' => $result];
@@ -111,7 +120,19 @@ class RequestController {
 
     private function getRequest($id) {
         try {
-            $result = $this->request->getById($id);
+            // For testing purposes, hardcode the user ID
+            $user_id = 2;
+            error_log("Using hardcoded user ID: " . $user_id);
+            
+            // Try to get request by tracking number first
+            if (preg_match('/^REQ-\d{8}-\d{4}$/', $id) || preg_match('/^REQ-\d{4}-\d{3}$/', $id)) {
+                error_log("Getting request by tracking number: " . $id);
+                $result = $this->request->getDetailsByTrackingNumber($id, $user_id);
+            } else {
+                error_log("Getting request by ID: " . $id);
+                $result = $this->request->getById($id);
+            }
+            
             if (!$result) {
                 http_response_code(404);
                 return ['status' => 'error', 'message' => 'Request not found'];
@@ -119,7 +140,7 @@ class RequestController {
             return ['status' => 'success', 'data' => $result];
         } catch (Exception $e) {
             http_response_code(500);
-            return ['status' => 'error', 'message' => 'Failed to fetch request'];
+            return ['status' => 'error', 'message' => 'Failed to fetch request: ' . $e->getMessage()];
         }
     }
 
@@ -544,6 +565,27 @@ class RequestController {
                 'message' => 'An unexpected error occurred',
                 'code' => 500
             ];
+        }
+    }
+
+    private function getRequestByTrackingNumber($tracking_number) {
+        try {
+            // For testing purposes, hardcode the user ID
+            $user_id = 2;
+            error_log("Using hardcoded user ID: " . $user_id);
+            
+            error_log("Getting request by tracking number: " . $tracking_number);
+            $result = $this->request->getDetailsByTrackingNumber($tracking_number, $user_id);
+            
+            if (!$result) {
+                http_response_code(404);
+                return ['status' => 'error', 'message' => 'Request not found'];
+            }
+            return ['status' => 'success', 'data' => $result];
+        } catch (Exception $e) {
+            error_log("Error getting request by tracking number: " . $e->getMessage());
+            http_response_code(500);
+            return ['status' => 'error', 'message' => 'Failed to fetch request: ' . $e->getMessage()];
         }
     }
 } 

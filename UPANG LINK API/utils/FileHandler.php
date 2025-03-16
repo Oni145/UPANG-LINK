@@ -7,7 +7,7 @@ class FileHandler {
 
     public function __construct() {
         $this->config = require_once __DIR__ . '/../config/config.php';
-        $this->upload_dir = __DIR__ . '/../uploads/';
+        $this->upload_dir = __DIR__ . '/../../uploads/';
         $this->allowed_types = $this->config['security']['allowed_file_types'];
         $this->max_file_size = $this->config['security']['max_file_size'];
 

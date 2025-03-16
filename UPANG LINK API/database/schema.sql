@@ -121,9 +121,14 @@ INSERT INTO categories (name, description) VALUES
 ('Uniforms', 'School uniform requests'),
 ('Books and Modules', 'Academic materials and learning resources');
 
--- Insert default admin user
+-- Insert user accounts
+-- Admin account
 INSERT INTO users (email, password, first_name, last_name, role, email_verified) VALUES
-('admin@upang.edu.ph', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'admin', 1);
+('jede.garcia.up@phinmaed.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Jede', 'Garcia', 'admin', 1);
+
+-- Student account
+INSERT INTO users (email, password, first_name, last_name, role, email_verified) VALUES
+('jerickogarcia0@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Jericko', 'Garcia', 'student', 1);
 
 -- Insert sample request types
 INSERT INTO request_types (category_id, name, description, requirements, processing_time) VALUES

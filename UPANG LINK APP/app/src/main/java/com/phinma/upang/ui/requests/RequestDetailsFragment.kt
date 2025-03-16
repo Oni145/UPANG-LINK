@@ -21,6 +21,7 @@ import com.phinma.upang.data.model.RequirementItem
 import com.phinma.upang.data.model.RequirementStatus
 import com.phinma.upang.data.model.Request
 import com.phinma.upang.data.model.RequestStatus
+import com.phinma.upang.data.model.getRequirementsMap
 import com.phinma.upang.databinding.FragmentRequestDetailsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
@@ -38,6 +39,7 @@ class RequestDetailsFragment : Fragment() {
     private val args: RequestDetailsFragmentArgs by navArgs()
     private lateinit var requirementsAdapter: RequestDetailsAdapter
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    private val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
     private val apiDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
     private var currentRequirement: RequirementItem? = null
@@ -69,6 +71,9 @@ class RequestDetailsFragment : Fragment() {
         setupListeners()
         observeViewModel()
         viewModel.getRequest(args.requestId)
+        
+        // Hide bottom navigation
+        hideBottomNavigation()
     }
 
     private fun setupRecyclerView() {
@@ -89,77 +94,109 @@ class RequestDetailsFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.cancelButton.setOnClickListener {
-            showCancelConfirmationDialog()
+        // Remove cancel button click listener
+        // Hide the cancel button completely
+        binding.cancelButton.visibility = View.GONE
+        
+        binding.backButton.setOnClickListener {
+            findNavController().navigateUp()
         }
     }
 
     private fun observeViewModel() {
         viewModel.request.observe(viewLifecycleOwner) { request ->
             binding.apply {
+                // Set request title and tracking number
                 requestTitle.text = request.type?.name ?: request.document_type
-                requestDescription.text = request.purpose
-                requestDate.text = "Created: ${formatDate(request.submitted_at)}"
+                trackingNumberText.text = "Tracking #: ${request.id}"
+                
+                // Always hide purpose section as requested by user
+                purposeCard.visibility = View.GONE
+                
+                // Set request dates
+                createdAtText.text = "Created: ${formatDateWithTime(request.submitted_at)}"
+                updatedAtText.text = "Last updated: ${formatDateWithTime(request.updated_at)}"
+                
+                // Set requester information
+                requesterNameText.text = "${request.first_name} ${request.last_name}"
+                
+                // Update status views and timeline
                 updateStatusViews(request.status ?: RequestStatus.PENDING)
+                updateStatusTimeline(request.status ?: RequestStatus.PENDING)
 
-                // Parse and display requirements
-                val requirementsData = request.parseRequirements()
-                val requirementsList = mutableListOf<RequirementItem>()
-                
-                // Add fields if available
-                requirementsData.fields?.forEach { field ->
-                    requirementsList.add(
-                        RequirementItem(
-                            id = field.name,
-                            name = field.label,
-                            description = field.description ?: "",
-                            isRequired = field.required,
-                            allowedFileTypes = field.allowed_types?.split(",") ?: listOf(),
-                            maxFileSize = 5 * 1024 * 1024L, // 5MB default
-                            status = RequirementStatus.PENDING,
-                            fileUrl = null
-                        )
-                    )
-                }
-                
-                // Add required docs if available
-                requirementsData.required_docs?.forEach { doc ->
-                    requirementsList.add(
-                        RequirementItem(
-                            id = doc.lowercase().replace(" ", "_"),
-                            name = doc,
-                            description = "Required document",
-                            isRequired = true,
-                            allowedFileTypes = listOf("pdf", "jpg", "jpeg", "png"),
-                            maxFileSize = 5 * 1024 * 1024L, // 5MB default
-                            status = RequirementStatus.PENDING,
-                            fileUrl = null
-                        )
-                    )
-                }
-
-                requirementsAdapter.submitList(requirementsList)
+                // Always hide requirements section as requested by user
+                requirementsLabel.isVisible = false
+                recyclerViewRequirements.isVisible = false
+                noRequirementsText.isVisible = false
 
                 // Show remarks if available
                 request.remarks?.let { remarks ->
                     remarksCard.isVisible = true
+                    remarksLabel.isVisible = true
                     remarksText.text = remarks
                 } ?: run {
                     remarksCard.isVisible = false
+                    remarksLabel.isVisible = false
                 }
 
-                // Set processing time
-                processingTimeText.text = request.processing_time
+                // Use processing time from API response
+                android.util.Log.d("RequestDetails", "Processing time from API: ${request.processing_time}")
+                android.util.Log.d("RequestDetails", "Request type processing time: ${request.type?.processing_time}")
+                
+                // Get processing time from the API response using the same approach as RequestsAdapter
+                val processingTime = when {
+                    // First priority: Use the processing_time from the type object if available
+                    request.type != null && !request.type.processing_time.isNullOrEmpty() -> {
+                        android.util.Log.d("RequestDetails", "Using processing time from type object: ${request.type.processing_time}")
+                        request.type.processing_time
+                    }
+                    // Second priority: Use the processing_time directly from the request if available
+                    !request.processing_time.isNullOrEmpty() && request.processing_time != "null" -> {
+                        android.util.Log.d("RequestDetails", "Using processing time from request: ${request.processing_time}")
+                        request.processing_time
+                    }
+                    // Third priority: Use fallback mapping based on request type
+                    else -> {
+                        android.util.Log.d("RequestDetails", "Using fallback mapping for processing time")
+                        when (request.request_type) {
+                            "Course Module Request" -> "1-2 working days"
+                            "Transcript of Records" -> "5-7 working days"
+                            "Certificate of Grades" -> "3-5 working days"
+                            "Certificate of Enrollment" -> "1-2 working days"
+                            "Certificate of Good Moral" -> "3-5 working days"
+                            "Certificate of Graduation" -> "3-5 working days"
+                            "Enrollment Certificate" -> "2-3 working days"
+                            "ID Replacement" -> "5-7 working days"
+                            "New Student ID" -> "5-7 working days"
+                            "PE Uniform Request" -> "3-5 working days"
+                            "School Uniform Request" -> "3-5 working days"
+                            else -> "5-7 working days" // Default
+                        }
+                    }
+                }
+                processingTimeText.text = processingTime
+                
+                // Set request category
+                categoryText.text = request.category_name
+                
+                // Always hide the cancel button
+                cancelButton.visibility = View.GONE
             }
         }
 
         viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.isVisible = isLoading
+            binding.contentLayout.isVisible = !isLoading
         }
 
         viewModel.errorMessage.observe(viewLifecycleOwner) { error ->
             error?.let {
-                showError(it)
+                if (it.contains("Authentication error", ignoreCase = true)) {
+                    // Show authentication error dialog
+                    showAuthenticationErrorDialog(it)
+                } else {
+                    showError(it)
+                }
             }
         }
     }
@@ -168,6 +205,17 @@ class RequestDetailsFragment : Fragment() {
         return try {
             val date = apiDateFormat.parse(dateString)
             date?.let { dateFormat.format(it) } ?: "Date not available"
+        } catch (e: Exception) {
+            "Date not available"
+        }
+    }
+    
+    private fun formatDateWithTime(dateString: String): String {
+        return try {
+            val date = apiDateFormat.parse(dateString)
+            date?.let { 
+                "${dateFormat.format(it)} at ${timeFormat.format(it)}" 
+            } ?: "Date not available"
         } catch (e: Exception) {
             "Date not available"
         }
@@ -193,8 +241,32 @@ class RequestDetailsFragment : Fragment() {
             requestStatus.text = text
             context?.let { ctx ->
                 requestStatus.setTextColor(ContextCompat.getColor(ctx, colorRes))
+                statusIndicator.setCardBackgroundColor(ContextCompat.getColor(ctx, colorRes))
             }
-            cancelButton.isVisible = status == RequestStatus.PENDING
+        }
+    }
+    
+    private fun updateStatusTimeline(status: RequestStatus) {
+        binding.apply {
+            // Update timeline indicators
+            pendingIndicator.isSelected = true
+            pendingLine.isSelected = status != RequestStatus.PENDING
+            inProgressIndicator.isSelected = status != RequestStatus.PENDING
+            inProgressLine.isSelected = status == RequestStatus.COMPLETED || status == RequestStatus.REJECTED
+            completedIndicator.isSelected = status == RequestStatus.COMPLETED || status == RequestStatus.REJECTED
+            
+            // Set colors based on status
+            val completedColor = when (status) {
+                RequestStatus.COMPLETED -> R.color.status_approved
+                RequestStatus.REJECTED -> R.color.status_rejected
+                else -> R.color.status_pending
+            }
+            
+            context?.let { ctx ->
+                if (status == RequestStatus.COMPLETED || status == RequestStatus.REJECTED) {
+                    completedIndicator.setCardBackgroundColor(ContextCompat.getColor(ctx, completedColor))
+                }
+            }
         }
     }
 
@@ -230,23 +302,35 @@ class RequestDetailsFragment : Fragment() {
         }
     }
 
-    private fun showCancelConfirmationDialog() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Cancel Request")
-            .setMessage("Are you sure you want to cancel this request?")
-            .setPositiveButton("Yes") { _, _ ->
-                viewModel.cancelRequest(args.requestId)
-            }
-            .setNegativeButton("No", null)
-            .show()
-    }
-
     private fun showError(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
+    private fun showAuthenticationErrorDialog(message: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Authentication Error")
+            .setMessage("$message\nYou may need to log in again.")
+            .setPositiveButton("OK") { _, _ ->
+                // Navigate to login screen or refresh token
+                // For now, just go back
+                findNavController().navigateUp()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
+        // Show bottom navigation when leaving this fragment
+        showBottomNavigation()
         _binding = null
+    }
+    
+    private fun hideBottomNavigation() {
+        (activity as? com.phinma.upang.ui.MainActivity)?.findViewById<View>(R.id.bottom_nav)?.visibility = View.GONE
+    }
+    
+    private fun showBottomNavigation() {
+        (activity as? com.phinma.upang.ui.MainActivity)?.findViewById<View>(R.id.bottom_nav)?.visibility = View.VISIBLE
     }
 } 

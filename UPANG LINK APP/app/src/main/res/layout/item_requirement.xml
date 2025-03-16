@@ -65,6 +65,37 @@
             android:textColor="#757575"
             tools:text="Please provide your uniform size" />
 
+        <!-- Submitted Value Layout -->
+        <LinearLayout
+            android:id="@+id/submittedValueLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Submitted Value:"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="#333333" />
+                
+            <TextView
+                android:id="@+id/submittedValueText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="14sp"
+                android:textColor="#4285F4"
+                android:background="@drawable/bg_file_name"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                tools:text="BSIT-4" />
+        </LinearLayout>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/uploadButton"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"

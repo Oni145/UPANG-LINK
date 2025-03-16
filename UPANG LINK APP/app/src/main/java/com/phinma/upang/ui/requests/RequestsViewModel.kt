@@ -88,6 +88,14 @@ class RequestsViewModel @Inject constructor(
     fun loadRequestDetails(id: String) {
         viewModelScope.launch {
             _uiState.value = RequestUiState.Loading
+            
+            // Validate tracking number format
+            if (!id.matches(Regex("REQ-\\d{8}-\\d{4}")) && !id.matches(Regex("REQ-\\d{4}-\\d{3}"))) {
+                _error.value = "Invalid tracking number format. Expected format: REQ-YYYYMMDD-XXXX or REQ-YYYY-XXX"
+                _uiState.value = RequestUiState.Error("Invalid tracking number format")
+                return@launch
+            }
+            
             repository.getRequest(id)
                 .onSuccess { request ->
                     _selectedRequest.value = request

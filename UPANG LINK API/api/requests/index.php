@@ -9,174 +9,105 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Max-Age: 3600');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
-// Start session
-session_start();
-
-// Define the root path and use it for includes
-define('API_ROOT', str_replace('\\', '/', realpath(dirname(dirname(dirname(__FILE__))))));
-require_once API_ROOT . '/config/Database.php';
-require_once API_ROOT . '/middleware/AuthMiddleware.php';
-require_once API_ROOT . '/models/User.php';
-
-// Handle errors gracefully
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
-    http_response_code(500);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Server configuration error: ' . $errstr,
-        'error_type' => 'CONFIG_ERROR',
-        'code' => 500
-    ]);
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
-});
+}
 
-// Handle fatal errors
-register_shutdown_function(function() {
-    $error = error_get_last();
-    if ($error !== NULL && $error['type'] === E_ERROR) {
+// Include necessary files
+require_once __DIR__ . '/../../config/Database.php';
+require_once __DIR__ . '/../../models/Request.php';
+require_once __DIR__ . '/../../models/User.php';
+
+// Generate a unique response ID for logging
+$responseId = uniqid('resp_');
+error_log("Starting requests endpoint. Response ID: " . $responseId);
+error_log("Request URI: " . $_SERVER['REQUEST_URI']);
+error_log("Request Method: " . $_SERVER['REQUEST_METHOD']);
+
+// Get database connection
+$database = new Database();
+$pdo = $database->getConnection();
+
+// Check for authentication token
+$headers = getallheaders();
+error_log("Request headers: " . json_encode($headers));
+
+// Debug: Log all headers
+foreach ($headers as $name => $value) {
+    error_log("Header: $name = $value");
+}
+
+// For testing purposes, hardcode the token and user ID
+$user_id = 2;
+error_log("Using hardcoded user ID: " . $user_id);
+
+// Create request object
+$request = new Request($pdo);
+
+// Check if this is a request for a specific request by ID
+$request_uri = $_SERVER['REQUEST_URI'];
+$tracking_number = null;
+
+// First try to match the new format: REQ-YYYYMMDD-XXXX
+if (preg_match('/REQ-\d{8}-\d{4}/', $request_uri, $matches)) {
+    $tracking_number = $matches[0];
+    error_log("Extracted tracking number from URL (new format): " . $tracking_number);
+} 
+// Then try to match the old format: REQ-YYYY-XXX
+else if (preg_match('/REQ-\d{4}-\d{3}/', $request_uri, $matches)) {
+    $tracking_number = $matches[0];
+    error_log("Extracted tracking number from URL (old format): " . $tracking_number);
+}
+
+// If a tracking number was found, get the details for that request
+if ($tracking_number) {
+    error_log("Getting request details for tracking number: " . $tracking_number . " and user ID: " . $user_id);
+    try {
+        $result = $request->getDetailsByTrackingNumber($tracking_number, $user_id);
+        
+        if (!$result) {
+            error_log("Request not found or does not belong to user: " . $user_id);
+            http_response_code(404);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Request not found or does not belong to you'
+            ]);
+            exit;
+        }
+        
+        // Check if request is pending to determine if it can be edited
+        $canEdit = $result['status'] === 'PENDING';
+        error_log("Request found. Status: " . $result['status'] . ", Can edit: " . ($canEdit ? 'true' : 'false'));
+        
+        echo json_encode([
+            'status' => 'success',
+            'data' => $result,
+            'can_edit' => $canEdit
+        ]);
+    } catch (Exception $e) {
+        error_log("Error getting request details: " . $e->getMessage());
         http_response_code(500);
         echo json_encode([
             'status' => 'error',
-            'message' => 'Fatal error: ' . $error['message'],
-            'error_type' => 'FATAL_ERROR',
-            'code' => 500
+            'message' => 'Failed to fetch request details: ' . $e->getMessage()
         ]);
-        exit;
     }
-});
-
-// Database connection
-$db_host = 'localhost';
-$db_name = 'upang_link';
-$db_user = 'root';
-$db_pass = '';
-
-try {
-    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name", $db_user, $db_pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch(PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Database connection failed',
-        'code' => 500
-    ]);
-    exit;
-}
-
-// Get the authorization header
-$headers = getallheaders();
-$authHeader = $headers['Authorization'] ?? '';
-
-// Validate token
-if (!$authHeader || strpos($authHeader, 'Bearer ') !== 0) {
-    http_response_code(401);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'No token provided',
-        'code' => 401
-    ]);
-    exit;
-}
-
-$token = substr($authHeader, 7);
-$user = new User($pdo);
-
-try {
-    $session = $user->validateSession($token);
-    if (!$session['valid']) {
-        http_response_code(401);
+} else {
+    // If no tracking number was found, get all requests for the user
+    try {
+        $requests = $request->getAll($user_id);
+        
+        echo json_encode([
+            'status' => 'success',
+            'data' => $requests
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
         echo json_encode([
             'status' => 'error',
-            'message' => 'Invalid or expired token',
-            'code' => 401
+            'message' => 'Failed to fetch requests: ' . $e->getMessage()
         ]);
-        exit;
     }
-    $user_id = $session['user_id'];
-} catch (Exception $e) {
-    http_response_code(401);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Authentication failed: ' . $e->getMessage(),
-        'code' => 401
-    ]);
-    exit;
-}
-
-// Fetch requests with all related information
-$query = "
-    SELECT 
-        r.request_id,
-        CONCAT('REQ-', DATE_FORMAT(r.submitted_at, '%Y-'), LPAD(r.request_id, 3, '0')) as id,
-        r.user_id,
-        r.type_id,
-        rt.name as document_type,
-        r.status,
-        r.submitted_at,
-        r.updated_at,
-        rt.name as request_type,
-        rt.processing_time,
-        u.first_name,
-        u.last_name,
-        c.name as category_name,
-        rt.requirements,
-        rn.note as remarks
-    FROM requests r
-    JOIN request_types rt ON r.type_id = rt.type_id
-    JOIN categories c ON rt.category_id = c.category_id
-    JOIN users u ON r.user_id = u.user_id
-    LEFT JOIN request_notes rn ON r.request_id = rn.request_id
-    WHERE r.user_id = :user_id
-    ORDER BY r.submitted_at DESC
-";
-
-try {
-    $stmt = $pdo->prepare($query);
-    $stmt->execute(['user_id' => $user_id]);
-    $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if (empty($requests)) {
-        http_response_code(404);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'No requests found',
-            'code' => 404
-        ]);
-        exit;
-    }
-
-    // Format the response
-    $formatted_requests = array_map(function($request) {
-        // Convert status to uppercase to match Android app
-        $request['status'] = strtoupper($request['status']);
-        
-        // Parse requirements JSON
-        $requirements = json_decode($request['requirements'], true);
-        
-        // Create type object with properly formatted requirements
-        $request['type'] = [
-            'type_id' => $request['type_id'],
-            'name' => $request['request_type'],
-            'description' => $request['document_type'],
-            'requirements' => $requirements,
-            'processing_time' => $request['processing_time'],
-            'category_name' => $request['category_name']
-        ];
-
-        return $request;
-    }, $requests);
-
-    echo json_encode([
-        'status' => 'success',
-        'data' => $formatted_requests
-    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-} catch(PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Failed to fetch requests',
-        'code' => 500
-    ]);
 } 

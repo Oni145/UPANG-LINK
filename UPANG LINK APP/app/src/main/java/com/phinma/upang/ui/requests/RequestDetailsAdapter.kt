@@ -25,6 +25,18 @@ class RequestDetailsAdapter(
                 requirementDescription.text = item.description
                 requiredText.isVisible = item.isRequired
 
+                // Show submitted value if available
+                if (item.submittedValue != null) {
+                    // Display the submitted value
+                    submittedValueLayout.visibility = android.view.View.VISIBLE
+                    submittedValueText.text = item.submittedValue
+                    
+                    // Hide upload button if we have a submitted value
+                    uploadButton.isVisible = false
+                } else {
+                    submittedValueLayout.visibility = android.view.View.GONE
+                }
+
                 // Show file status
                 if (item.fileUrl != null) {
                     uploadButton.isVisible = false
@@ -38,7 +50,8 @@ class RequestDetailsAdapter(
                         else -> android.graphics.Color.parseColor("#FFA500") // Orange
                     }
                     fileNameText.setTextColor(statusColor)
-                } else {
+                } else if (item.submittedValue == null) {
+                    // Only show upload button if we don't have a submitted value
                     uploadButton.isVisible = true
                     fileNameText.isVisible = false
                 }

@@ -118,11 +118,32 @@ class RequestRepositoryImpl @Inject constructor(
 
     override suspend fun getRequest(id: String): Result<Request> {
         return try {
+            Log.d(TAG, "Fetching request with ID: $id")
+            
+            // Check if the ID is a tracking number
+            val isNewFormat = id.matches(Regex("REQ-\\d{8}-\\d{4}"))
+            val isOldFormat = id.matches(Regex("REQ-\\d{4}-\\d{3}"))
+            
+            if (isNewFormat) {
+                Log.d(TAG, "ID is a new format tracking number: $id")
+            } else if (isOldFormat) {
+                Log.d(TAG, "ID is an old format tracking number: $id")
+            } else {
+                Log.e(TAG, "Invalid tracking number format: $id")
+                return Result.failure(Exception("Invalid tracking number format. Expected format: REQ-YYYYMMDD-XXXX or REQ-YYYY-XXX"))
+            }
+            
             val response = api.getRequest(id)
-            response.data?.let {
-                Result.success(it)
-            } ?: Result.failure(Exception(response.message))
+            
+            if (response.status == "success" && response.data != null) {
+                Log.d(TAG, "Successfully fetched request: ${response.data.id}")
+                Result.success(response.data)
+            } else {
+                Log.e(TAG, "Error fetching request: ${response.message}")
+                Result.failure(Exception(response.message ?: "Failed to get request details"))
+            }
         } catch (e: Exception) {
+            Log.e(TAG, "Exception fetching request", e)
             Result.failure(e)
         }
     }
@@ -218,14 +239,26 @@ class RequestRepositoryImpl @Inject constructor(
 
     override suspend fun cancelRequest(id: String): Result<Unit> {
         return try {
+            Log.d(TAG, "Attempting to cancel request with ID: $id")
             val response = api.cancelRequest(id)
+            
             if (response.status == "success") {
+                Log.d(TAG, "Successfully canceled request: $id")
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.message))
+                Log.e(TAG, "Error canceling request: ${response.message}")
+                Result.failure(Exception(response.message ?: "Failed to cancel request"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e(TAG, "Exception canceling request", e)
+            
+            // Check if it's a 401 Unauthorized error
+            if (e is retrofit2.HttpException && e.code() == 401) {
+                Log.e(TAG, "Authentication error (401) when canceling request")
+                Result.failure(Exception("Authentication error. Please log in again."))
+            } else {
+                Result.failure(e)
+            }
         }
     }
 
@@ -249,20 +282,33 @@ class RequestRepositoryImpl @Inject constructor(
                 } ?: Result.failure(Exception(response.message))
             }
         } catch (e: Exception) {
-            if (e.message?.contains("404") == true) {
-                // Return empty statistics for 404 with all required parameters
-                Result.success(RequestStatistics(
-                    total = 0,
-                    pending = 0,
-                    completed = 0,
-                    inProgress = 0,
-                    cancelled = 0,
-                    byType = emptyMap(),
-                    byMonth = emptyMap()
-                ))
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getRequestDetails(requestId: String): Result<RequestDetails> {
+        return try {
+            val response = api.getRequestDetails(requestId)
+            response.data?.let {
+                Result.success(it)
+            } ?: Result.failure(Exception(response.message ?: "Failed to get request details"))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting request details", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateRequestDetails(requestId: String, updateData: RequestUpdateData): Result<Unit> {
+        return try {
+            val response = api.updateRequestDetails(requestId, updateData)
+            if (response.status == "success") {
+                Result.success(Unit)
             } else {
-                Result.failure(e)
+                Result.failure(Exception(response.message ?: "Failed to update request details"))
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating request details", e)
+            Result.failure(e)
         }
     }
 } 

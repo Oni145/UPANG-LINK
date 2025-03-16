@@ -17,10 +17,10 @@ $config = [
     'email' => [
         'host' => 'smtp.gmail.com',
         'port' => 587,
-        'username' => '[REDACTED]',
-        'password' => '[REDACTED]', 
+        'username' => 'jerickogarcia0@gmail.com',
+        'password' => 'laht squw emyi ggix',
         'from_name' => 'UPANG LINK',
-        'from_email' => '[REDACTED]'
+        'from_email' => 'jerickogarcia0@gmail.com'
     ],
     'security' => [
         'token_expiry' => 24, // hours

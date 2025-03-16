@@ -54,12 +54,19 @@ class RequestsFragment : Fragment() {
     private fun setupRecyclerView() {
         requestsAdapter = RequestsAdapter(
             onItemClick = { request ->
-                findNavController().navigate(
-                    RequestsFragmentDirections.actionRequestsToDetails(request.id)
-                )
-            },
-            onCancelClick = { request ->
-                showCancelConfirmationDialog(request)
+                // Use tracking_number if available, otherwise convert request_id to string
+                val requestIdentifier = if (request.tracking_number != null && request.tracking_number.isNotEmpty()) {
+                    request.tracking_number
+                } else {
+                    request.request_id.toString()
+                }
+                
+                // Make sure we have a valid identifier before navigating
+                if (requestIdentifier.isNotEmpty()) {
+                    findNavController().navigate(
+                        RequestsFragmentDirections.actionRequestsToDetails(requestIdentifier)
+                    )
+                }
             }
         )
 
@@ -144,17 +151,6 @@ class RequestsFragment : Fragment() {
                 Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             }
         }
-    }
-
-    private fun showCancelConfirmationDialog(request: Request) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Cancel Request")
-            .setMessage("Are you sure you want to cancel this request?")
-            .setPositiveButton("Yes") { _, _ ->
-                viewModel.cancelRequest(request.id)
-            }
-            .setNegativeButton("No", null)
-            .show()
     }
 
     override fun onDestroyView() {

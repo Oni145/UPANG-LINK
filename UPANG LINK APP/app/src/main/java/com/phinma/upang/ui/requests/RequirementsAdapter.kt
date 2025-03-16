@@ -41,7 +41,7 @@ class RequirementsAdapter(
         val requirement = getItem(position)
         return when (requirement.type.lowercase()) {
             "file" -> VIEW_TYPE_FILE
-            "dropdown" -> VIEW_TYPE_DROPDOWN
+            "select", "dropdown" -> VIEW_TYPE_DROPDOWN
             else -> VIEW_TYPE_TEXT
         }
     }

@@ -30,6 +30,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import android.app.Dialog
 import android.view.Window
 import android.widget.Button
+import com.google.android.material.snackbar.Snackbar
 
 @AndroidEntryPoint
 class CreateRequestFragment : Fragment() {
@@ -154,12 +155,19 @@ class CreateRequestFragment : Fragment() {
             // Observe success
             viewModel.success.collect { response ->
                 response?.let {
-                    Toast.makeText(
-                        requireContext(),
-                        "Request created successfully! Tracking number: ${it.tracking_number}",
-                        Toast.LENGTH_LONG
+                    // Use the tracking number directly from the API response
+                    val trackingNumber = it.tracking_number
+                    
+                    // Show a Snackbar with the success message
+                    Snackbar.make(
+                        binding.root,
+                        "Request created successfully!",
+                        Snackbar.LENGTH_LONG
                     ).show()
-                    findNavController().navigateUp()
+                    
+                    // Navigate back to the requests screen instead of details
+                    findNavController().popBackStack()
+                    
                     viewModel.clearSuccess()
                 }
             }
@@ -446,7 +454,11 @@ class CreateRequestFragment : Fragment() {
             // Submit the request with standard purpose
             viewModel.createRequest(
                 typeId = selectedType.type_id,
-                purpose = textValues["purpose"] ?: "N/A",
+                purpose = if (selectedType.name.contains("Course Module", ignoreCase = true)) {
+                    "Course Module Request for ${textValues["course_name"] ?: "Current Semester"}"
+                } else {
+                    textValues["purpose"] ?: "N/A"
+                },
                 files = fileUris,
                 textValues = textValues
             )

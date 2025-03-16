@@ -53,8 +53,12 @@
         
         <fragment
             android:id="@+id/navigation_home"
-            android:name="com.phinma.upang.ui.main.MainFragment"
-            android:label="Home" />
+            android:name="com.phinma.upang.ui.home.HomeFragment"
+            android:label="Home">
+            <action
+                android:id="@+id/action_navigation_home_to_createRequestFragment"
+                app:destination="@id/createRequestFragment" />
+        </fragment>
 
         <fragment
             android:id="@+id/navigation_requests"
@@ -85,12 +89,36 @@
         <fragment
             android:id="@+id/createRequestFragment"
             android:name="com.phinma.upang.ui.requests.CreateRequestFragment"
-            android:label="Create Request" />
+            android:label="Create Request">
+            <action
+                android:id="@+id/action_create_to_details"
+                app:destination="@id/requestDetailsFragment">
+                <argument
+                    android:name="requestId"
+                    app:argType="string" />
+            </action>
+        </fragment>
 
         <fragment
             android:id="@+id/requestDetailsFragment"
             android:name="com.phinma.upang.ui.requests.RequestDetailsFragment"
             android:label="Request Details">
+            <argument
+                android:name="requestId"
+                app:argType="string" />
+            <action
+                android:id="@+id/action_requestDetails_to_requestEdit"
+                app:destination="@id/requestEditFragment">
+                <argument
+                    android:name="requestId"
+                    app:argType="string" />
+            </action>
+        </fragment>
+        
+        <fragment
+            android:id="@+id/requestEditFragment"
+            android:name="com.phinma.upang.ui.requests.RequestEditFragment"
+            android:label="Edit Request">
             <argument
                 android:name="requestId"
                 app:argType="string" />

@@ -9,5 +9,6 @@ data class RequirementItem(
     val maxFileSize: Long = 5 * 1024 * 1024, // 5MB default
     val status: RequirementStatus? = null,
     val fileUrl: String? = null,
-    val remarks: String? = null
+    val remarks: String? = null,
+    val submittedValue: String? = null
 ) 

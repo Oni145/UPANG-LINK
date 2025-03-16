@@ -143,6 +143,24 @@
         <argument
             android:name="requestId"
             app:argType="string" />
+        <action
+            android:id="@+id/action_requestDetails_to_requestEdit"
+            app:destination="@id/requestEditFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim">
+            <argument
+                android:name="requestId"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/requestEditFragment"
+        android:name="com.phinma.upang.ui.requests.RequestEditFragment"
+        android:label="Edit Request">
+        <argument
+            android:name="requestId"
+            app:argType="string" />
     </fragment>
 
     <action
