@@ -1,20 +1,4 @@
 <?php
-// Set error handling to catch errors and convert them to JSON
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
-    header('Content-Type: application/json');
-    http_response_code(500);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Internal Server Error',
-        'debug' => [
-            'error' => $errstr,
-            'file' => $errfile,
-            'line' => $errline
-        ]
-    ]);
-    exit();
-});
-
 session_start(); // Start session to persist rate-limiter data
 
 // Set CORS and content-type headers
@@ -24,9 +8,10 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Platform");
 
-// Handle preflight OPTIONS requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Platform");
     exit(0);
 }
 
@@ -147,39 +132,18 @@ $controller    = null;
 
 // Special case for admin/login endpoint
 if (count($uri) >= 2 && $uri[0] === 'admin' && $uri[1] === 'login') {
-    // Log the request to debug
-    error_log("Admin login request received: " . print_r($uri, true));
-    error_log("Request method: " . $_SERVER["REQUEST_METHOD"]);
-    error_log("Raw input: " . file_get_contents('php://input'));
-    
     $controller = new AdminController($db);
-    // Handle the login request directly
-    if ($_SERVER["REQUEST_METHOD"] === "POST") {
-        $controller->login();
-    } else {
-        header("HTTP/1.1 405 Method Not Allowed");
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Method not allowed for this endpoint'
-        ]);
-    }
-    exit(); // Exit after handling the request
+    // No need to modify $uri, the controller will handle it
 } else {
     switch ($uri[0]) {
         case 'admin':
-            $controller = new AdminController($db);
-            
-            // Create a new URI array without the 'admin' part for the controller
-            $controllerUri = $uri;
-            array_shift($controllerUri); // Remove 'admin'
-            
-            // Special case for admin/notifications
             if (isset($uri[1]) && $uri[1] === 'notifications') {
                 $controller = new AdminNotificationsController($db);
+                array_shift($uri); // Remove 'admin'
+                array_shift($uri); // Remove 'notifications'
+            } else {
+                $controller = new AdminController($db);
             }
-            
-            // Pass the modified URI array to the controller
-            $uri = $controllerUri;
             break;
 
         case 'auth':

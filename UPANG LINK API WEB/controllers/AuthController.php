@@ -17,19 +17,6 @@ class AuthController {
     
     public function handleRequest($method, $uri) {
         switch ($method) {
-            case 'GET':
-                if (isset($uri[0])) {
-                    switch ($uri[0]) {
-                        case 'users':
-                            $this->getUsers();
-                            break;
-                        default:
-                            $this->sendError('Invalid GET endpoint');
-                    }
-                } else {
-                    $this->sendError('Invalid GET endpoint');
-                }
-                break;
             case 'POST':
                 if (isset($uri[0])) {
                     switch ($uri[0]) {
@@ -95,6 +82,24 @@ class AuthController {
                     }
                 } else {
                     $this->sendError("Invalid endpoint", 400);
+                }
+                break;
+            case 'GET':
+                if (isset($uri[0])) {
+                    if ($uri[0] === 'verify') {
+                        $this->verifyEmail();
+                    } elseif ($uri[0] === 'users') {
+                        $this->requireToken();
+                        if (isset($uri[1]) && !empty($uri[1])) {
+                            $this->getUser($uri[1]);
+                        } else {
+                            $this->getAllUsers();
+                        }
+                    } else {
+                        $this->sendError('Invalid endpoint');
+                    }
+                } else {
+                    $this->sendError('Invalid endpoint');
                 }
                 break;
             default:
@@ -670,66 +675,6 @@ class AuthController {
             'status' => 'error',
             'message' => $message
         ]);
-    }
-
-    /**
-     * Get all users (used by the dashboard)
-     */
-    private function getUsers() {
-        try {
-            // Authenticate the request first
-            $token = $this->getTokenFromHeader();
-            if (!$token) {
-                $this->sendError("Authentication token not provided", 401);
-                return;
-            }
-
-            // Verify the token
-            $stmt = $this->db->prepare("SELECT user_id FROM user_sessions WHERE token = ? AND expires_at > NOW() AND is_active = 1");
-            $stmt->execute([$token]);
-            $session = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$session) {
-                $this->sendError("Invalid or expired token", 401);
-                return;
-            }
-
-            // Get all users
-            $stmt = $this->db->prepare("SELECT user_id, email, first_name, last_name, role, student_number, email_verified, created_at, updated_at FROM users");
-            $stmt->execute();
-            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Return success response
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'Users retrieved successfully',
-                'data' => $users
-            ]);
-            
-        } catch (Exception $e) {
-            $this->sendError("Error retrieving users: " . $e->getMessage(), 500);
-        }
-    }
-    
-    /**
-     * Get token from the Authorization header
-     */
-    private function getTokenFromHeader() {
-        $headers = function_exists('apache_request_headers') ? apache_request_headers() : getallheaders();
-        
-        if (isset($headers['Authorization'])) {
-            $authHeader = $headers['Authorization'];
-        } elseif (isset($headers['authorization'])) {
-            $authHeader = $headers['authorization'];
-        } else {
-            return null;
-        }
-        
-        if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            return $matches[1];
-        }
-        
-        return null;
     }
 }
 ?>

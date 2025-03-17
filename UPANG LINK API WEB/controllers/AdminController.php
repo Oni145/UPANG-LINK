@@ -123,11 +123,9 @@ class AdminController {
 
             case 'users':
                 if ($method === 'GET') {
-                    // If there's a specific user ID, pass it to getUsers
-                    $userId = isset($request[1]) ? $request[1] : null;
-                    $this->getUsers($userId);
+                    $this->getUsers();
                 } else {
-                    $this->sendError("Invalid method for users endpoint", 405);
+                    $this->sendError("Invalid endpoint or method", 400);
                 }
                 break;
 
@@ -343,25 +341,20 @@ class AdminController {
         try {
             // Log the raw input for debugging
             $raw_input = file_get_contents('php://input');
-            error_log("AdminController::login - Raw login input: " . $raw_input);
+            error_log("Raw login input: " . $raw_input);
             
             // Parse JSON input
             $data = json_decode($raw_input);
             
             // Check for JSON parsing errors
             if (json_last_error() !== JSON_ERROR_NONE) {
-                error_log("AdminController::login - JSON parsing error: " . json_last_error_msg());
                 $this->sendError("Invalid JSON data: " . json_last_error_msg(), 400);
                 return;
             }
             
-            // Log the parsed data
-            error_log("AdminController::login - Parsed JSON data: " . print_r($data, true));
-            
             // Validate required fields
             $missing = $this->checkMissingFields($data, ['username', 'password']);
             if (!empty($missing)) {
-                error_log("AdminController::login - Missing fields: " . implode(", ", $missing));
                 $this->sendError("Missing field(s): " . implode(", ", $missing), 400);
                 return;
             }
@@ -369,7 +362,6 @@ class AdminController {
             // Get admin by username (which is actually the email in the users table)
             $admin = $this->adminModel->getByUsername($data->username);
             if (!$admin) {
-                error_log("AdminController::login - Admin not found for username: " . $data->username);
                 $this->sendError("Admin not found", 404);
                 return;
             }
@@ -514,7 +506,7 @@ class AdminController {
     /**
      * GetUsers: Validates the token and retrieves admin details.
      */
-    public function getUsers($adminId = null) {
+    private function getUsers($adminId = null) {
         $headers = function_exists('getallheaders') ? getallheaders() : [];
         $authHeader = null;
         if (isset($headers['Authorization'])) {
