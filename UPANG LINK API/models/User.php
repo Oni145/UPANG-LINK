@@ -9,6 +9,11 @@ class User {
     public $first_name;
     public $last_name;
     public $role;
+    public $student_number;
+    public $birthdate;
+    public $emergency_contact;
+    public $course;
+    public $current_year;
     public $email_verified;
     public $email_verification_token;
     public $email_token_expiry;
@@ -225,6 +230,27 @@ class User {
 
         $stmt->bindParam(":first_name", $this->first_name);
         $stmt->bindParam(":last_name", $this->last_name);
+        $stmt->bindParam(":user_id", $this->user_id);
+
+        return $stmt->execute();
+    }
+
+    public function updateStudentDetails() {
+        $query = "UPDATE " . $this->table_name . "
+                SET student_number = :student_number,
+                    birthdate = :birthdate,
+                    emergency_contact = :emergency_contact,
+                    course = :course,
+                    current_year = :current_year
+                WHERE user_id = :user_id";
+
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(":student_number", $this->student_number);
+        $stmt->bindParam(":birthdate", $this->birthdate);
+        $stmt->bindParam(":emergency_contact", $this->emergency_contact);
+        $stmt->bindParam(":course", $this->course);
+        $stmt->bindParam(":current_year", $this->current_year);
         $stmt->bindParam(":user_id", $this->user_id);
 
         return $stmt->execute();

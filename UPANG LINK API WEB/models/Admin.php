@@ -33,11 +33,27 @@ class Admin {
 
     // Retrieve a single admin record by username
     public function getByUsername($username) {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE email = ? AND role = 'admin' LIMIT 0,1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $username);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        error_log("Admin::getByUsername - Looking for username: " . $username);
+        
+        try {
+            $query = "SELECT * FROM " . $this->table_name . " WHERE email = ? AND role = 'admin' LIMIT 0,1";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $username);
+            $stmt->execute();
+            
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result) {
+                error_log("Admin::getByUsername - Admin found with ID: " . $result['user_id']);
+            } else {
+                error_log("Admin::getByUsername - No admin found with email: " . $username);
+            }
+            
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Admin::getByUsername - Database error: " . $e->getMessage());
+            return false;
+        }
     }
 
     // Retrieve a single admin record by email

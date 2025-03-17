@@ -171,13 +171,33 @@ class Request {
 
     public function create($data) {
         try {
+            // First, check student details
+            $query = "SELECT current_year, course, student_number, birthdate, emergency_contact, details_complete 
+                     FROM users 
+                     WHERE user_id = :user_id";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':user_id', $data->user_id);
+            $stmt->execute();
+            
+            $studentDetails = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Check if student details are incomplete
+            $isIncomplete = !$studentDetails || 
+                           empty($studentDetails['current_year']) || 
+                           empty($studentDetails['course']) || 
+                           empty($studentDetails['student_number']) ||
+                           empty($studentDetails['birthdate']) ||
+                           empty($studentDetails['emergency_contact']) ||
+                           !$studentDetails['details_complete'];
+            
             // Generate tracking number
             $tracking_number = $this->generateTrackingNumber();
             
             $query = "INSERT INTO " . $this->table . " 
                         (tracking_number, user_id, type_id, description, status, created_at) 
                     VALUES 
-                        (:tracking_number, :user_id, :type_id, :description, 'PENDING', NOW())";
+                        (:tracking_number, :user_id, :type_id, :description, :status, NOW())";
             
             $stmt = $this->conn->prepare($query);
             
@@ -186,11 +206,15 @@ class Request {
             $type_id = htmlspecialchars(strip_tags($data->type_id));
             $description = htmlspecialchars(strip_tags($data->description));
             
+            // Set status based on student details completeness
+            $status = $isIncomplete ? 'REJECTED' : 'PENDING';
+            
             // Bind data
             $stmt->bindParam(':tracking_number', $tracking_number);
             $stmt->bindParam(':user_id', $user_id);
             $stmt->bindParam(':type_id', $type_id);
             $stmt->bindParam(':description', $description);
+            $stmt->bindParam(':status', $status);
             
             if($stmt->execute()) {
                 $id = $this->conn->lastInsertId();

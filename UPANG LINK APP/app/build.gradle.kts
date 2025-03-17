@@ -20,7 +20,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.16/UPANG-LINK/UPANG%20LINK%20API/api/\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.15/UPANG-LINK/UPANG%20LINK%20API/api/\"")
+        
+        // Add multiDexEnabled
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -58,6 +61,9 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    
+    // Add multidex support
+    implementation("androidx.multidex:multidex:2.0.1")
     
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

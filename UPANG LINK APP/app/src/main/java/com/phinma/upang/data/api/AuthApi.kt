@@ -31,6 +31,12 @@ interface AuthApi {
     @PUT("auth/student/profile")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): ApiResponse<UserProfile>
 
+    @GET("get_student_details.php")
+    suspend fun getStudentDetails(): ApiResponse<UserProfile>
+
+    @POST("update_student_details.php")
+    suspend fun updateStudentDetails(@Body request: UpdateStudentDetailsRequest): ApiResponse<Unit>
+
     @POST("change_password.php")
     suspend fun changePassword(@Body request: ChangePasswordRequest): ApiResponse<Unit>
 

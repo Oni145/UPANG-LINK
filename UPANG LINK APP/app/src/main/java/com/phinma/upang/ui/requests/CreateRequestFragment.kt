@@ -123,6 +123,18 @@ class CreateRequestFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
+            // Observe warning message
+            viewModel.warningMessage.collect { message ->
+                if (message != null) {
+                    binding.warningBanner.visibility = View.VISIBLE
+                    binding.warningText.text = message
+                } else {
+                    binding.warningBanner.visibility = View.GONE
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
             // Observe loading state
             viewModel.loading.collect { isLoading ->
                 if (isLoading) {
@@ -201,12 +213,7 @@ class CreateRequestFragment : Fragment() {
                     binding.placeholderRequirements.visibility = View.GONE
                     binding.requirementsRecyclerView.visibility = View.GONE
                     
-                    // Show a toast message
-                    Toast.makeText(
-                        requireContext(), 
-                        "No requirements needed for ${selectedRequestType?.name}", 
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    // Toast message removed since the information is already shown in the Requirements section
                 }
             }
         }
@@ -454,10 +461,13 @@ class CreateRequestFragment : Fragment() {
             // Submit the request with standard purpose
             viewModel.createRequest(
                 typeId = selectedType.type_id,
-                purpose = if (selectedType.name.contains("Course Module", ignoreCase = true)) {
-                    "Course Module Request for ${textValues["course_name"] ?: "Current Semester"}"
-                } else {
-                    textValues["purpose"] ?: "N/A"
+                purpose = when {
+                    selectedType.name.contains("Course Module", ignoreCase = true) -> 
+                        "Course Module Request for ${textValues["course_name"] ?: "Current Semester"}"
+                    selectedType.name.contains("Enrollment Certificate", ignoreCase = true) -> 
+                        "Enrollment Certificate Request"
+                    else -> 
+                        textValues["purpose"] ?: "N/A"
                 },
                 files = fileUris,
                 textValues = textValues

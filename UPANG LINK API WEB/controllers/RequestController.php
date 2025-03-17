@@ -601,15 +601,28 @@ $notificationsController->storeNotification($userId, $data->type_id);  // Call t
         }
         
         private function sendError($message, $code = 400, $errors = null) {
+            // Make sure we set the content type to JSON
+            header('Content-Type: application/json');
+            
+            // Set the HTTP response code
             http_response_code($code);
+            
+            // Create the error response
             $response = [
                 'status' => 'error',
                 'message' => $message
             ];
+            
             if ($errors !== null) {
                 $response['errors'] = $errors;
             }
+            
+            // Log the error
+            error_log("API Error: " . $message . " (Code: " . $code . ")");
+            
+            // Output the error as JSON
             echo json_encode($response);
+            exit();
         }
     }
 }

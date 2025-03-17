@@ -123,6 +123,60 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    suspend fun getStudentDetails(): Result<ApiResponse<UserProfile>> {
+        return try {
+            val response = api.getStudentDetails()
+            Result.success(response)
+        } catch (e: Exception) {
+            // More detailed error handling for JSON parsing errors
+            val errorMessage = when (e) {
+                is com.google.gson.JsonSyntaxException, 
+                is java.lang.IllegalStateException -> {
+                    "Server returned an invalid response. Please try again later."
+                }
+                is java.net.SocketTimeoutException -> {
+                    "Connection timed out. Please check your internet connection."
+                }
+                is java.io.IOException -> {
+                    "Network error. Please check your internet connection."
+                }
+                else -> parseErrorResponse(e)
+            }
+            
+            Log.e("AuthRepository", "Error getting student details", e)
+            
+            // Return a default error response instead of failing
+            val errorResponse = ApiResponse<UserProfile>(
+                status = "error",
+                message = errorMessage,
+                data = null
+            )
+            Result.success(errorResponse)
+        }
+    }
+
+    suspend fun updateStudentDetails(
+        studentNumber: String,
+        birthdate: String,
+        emergencyContact: String,
+        course: String,
+        currentYear: String
+    ): Result<ApiResponse<Unit>> {
+        return try {
+            val request = UpdateStudentDetailsRequest(
+                student_number = studentNumber,
+                birthdate = birthdate,
+                emergency_contact = emergencyContact,
+                course = course,
+                current_year = currentYear
+            )
+            val response = api.updateStudentDetails(request)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(Exception(parseErrorResponse(e)))
+        }
+    }
+
     suspend fun changePassword(
         currentPassword: String,
         newPassword: String,

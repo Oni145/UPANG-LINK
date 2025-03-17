@@ -11,9 +11,15 @@ data class UserProfile(
     val first_name: String,
     val last_name: String,
     val role: String,
+    val student_number: String? = null,
+    val birthdate: String? = null,
+    val emergency_contact: String? = null,
+    val course: String? = null,
+    val current_year: String? = null,
     val email_verified: Int,
     val created_at: String,
-    val updated_at: String
+    val updated_at: String,
+    val details_complete: Boolean = false
 ) : Parcelable
 
 data class LoginRequest(
@@ -48,6 +54,14 @@ data class RegisterResponse(
 data class UpdateProfileRequest(
     val firstName: String,
     val lastName: String
+)
+
+data class UpdateStudentDetailsRequest(
+    val student_number: String,
+    val birthdate: String,
+    val emergency_contact: String,
+    val course: String,
+    val current_year: String
 )
 
 data class ChangePasswordRequest(

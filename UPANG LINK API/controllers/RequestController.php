@@ -149,21 +149,6 @@ class RequestController {
         $requirements = [
             'fields' => [
                 [
-                    'name' => 'student_id',
-                    'label' => 'Student ID Number',
-                    'type' => 'text',
-                    'required' => true,
-                    'description' => 'Enter your student ID number'
-                ],
-                [
-                    'name' => 'student_id_document',
-                    'label' => 'Student ID',
-                    'type' => 'file',
-                    'required' => false,
-                    'description' => 'Upload a clear photo of your student ID',
-                    'allowed_types' => 'jpg,jpeg,png,pdf'
-                ],
-                [
                     'name' => 'uniform_size',
                     'label' => 'Uniform Size',
                     'type' => 'select',
@@ -172,18 +157,16 @@ class RequestController {
                     'options' => ['XS', 'S', 'M', 'L', 'XL', 'XXL']
                 ]
             ],
-            'instructions' => 'Please fill out all required fields and ensure your student ID photo is clear and readable.'
+            'instructions' => 'Please select your uniform size. Student information will be pulled from your profile.'
         ];
 
         // Add type-specific variations to force UI refresh
         if (strpos($type_name, 'PE') !== false) {
-            $requirements['fields'][0]['label'] = 'Student ID Number (PE)';
-            $requirements['fields'][2]['label'] = 'PE Uniform Size';
-            $requirements['instructions'] = 'Please fill out all required fields for your PE Uniform request.';
+            $requirements['fields'][0]['label'] = 'PE Uniform Size';
+            $requirements['instructions'] = 'Please select your PE Uniform size. Your student information will be automatically included.';
         } else {
-            $requirements['fields'][0]['label'] = 'Student ID Number (School)';
-            $requirements['fields'][2]['label'] = 'School Uniform Size';
-            $requirements['instructions'] = 'Please fill out all required fields for your School Uniform request.';
+            $requirements['fields'][0]['label'] = 'School Uniform Size';
+            $requirements['instructions'] = 'Please select your School Uniform size. Your student information will be automatically included.';
         }
 
         return $requirements;
@@ -206,11 +189,103 @@ class RequestController {
             foreach ($types as &$type) {
                 error_log("Processing type: " . $type['name'] . ", Requirements: " . print_r($type['requirements'], true));
                 
-                // For uniform requests, use the default structure
-                if (strpos(strtolower($type['name']), 'uniform') !== false) {
+                // For uniform requests, always use the default structure
+                if (strpos($type['name'], 'Uniform') !== false) {
                     $requirements = $this->getUniformRequirements($type['name']);
-                } else {
-                    // For other requests, format the requirements
+                    // Add unique identifier for each uniform type
+                    $requirements['key'] = $type['name'] . '_' . $type['type_id'] . '_' . time();
+                    $requirements['force_refresh'] = true;
+                } 
+                // For special types that don't need additional fields, return empty requirements
+                else if (stripos($type['name'], 'Course Module') !== false || 
+                        stripos($type['name'], 'Enrollment Certificate') !== false) {
+                    $requirements = [
+                        'fields' => [],
+                        'instructions' => 'No additional information needed for this request.',
+                        'key' => $type['name'] . '_' . $type['type_id'] . '_' . time(),
+                        'force_refresh' => true
+                    ];
+                } 
+                // For ID Replacement, return specific requirements
+                else if (stripos($type['name'], 'ID Replacement') !== false) {
+                    $requirements = [
+                        'fields' => [
+                            [
+                                'name' => 'affidavit_of_loss',
+                                'label' => 'Affidavit of Loss',
+                                'type' => 'file',
+                                'required' => true,
+                                'description' => 'Upload a scanned copy of your Affidavit of Loss',
+                                'allowed_types' => 'pdf,jpg,jpeg,png'
+                            ],
+                            [
+                                'name' => 'payment_receipt',
+                                'label' => 'Payment Receipt',
+                                'type' => 'file',
+                                'required' => true,
+                                'description' => 'Upload a scanned copy of your Payment Receipt',
+                                'allowed_types' => 'pdf,jpg,jpeg,png'
+                            ]
+                        ],
+                        'instructions' => 'Please upload the required documents for ID Replacement.',
+                        'key' => $type['name'] . '_' . $type['type_id'] . '_' . time(),
+                        'force_refresh' => true
+                    ];
+                }
+                // For New Student ID, return specific requirements
+                else if (stripos($type['name'], 'New Student ID') !== false) {
+                    $requirements = [
+                        'fields' => [
+                            [
+                                'name' => 'id_photo',
+                                'label' => '1x1 ID Photo',
+                                'type' => 'file',
+                                'required' => true,
+                                'description' => 'Upload a 1x1 ID photo with white background',
+                                'allowed_types' => 'jpg,jpeg,png'
+                            ],
+                            [
+                                'name' => 'signature',
+                                'label' => 'Signature',
+                                'type' => 'file',
+                                'required' => true,
+                                'description' => 'Upload a clear image of your signature on white paper',
+                                'allowed_types' => 'jpg,jpeg,png,pdf'
+                            ]
+                        ],
+                        'instructions' => 'Please upload your 1x1 ID photo and signature for your new student ID.',
+                        'key' => $type['name'] . '_' . $type['type_id'] . '_' . time(),
+                        'force_refresh' => true
+                    ];
+                }
+                // For Transcript of Records, return specific requirements
+                else if (stripos($type['name'], 'Transcript of Records') !== false) {
+                    $requirements = [
+                        'fields' => [
+                            [
+                                'name' => 'request_form',
+                                'label' => 'Request Form',
+                                'type' => 'file',
+                                'required' => true,
+                                'description' => 'Upload a scanned copy of the completed Request Form',
+                                'allowed_types' => 'pdf,jpg,jpeg,png'
+                            ],
+                            [
+                                'name' => 'clearance',
+                                'label' => 'Clearance',
+                                'type' => 'file',
+                                'required' => true,
+                                'description' => 'Upload a scanned copy of your Clearance',
+                                'allowed_types' => 'pdf,jpg,jpeg,png'
+                            ]
+                        ],
+                        'instructions' => 'Please upload the required documents for Transcript of Records. Your student information will be automatically included.',
+                        'key' => $type['name'] . '_' . $type['type_id'] . '_' . time(),
+                        'force_refresh' => true
+                    ];
+                }
+                else {
+                    // Format the requirements for other request types
                     $requirements = $this->formatRequirements($type['requirements']);
                     error_log("Formatted requirements: " . print_r($requirements, true));
                 }
@@ -521,8 +596,98 @@ class RequestController {
                 // Add unique identifier for each uniform type
                 $requirements['key'] = $type['name'] . '_' . $type_id . '_' . time();
                 $requirements['force_refresh'] = true;
-            } else {
-                // Format the requirements for non-uniform requests
+            } 
+            // For special types that don't need additional fields, return empty requirements
+            else if (stripos($type['name'], 'Course Module') !== false || 
+                    stripos($type['name'], 'Enrollment Certificate') !== false ||
+                    stripos($type['name'], 'ID Replacement') !== false) {
+                $requirements = [
+                    'fields' => [],
+                    'instructions' => 'No additional information needed for this request.',
+                    'key' => $type['name'] . '_' . $type_id . '_' . time(),
+                    'force_refresh' => true
+                ];
+            }
+            // For ID Replacement, return specific requirements
+            else if (stripos($type['name'], 'ID Replacement') !== false) {
+                $requirements = [
+                    'fields' => [
+                        [
+                            'name' => 'affidavit_of_loss',
+                            'label' => 'Affidavit of Loss',
+                            'type' => 'file',
+                            'required' => true,
+                            'description' => 'Upload a scanned copy of your Affidavit of Loss',
+                            'allowed_types' => 'pdf,jpg,jpeg,png'
+                        ],
+                        [
+                            'name' => 'payment_receipt',
+                            'label' => 'Payment Receipt',
+                            'type' => 'file',
+                            'required' => true,
+                            'description' => 'Upload a scanned copy of your Payment Receipt',
+                            'allowed_types' => 'pdf,jpg,jpeg,png'
+                        ]
+                    ],
+                    'instructions' => 'Please upload the required documents for ID Replacement.',
+                    'key' => $type['name'] . '_' . $type_id . '_' . time(),
+                    'force_refresh' => true
+                ];
+            }
+            // For New Student ID, return specific requirements
+            else if (stripos($type['name'], 'New Student ID') !== false) {
+                $requirements = [
+                    'fields' => [
+                        [
+                            'name' => 'id_photo',
+                            'label' => '1x1 ID Photo',
+                            'type' => 'file',
+                            'required' => true,
+                            'description' => 'Upload a 1x1 ID photo with white background',
+                            'allowed_types' => 'jpg,jpeg,png'
+                        ],
+                        [
+                            'name' => 'signature',
+                            'label' => 'Signature',
+                            'type' => 'file',
+                            'required' => true,
+                            'description' => 'Upload a clear image of your signature on white paper',
+                            'allowed_types' => 'jpg,jpeg,png,pdf'
+                        ]
+                    ],
+                    'instructions' => 'Please upload your 1x1 ID photo and signature for your new student ID.',
+                    'key' => $type['name'] . '_' . $type_id . '_' . time(),
+                    'force_refresh' => true
+                ];
+            }
+            // For Transcript of Records, return specific requirements
+            else if (stripos($type['name'], 'Transcript of Records') !== false) {
+                $requirements = [
+                    'fields' => [
+                        [
+                            'name' => 'request_form',
+                            'label' => 'Request Form',
+                            'type' => 'file',
+                            'required' => true,
+                            'description' => 'Upload a scanned copy of the completed Request Form',
+                            'allowed_types' => 'pdf,jpg,jpeg,png'
+                        ],
+                        [
+                            'name' => 'clearance',
+                            'label' => 'Clearance',
+                            'type' => 'file',
+                            'required' => true,
+                            'description' => 'Upload a scanned copy of your Clearance',
+                            'allowed_types' => 'pdf,jpg,jpeg,png'
+                        ]
+                    ],
+                    'instructions' => 'Please upload the required documents for Transcript of Records. Your student information will be automatically included.',
+                    'key' => $type['name'] . '_' . $type_id . '_' . time(),
+                    'force_refresh' => true
+                ];
+            }
+            else {
+                // Format the requirements for other request types
                 $requirements = $this->formatRequirements($type['requirements']);
             }
 

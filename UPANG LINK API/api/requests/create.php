@@ -82,14 +82,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get POST data
     $type_id = $_POST['type_id'] ?? null;
     $purpose = $_POST['purpose'] ?? null;
-    $year_level = $_POST['student_id'] ?? null;
+    $student_id = $_POST['student_id'] ?? null;
 
-    // Validate required fields
-    if (!$type_id || !$purpose || !$year_level) {
+    // Get the request type name to check if it's a special type
+    $isSpecialType = false;
+    $typeNameQuery = "SELECT name FROM request_types WHERE type_id = ?";
+    $typeStmt = $pdo->prepare($typeNameQuery);
+    $typeStmt->execute([$type_id]);
+    $typeResult = $typeStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($typeResult) {
+        $typeName = $typeResult['name'];
+        // Check if it's a special type that doesn't need additional fields
+        if (stripos($typeName, 'Course Module') !== false || 
+            stripos($typeName, 'Enrollment Certificate') !== false ||
+            stripos($typeName, 'ID Replacement') !== false ||
+            stripos($typeName, 'New Student ID') !== false ||
+            stripos($typeName, 'Uniform') !== false ||
+            stripos($typeName, 'Transcript of Records') !== false) {
+            $isSpecialType = true;
+        }
+    }
+
+    // Validate required fields based on request type
+    if (!$type_id || !$purpose) {
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
             'message' => 'Missing required fields',
+            'code' => 400
+        ]);
+        exit;
+    }
+    
+    // Only validate student_id if it's not a special type
+    if (!$isSpecialType && !$student_id) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Student ID is required for this request type',
             'code' => 400
         ]);
         exit;
@@ -113,13 +144,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Add request details
         $query = "INSERT INTO request_notes (request_id, user_id, note) VALUES (?, ?, ?)";
         $stmt = $pdo->prepare($query);
+        
+        $noteData = ['purpose' => $purpose];
+        
+        // Only include student_id in the note if available
+        if ($student_id) {
+            $noteData['student_id'] = $student_id;
+        }
+        
+        // For special types, get student details from user profile
+        if ($isSpecialType) {
+            // Get the student details from the user profile
+            $userQuery = "SELECT current_year FROM users WHERE user_id = ?";
+            $userStmt = $pdo->prepare($userQuery);
+            $userStmt->execute([$user_id]);
+            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($userData && isset($userData['current_year'])) {
+                $noteData['year_level'] = $userData['current_year'];
+            } else {
+                // Provide a default value if the year level is not found
+                $noteData['year_level'] = 'Not specified';
+                // Log this for debugging
+                error_log("User details not found or current_year not set for user_id: $user_id");
+            }
+        }
+        
         $stmt->execute([
             $request_id,
             $user_id,
-            json_encode([
-                'purpose' => $purpose,
-                'year_level' => $year_level
-            ])
+            json_encode($noteData)
         ]);
 
         // Handle file uploads if any
@@ -188,10 +242,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Rollback transaction on error
         $pdo->rollBack();
         
+        // Log more details about the error
+        error_log("Error creating request: " . $e->getMessage());
+        error_log("Error trace: " . $e->getTraceAsString());
+        error_log("Request data - type_id: $type_id, user_id: $user_id, is_special_type: " . ($isSpecialType ? 'true' : 'false'));
+        
         http_response_code(500);
         echo json_encode([
             'status' => 'error',
             'message' => 'Failed to create request: ' . $e->getMessage(),
+            'debug_info' => [
+                'type_id' => $type_id,
+                'special_type' => $isSpecialType,
+                'request_params' => $_POST
+            ],
             'code' => 500
         ]);
     }

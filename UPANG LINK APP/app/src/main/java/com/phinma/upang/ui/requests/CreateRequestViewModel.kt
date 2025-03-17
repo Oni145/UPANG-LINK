@@ -10,6 +10,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.phinma.upang.data.api.RequestService
+import com.phinma.upang.data.api.AuthApi
 import com.phinma.upang.data.model.CreateRequestResponse
 import com.phinma.upang.data.model.RequestType
 import com.phinma.upang.data.model.RequirementField
@@ -47,6 +48,7 @@ fun Any?.isNotEmptyStringSafe(): Boolean {
 @HiltViewModel
 class CreateRequestViewModel @Inject constructor(
     private val requestService: RequestService,
+    private val authApi: AuthApi,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -71,8 +73,37 @@ class CreateRequestViewModel @Inject constructor(
     private val _success = MutableStateFlow<CreateRequestResponse?>(null)
     val success: StateFlow<CreateRequestResponse?> = _success
 
+    // Add warning message state
+    private val _warningMessage = MutableStateFlow<String?>(null)
+    val warningMessage: StateFlow<String?> = _warningMessage
+
     init {
         loadRequestTypes()
+        checkStudentDetails()
+    }
+
+    private fun checkStudentDetails() {
+        viewModelScope.launch {
+            try {
+                val response = authApi.getStudentDetails()
+                val studentDetails = response.data
+                if (studentDetails == null || 
+                    studentDetails.current_year.isNullOrEmpty() || 
+                    studentDetails.course.isNullOrEmpty() || 
+                    studentDetails.student_number.isNullOrEmpty() ||
+                    studentDetails.birthdate.isNullOrEmpty() ||
+                    studentDetails.emergency_contact.isNullOrEmpty() ||
+                    !studentDetails.details_complete) {
+                    _warningMessage.value = "Your student details are incomplete. If you proceed with the submission, your request will be automatically rejected.\n\nYou can:\n1. Update your student details first (recommended)\n2. Or proceed with the submission (will be rejected)"
+                    Log.d("CreateRequestVM", "Student details incomplete, showing warning with options")
+                } else {
+                    _warningMessage.value = null
+                }
+            } catch (e: Exception) {
+                Log.e("CreateRequestVM", "Error checking student details", e)
+                _warningMessage.value = "Unable to verify student details. Your request may be rejected if details are incomplete."
+            }
+        }
     }
 
     private fun loadRequestTypes() {
@@ -118,6 +149,174 @@ class CreateRequestViewModel @Inject constructor(
     fun loadRequirements(requestType: RequestType) {
         _loading.value = true
         Log.d("CreateRequestVM", "Loading requirements for ${requestType.name}")
+        
+        // Check for incomplete student details and set warning
+        viewModelScope.launch {
+            try {
+                val response = authApi.getStudentDetails()
+                val studentDetails = response.data
+                if (studentDetails == null || 
+                    studentDetails.current_year.isNullOrEmpty() || 
+                    studentDetails.course.isNullOrEmpty() || 
+                    studentDetails.student_number.isNullOrEmpty() ||
+                    studentDetails.birthdate.isNullOrEmpty() ||
+                    studentDetails.emergency_contact.isNullOrEmpty() ||
+                    !studentDetails.details_complete) {
+                    _warningMessage.value = "Warning: Your student details are incomplete. If you proceed with the submission, your request will be automatically rejected.\n\nYou can:\n1. Update your student details first (recommended)\n2. Or proceed with the submission (will be rejected)"
+                    Log.d("CreateRequestVM", "Student details incomplete, showing warning with options")
+                } else {
+                    _warningMessage.value = null
+                }
+            } catch (e: Exception) {
+                Log.e("CreateRequestVM", "Error checking student details", e)
+                _warningMessage.value = "Warning: Unable to verify student details. Your request may be rejected if details are incomplete."
+            }
+        }
+        
+        // Skip server requirements for Course Module and Enrollment Certificate
+        if (requestType.name.contains("Course Module", ignoreCase = true) || 
+            requestType.name.contains("Enrollment Certificate", ignoreCase = true)) {
+            // For these requests, don't add any field requirements as student details are already in the system
+            _requirements.value = emptyList()
+            _requirementsNeeded.value = false
+            requestTypesWithRequiredFields[requestType.type_id] = false
+            Log.d("CreateRequestVM", "No requirements needed for ${requestType.name}")
+            _loading.value = false
+            return
+        }
+        
+        // For uniform requests, only ask for size
+        if (requestType.name.contains("Uniform", ignoreCase = true)) {
+            val requirements = mutableListOf<RequirementField>()
+            
+            // Add uniform size field as dropdown with standard sizes
+            val uniformSizeRequirement = RequirementField(
+                name = "uniform_size",
+                label = if (requestType.name.contains("PE", ignoreCase = true)) 
+                    "PE Uniform Size" else "School Uniform Size",
+                type = "dropdown",
+                required = true,
+                description = "Please select your uniform size (check size chart for measurements)",
+                allowed_types = null,
+                options = listOf("XXS (0)", "XS (2-4)", "S (6-8)", "M (10-12)", "L (14-16)", "XL (18-20)", "2XL (22-24)", "3XL (26-28)", "4XL (30-32)")
+            )
+            requirements.add(uniformSizeRequirement)
+            
+            _requirements.value = requirements
+            _requirementsNeeded.value = true
+            requestTypesWithRequiredFields[requestType.type_id] = true
+            Log.d("CreateRequestVM", "Created uniform size requirement only for ${requestType.name}")
+            _loading.value = false
+            return
+        }
+        
+        // For ID Replacement, add specific document requirements
+        if (requestType.name.contains("ID Replacement", ignoreCase = true)) {
+            val requirements = mutableListOf<RequirementField>()
+            
+            // Add Affidavit of Loss document
+            val affidavitRequirement = RequirementField(
+                name = "affidavit_of_loss",
+                label = "Affidavit of Loss",
+                type = "file",
+                required = true,
+                description = "Upload a scanned copy of your Affidavit of Loss",
+                allowed_types = "pdf,jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(affidavitRequirement)
+            
+            // Add Payment Receipt document
+            val receiptRequirement = RequirementField(
+                name = "payment_receipt",
+                label = "Payment Receipt",
+                type = "file",
+                required = true,
+                description = "Upload a scanned copy of your Payment Receipt",
+                allowed_types = "pdf,jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(receiptRequirement)
+            
+            _requirements.value = requirements
+            _requirementsNeeded.value = true
+            requestTypesWithRequiredFields[requestType.type_id] = true
+            Log.d("CreateRequestVM", "Added specific document requirements for ID Replacement")
+            _loading.value = false
+            return
+        }
+        
+        // For New Student ID, add specific document requirements
+        if (requestType.name.contains("New Student ID", ignoreCase = true)) {
+            val requirements = mutableListOf<RequirementField>()
+            
+            // Add 1x1 ID Photo document
+            val photoRequirement = RequirementField(
+                name = "id_photo",
+                label = "1x1 ID Photo",
+                type = "file",
+                required = true,
+                description = "Upload a 1x1 ID photo with white background",
+                allowed_types = "jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(photoRequirement)
+            
+            // Add Signature document
+            val signatureRequirement = RequirementField(
+                name = "signature",
+                label = "Signature",
+                type = "file",
+                required = true,
+                description = "Upload a clear image of your signature on white paper",
+                allowed_types = "jpg,jpeg,png,pdf",
+                options = null
+            )
+            requirements.add(signatureRequirement)
+            
+            _requirements.value = requirements
+            _requirementsNeeded.value = true
+            requestTypesWithRequiredFields[requestType.type_id] = true
+            Log.d("CreateRequestVM", "Added specific document requirements for New Student ID")
+            _loading.value = false
+            return
+        }
+        
+        // For Transcript of Records, add specific document requirements
+        if (requestType.name.contains("Transcript of Records", ignoreCase = true)) {
+            val requirements = mutableListOf<RequirementField>()
+            
+            // Add Request Form document
+            val requestFormRequirement = RequirementField(
+                name = "request_form",
+                label = "Request Form",
+                type = "file",
+                required = true,
+                description = "Upload a scanned copy of the completed Request Form",
+                allowed_types = "pdf,jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(requestFormRequirement)
+            
+            // Add Clearance document
+            val clearanceRequirement = RequirementField(
+                name = "clearance",
+                label = "Clearance",
+                type = "file",
+                required = true,
+                description = "Upload a scanned copy of your Clearance",
+                allowed_types = "pdf,jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(clearanceRequirement)
+            
+            _requirements.value = requirements
+            _requirementsNeeded.value = true
+            requestTypesWithRequiredFields[requestType.type_id] = true
+            Log.d("CreateRequestVM", "Added specific document requirements for Transcript of Records")
+            _loading.value = false
+            return
+        }
         
         try {
             // Parse the requirements from the request type
@@ -193,19 +392,6 @@ class CreateRequestViewModel @Inject constructor(
         if (requestType.name.contains("Uniform", ignoreCase = true)) {
             val requirements = mutableListOf<RequirementField>()
             
-            // Add student ID number field (text, not file)
-            val studentIdRequirement = RequirementField(
-                name = "student_id_number",
-                label = if (requestType.name.contains("PE", ignoreCase = true)) 
-                    "Student ID Number (PE)" else "Student ID Number (School)",
-                type = "text",
-                required = true,
-                description = "Enter your student ID number",
-                allowed_types = null,
-                options = null
-            )
-            requirements.add(studentIdRequirement)
-            
             // Add uniform size field as dropdown with standard sizes
             val uniformSizeRequirement = RequirementField(
                 name = "uniform_size",
@@ -222,7 +408,111 @@ class CreateRequestViewModel @Inject constructor(
             _requirements.value = requirements
             _requirementsNeeded.value = true
             requestTypesWithRequiredFields[requestType.type_id] = true
-            Log.d("CreateRequestVM", "Created ${requirements.size} requirements for ${requestType.name}")
+            Log.d("CreateRequestVM", "Created uniform size requirement for ${requestType.name}")
+        } else if (requestType.name.contains("Course Module", ignoreCase = true) || 
+                  requestType.name.contains("Enrollment Certificate", ignoreCase = true)) {
+            // For special request types, don't add any field requirements 
+            // as student details are already in the system
+            _requirements.value = emptyList()
+            _requirementsNeeded.value = false
+            requestTypesWithRequiredFields[requestType.type_id] = false
+            Log.d("CreateRequestVM", "No requirements needed for ${requestType.name}")
+        } else if (requestType.name.contains("ID Replacement", ignoreCase = true)) {
+            // For ID Replacement, add specific document requirements
+            val requirements = mutableListOf<RequirementField>()
+            
+            // Add Affidavit of Loss document
+            val affidavitRequirement = RequirementField(
+                name = "affidavit_of_loss",
+                label = "Affidavit of Loss",
+                type = "file",
+                required = true,
+                description = "Upload a scanned copy of your Affidavit of Loss",
+                allowed_types = "pdf,jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(affidavitRequirement)
+            
+            // Add Payment Receipt document
+            val receiptRequirement = RequirementField(
+                name = "payment_receipt",
+                label = "Payment Receipt",
+                type = "file",
+                required = true,
+                description = "Upload a scanned copy of your Payment Receipt",
+                allowed_types = "pdf,jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(receiptRequirement)
+            
+            _requirements.value = requirements
+            _requirementsNeeded.value = true
+            requestTypesWithRequiredFields[requestType.type_id] = true
+            Log.d("CreateRequestVM", "Created ${requirements.size} document requirements for ID Replacement")
+        } else if (requestType.name.contains("New Student ID", ignoreCase = true)) {
+            // For New Student ID, add specific document requirements
+            val requirements = mutableListOf<RequirementField>()
+            
+            // Add 1x1 ID Photo document
+            val photoRequirement = RequirementField(
+                name = "id_photo",
+                label = "1x1 ID Photo",
+                type = "file",
+                required = true,
+                description = "Upload a 1x1 ID photo with white background",
+                allowed_types = "jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(photoRequirement)
+            
+            // Add Signature document
+            val signatureRequirement = RequirementField(
+                name = "signature",
+                label = "Signature",
+                type = "file",
+                required = true,
+                description = "Upload a clear image of your signature on white paper",
+                allowed_types = "jpg,jpeg,png,pdf",
+                options = null
+            )
+            requirements.add(signatureRequirement)
+            
+            _requirements.value = requirements
+            _requirementsNeeded.value = true
+            requestTypesWithRequiredFields[requestType.type_id] = true
+            Log.d("CreateRequestVM", "Created ${requirements.size} document requirements for New Student ID")
+        } else if (requestType.name.contains("Transcript of Records", ignoreCase = true)) {
+            // For Transcript of Records, add specific document requirements
+            val requirements = mutableListOf<RequirementField>()
+            
+            // Add Request Form document
+            val requestFormRequirement = RequirementField(
+                name = "request_form",
+                label = "Request Form",
+                type = "file",
+                required = true,
+                description = "Upload a scanned copy of the completed Request Form",
+                allowed_types = "pdf,jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(requestFormRequirement)
+            
+            // Add Clearance document
+            val clearanceRequirement = RequirementField(
+                name = "clearance",
+                label = "Clearance",
+                type = "file",
+                required = true,
+                description = "Upload a scanned copy of your Clearance",
+                allowed_types = "pdf,jpg,jpeg,png",
+                options = null
+            )
+            requirements.add(clearanceRequirement)
+            
+            _requirements.value = requirements
+            _requirementsNeeded.value = true
+            requestTypesWithRequiredFields[requestType.type_id] = true
+            Log.d("CreateRequestVM", "Created ${requirements.size} document requirements for Transcript of Records")
         } else {
             // Default for other request types
             val yearLevelRequirement = RequirementField(
@@ -387,5 +677,10 @@ class CreateRequestViewModel @Inject constructor(
 
     fun clearSuccess() {
         _success.value = null
+    }
+
+    // Add function to clear warning
+    fun clearWarning() {
+        _warningMessage.value = null
     }
 } 

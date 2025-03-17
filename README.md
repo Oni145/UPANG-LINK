@@ -107,4 +107,52 @@ If you encounter issues with the integration:
 - Username: `jede.garcia.up@phinmaed.com`, Password: `password`
 
 ### Student User:
-- Email: `jerickogarcia0@gmail.com`, Password: `password` 
+- Email: `jerickogarcia0@gmail.com`, Password: `password`
+
+# UPANG-LINK API Troubleshooting
+
+## Issues Found and Fixed
+
+### 1. Missing Database Columns
+The database schema defined in `UPANG LINK API/database/schema.sql` included student detail fields, but these columns were missing in the actual database:
+- student_number
+- birthdate
+- emergency_contact
+- course
+- current_year
+
+**Solution**: Created and executed a script (`update_users_table.php`) to add the missing columns to the users table.
+
+### 2. API Error Handling
+The API endpoints (`get_student_details.php` and `update_student_details.php`) were already properly handling NULL values and missing fields, but were showing warnings due to the missing database columns.
+
+**Solution**: After adding the missing columns to the database, the warnings disappeared and the API now functions correctly.
+
+## Testing Results
+
+### Get Student Details API
+- Endpoint: `/UPANG LINK API/api/get_student_details.php`
+- Method: GET
+- Authentication: Bearer Token
+- Response: Returns user details including student-specific fields
+- Status: Working correctly
+
+### Update Student Details API
+- Endpoint: `/UPANG LINK API/api/update_student_details.php`
+- Method: POST
+- Authentication: Bearer Token
+- Request Body: JSON with student details (student_number, birthdate, emergency_contact, course, current_year)
+- Response: Success message when details are updated
+- Status: Working correctly
+
+## Test Scripts
+The following test scripts were created to verify the API functionality:
+- `test_db.php`: Tests database connection and structure
+- `test_api.php`: Tests the get_student_details.php endpoint
+- `test_update_api.php`: Tests the update_student_details.php endpoint
+
+## Recommendations
+1. Always run the database schema script when setting up a new environment
+2. Consider adding database migration scripts for future updates
+3. Add validation for student detail fields in the update endpoint
+4. Implement proper error logging instead of suppressing all errors 
