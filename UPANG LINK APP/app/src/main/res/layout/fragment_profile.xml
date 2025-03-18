@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <!-- Header with gradient background -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:background="@drawable/profile_header_gradient" />
+
+            <!-- Profile Image -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_marginTop="-60dp"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="3dp"
+                app:strokeColor="@color/white">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/ivProfileImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/gray_200"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_person" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- User Name -->
+            <TextView
+                android:id="@+id/tvName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
+                android:textColor="@color/gray_800"
+                android:textStyle="bold"
+                tools:text="Jericko Garcia" />
+
+            <!-- User Email -->
+            <TextView
+                android:id="@+id/tvEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+                android:textColor="@color/gray_600"
+                tools:text="jerickogarcia0@gmail.com" />
+
+            <!-- Profile Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <!-- Section Title -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Account Settings"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                        android:textColor="@color/gray_800"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Change Password Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnChangePassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@android:color/transparent"
+                        android:drawableStart="@drawable/ic_lock"
+                        android:drawablePadding="16dp"
+                        android:gravity="start|center_vertical"
+                        android:padding="16dp"
+                        android:text="Change Password"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        app:backgroundTint="@android:color/transparent"
+                        app:cornerRadius="8dp"
+                        app:rippleColor="@color/colorPrimaryLight"
+                        app:strokeColor="@android:color/darker_gray"
+                        app:strokeWidth="0.5dp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.5dp"
+                        android:background="@android:color/darker_gray" />
+
+                    <!-- Student Details Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStudentDetails"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@android:color/transparent"
+                        android:drawableStart="@drawable/ic_person"
+                        android:drawablePadding="16dp"
+                        android:gravity="start|center_vertical"
+                        android:padding="16dp"
+                        android:text="Student Details"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        app:backgroundTint="@android:color/transparent"
+                        app:cornerRadius="8dp"
+                        app:rippleColor="@color/colorPrimaryLight"
+                        app:strokeColor="@android:color/darker_gray"
+                        app:strokeWidth="0.5dp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.5dp"
+                        android:background="@android:color/darker_gray" />
+
+                    <!-- Logout Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLogout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@android:color/transparent"
+                        android:drawableStart="@drawable/ic_logout"
+                        android:drawablePadding="16dp"
+                        android:gravity="start|center_vertical"
+                        android:padding="16dp"
+                        android:text="Logout"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        app:backgroundTint="@android:color/transparent"
+                        app:cornerRadius="8dp"
+                        app:rippleColor="@color/colorPrimaryLight"
+                        app:strokeColor="@android:color/darker_gray"
+                        app:strokeWidth="0.5dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Error Message -->
+            <LinearLayout
+                android:id="@+id/errorMessageView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/error_background"
+                android:padding="16dp"
+                android:visibility="gone"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_dialog_alert"
+                    android:tint="@android:color/white"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:id="@+id/errorMessageText"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- App Version -->
+            <TextView
+                android:id="@+id/tvAppVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="24dp"
+                android:text="UPANG Link v1.0.0"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                android:textColor="@color/gray_600" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout> 

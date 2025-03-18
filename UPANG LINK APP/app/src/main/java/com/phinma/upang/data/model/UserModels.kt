@@ -1,0 +1,71 @@
+package com.phinma.upang.data.model
+
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import java.util.Date
+
+@Parcelize
+data class UserProfile(
+    val user_id: Int,
+    val email: String,
+    val first_name: String,
+    val last_name: String,
+    val role: String,
+    val student_number: String? = null,
+    val birthdate: String? = null,
+    val emergency_contact: String? = null,
+    val course: String? = null,
+    val current_year: String? = null,
+    val email_verified: Int,
+    val created_at: String,
+    val updated_at: String,
+    val details_complete: Boolean = false
+) : Parcelable
+
+data class LoginRequest(
+    val email: String,
+    val password: String
+)
+
+data class LoginResponse(
+    val token: String,
+    val expires_at: String,
+    val user: UserProfile
+)
+
+data class ApiLoginResponse(
+    val status: String,
+    val message: String,
+    val data: LoginResponse?
+)
+
+data class RegisterRequest(
+    val email: String,
+    val password: String,
+    val first_name: String,
+    val last_name: String
+)
+
+data class RegisterResponse(
+    val verificationToken: String,
+    val expiresAt: Date
+)
+
+data class UpdateProfileRequest(
+    val firstName: String,
+    val lastName: String
+)
+
+data class UpdateStudentDetailsRequest(
+    val student_number: String,
+    val birthdate: String,
+    val emergency_contact: String,
+    val course: String,
+    val current_year: String
+)
+
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String,
+    val confirmPassword: String
+) 
