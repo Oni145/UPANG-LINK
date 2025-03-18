@@ -40,28 +40,29 @@ if (!class_exists('RequestController')) {
                 exit;
             }
             
-            // Check admin_tokens table first
-            $stmtAdmin = $this->db->prepare("SELECT admin_id, expires_at FROM admin_tokens WHERE token = ?");
-            $stmtAdmin->execute([$token]);
-            $adminRow = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
+$stmtUser = $this->db->prepare("SELECT user_id, expires_at FROM user_sessions WHERE token = ?");
+$stmtUser->execute([$token]);
+$userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
 
-            if ($adminRow) {
-                $currentTime = new DateTime();
-                $expiresAt = new DateTime($adminRow['expires_at']);
+if ($userRow) {
+    $currentTime = new DateTime();
+    $expiresAt = new DateTime($userRow['expires_at']);
 
-                if ($currentTime > $expiresAt) {
-                    $delStmt = $this->db->prepare("DELETE FROM admin_tokens WHERE token = ?");
-                    $delStmt->execute([$token]);
-                    $this->sendError("Access Denied: Admin token expired", 401);
-                    exit;
-                }
+    if ($currentTime > $expiresAt) {
+        $delStmt = $this->db->prepare("DELETE FROM user_sessions WHERE token = ?");
+        $delStmt->execute([$token]);
+        $this->sendError("Access Denied: User session expired", 401);
+        exit;
+    }
 
-                $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
-                $updateStmt = $this->db->prepare("UPDATE admin_tokens SET expires_at = ? WHERE token = ?");
-                $updateStmt->execute([$newExpiresAt, $token]);
+    // Extend the session expiration by 24 hours
+    $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
+    $updateStmt = $this->db->prepare("UPDATE user_sessions SET expires_at = ? WHERE token = ?");
+    $updateStmt->execute([$newExpiresAt, $token]);
 
-                return; // Authenticated as admin.
-            }
+    return; // Authenticated as user.
+}
+
             
             // Finally, check user_sessions (student tokens)
             $stmtStudent = $this->db->prepare("SELECT user_id, expires_at FROM user_sessions WHERE token = ?");

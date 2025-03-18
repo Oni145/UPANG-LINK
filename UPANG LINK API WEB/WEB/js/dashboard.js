@@ -478,108 +478,93 @@ class Dashboard {
 
 
 
-  async initializeData() {
-    console.log("Fetching requests and users data...");
-    try {
+async initializeData() {
+  console.log("Fetching requests and users data...");
+
+  try {
       const [requestsResponse, usersResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/requests/`, { headers: getAuthHeaders(this.token) }),
-        fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(this.token) })
+          fetch(`${API_BASE_URL}/requests/`, { headers: getAuthHeaders(this.token) }),
+          fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(this.token) })
       ]);
 
-      if (!requestsResponse.ok) {
-        console.error("HTTP error fetching requests:", requestsResponse.status);
-        if (requestsResponse.status === 401) {
-          // Authentication error - redirect to login
-          localStorage.removeItem('token');
-          window.location.href = 'login.html';
-        }
-        return;
-      }
-      if (!usersResponse.ok) {
-        console.error("HTTP error fetching users:", usersResponse.status);
-        if (usersResponse.status === 401) {
-          // Authentication error - redirect to login
-          localStorage.removeItem('token');
-          window.location.href = 'login.html';
-        }
-        return;
+      // Handle response errors
+      if (!requestsResponse.ok || !usersResponse.ok) {
+          if (requestsResponse.status === 401 || usersResponse.status === 401) {
+              console.warn("Unauthorized access, redirecting to login...");
+              localStorage.removeItem('token');
+              window.location.href = 'login.html';
+              return;
+          }
+          console.error("Error fetching data. Requests:", requestsResponse.status, "Users:", usersResponse.status);
+          return;
       }
 
-      // Check content type to prevent parsing HTML as JSON
+      // Check content type to ensure JSON response
       const requestsContentType = requestsResponse.headers.get('content-type');
       const usersContentType = usersResponse.headers.get('content-type');
-      
-      if (!requestsContentType || !requestsContentType.includes('application/json')) {
-        console.error("Invalid content type for requests response:", requestsContentType);
-        return;
+
+      if (!requestsContentType?.includes('application/json')) {
+          console.error("Invalid content type for requests response:", requestsContentType);
+          return;
       }
-      
-      if (!usersContentType || !usersContentType.includes('application/json')) {
-        console.error("Invalid content type for users response:", usersContentType);
-        return;
+      if (!usersContentType?.includes('application/json')) {
+          console.error("Invalid content type for users response:", usersContentType);
+          return;
       }
 
-      const requestsData = await requestsResponse.json();
-      const usersData = await usersResponse.json();
-      if (requestsData.status !== 'success') {
-        console.error("Error in requests data:", requestsData.message);
-        return;
+      // Read response text for debugging
+      const requestsText = await requestsResponse.text();
+      const usersText = await usersResponse.text();
+
+      try {
+          var requestsData = JSON.parse(requestsText);
+          var usersData = JSON.parse(usersText);
+      } catch (parseError) {
+          console.error("JSON parsing error. The API might be returning HTML instead of JSON.");
+          console.log("Raw requests response:", requestsText);
+          console.log("Raw users response:", usersText);
+          return;  // No need to check authentication, it's already handled above
       }
-      if (usersData.status !== 'success') {
-        console.error("Error in users data:", usersData.message);
-        return;
+
+      if (requestsData.status !== 'success' || usersData.status !== 'success') {
+          console.error("Error in response data:", requestsData.message || usersData.message);
+          return;
       }
-      this.requestsData = requestsData.data;
-      this.usersData = usersData.data;
+
+      this.requestsData = requestsData.data || [];
+      this.usersData = usersData.data || [];
+
       console.log("Requests data fetched:", this.requestsData);
       console.log("Users data fetched:", this.usersData);
 
       // Compute monthly counts for charts
-      this.monthCounts = this.requestsData.reduce((acc, request) => {
-        const date = new Date(request.submitted_at);
-        if (!isNaN(date)) {
-          acc[date.getMonth()]++;
-        } else {
-          console.warn("Invalid date in request:", request);
-        }
-        return acc;
-      }, Array(12).fill(0));
+      this.monthCounts = Array(12).fill(0);
+      this.requestsData.forEach(request => {
+          if (request.submitted_at) {
+              const date = new Date(request.submitted_at);
+              if (!isNaN(date)) {
+                  this.monthCounts[date.getMonth()]++;
+              } else {
+                  console.warn("Invalid date in request:", request.submitted_at);
+              }
+          }
+      });
 
+      // Load UI components
       this.loadStatsUsingData();
       this.loadMonthlyChartUsingData();
       this.loadRequestsChartUsingData();
       this.loadRequestTypesChartUsingData();
       this.loadRecentRequestsUsingData();
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      if (error instanceof SyntaxError) {
-        console.error("JSON parsing error. The API may be returning HTML instead of JSON.");
-        // Check if token is valid
-        this.checkAuthentication();
-      }
-    } finally {
-      this.hideLoading();
-    }
-  }
 
-  async checkAuthentication() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/admin/check`, {
-        headers: getAuthHeaders(this.token)
-      });
-      
-      if (!response.ok || response.status === 401) {
-        console.error("Authentication invalid, redirecting to login");
-        localStorage.removeItem('token');
-        window.location.href = 'login.html';
-      }
-    } catch (error) {
-      console.error("Error checking authentication:", error);
-      // On any error, redirect to login
-      localStorage.removeItem('token');
-      window.location.href = 'login.html';
-    }
+  } catch (error) {
+      console.error("Error fetching data:", error);
+  } finally {
+      this.hideLoading();
   }
+}
+
+
 
   loadStatsUsingData() {
     console.log("Updating stats using pre-fetched data...");
@@ -689,10 +674,14 @@ class Dashboard {
     const data = [];
     const backgroundColors = [];
     const colorsMapping = {
-      1: '#3699ff',
-      2: '#1bc5bd',
-      3: '#8950fc',
-      4: '#ffa800'
+  1: '#3699ff',  // Blue
+  2: '#1bc5bd',  // Teal
+  3: '#8950fc',  // Purple
+  4: '#ffa800',  // Orange
+  5: '#28a745',  // Green
+  6: '#dc3545',  // Red
+  7: '#ffc107',  // Yellow
+  12: '#e83e8c', // Pin
     };
     for (const [key, count] of Object.entries(typeCounts)) {
       labels.push(requestTypeNames[key] || 'Unknown');
@@ -748,35 +737,29 @@ class Dashboard {
     });
 
     const tbody = document.getElementById('requestsTableBody');
-    if (!tbody) {
-        console.error("requestsTableBody element not found in the DOM.");
-        return;
-    }
-
+    if (!tbody) return console.error("requestsTableBody element not found.");
+  
     if (!requests || requests.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center">No recent requests</td></tr>`;
-        console.log("No recent requests to display.");
-        return;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No pending requests to display</td></tr>`;
+      return;
     }
-
+  
     tbody.innerHTML = requests.map(request => {
-        const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
-        return `
-        <tr>
-          <td>${user.first_name} ${user.last_name}</td>
-          <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
-          <td>
-            <span class="badge status-${request.status.toLowerCase()}">
-                ${request.status}
-            </span>
-          </td>
-          <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
-        </tr>
-      `;
-    }).join('');
-
-    console.log("Requests table updated.");
-}
+      const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+      return `<tr>
+            <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
+            <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
+            <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
+            <td style="text-align: center;">
+              <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span>
+            </td> <!-- Status -->
+            <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
+              </div>
+            </td> <!-- Action -->
+          </tr>`;
+  }).join('');
+  }
+  
 
 
 

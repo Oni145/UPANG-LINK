@@ -42,6 +42,9 @@ function getAuthHeaders() {
 // ---- Usage ----
 // Call `checkTokenAndRedirect();` on login/signup pages.
 
+
+
+
 // ----- LOGIN FUNCTIONALITY -----
 document.addEventListener('DOMContentLoaded', function() {
     // Call checkTokenAndRedirect on page load to redirect if already logged in
@@ -72,142 +75,44 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function handleLogin(event) {
-    event.preventDefault(); // Prevent default form submission
+    event.preventDefault(); 
 
-    // Get the form values
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    
-    // Display loading state
-    const loginButton = document.querySelector('.login-btn');
-    loginButton.classList.add('loading');
-    
-    // Clear previous error messages
-    const errorMessage = document.getElementById('errorMessage');
-    if (errorMessage) {
-        errorMessage.innerText = '';
-    }
 
-    // Set the API endpoint to admin login only
     let apiUrl = getApiUrl('admin/login');
-    
-    console.log('Attempting login to:', apiUrl);
-    console.log('API endpoint path:', '/admin/login');
+    console.log('Attempting login at:', apiUrl);
 
     try {
-        console.log('Sending login request with data:', { email, password: '********' });
-        
-        // Create a new XMLHttpRequest object
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', apiUrl, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('Accept', 'application/json');
-        
-        // Set up a timeout
-        xhr.timeout = 10000; // 10 seconds
-        
-        // Set up event handlers
-        xhr.onload = function() {
-            // Store the raw response for debugging
-            const rawResponse = xhr.responseText;
-            console.log('Raw response:', rawResponse);
-            
-            if (xhr.status >= 200 && xhr.status < 300) {
-                // Success
-                try {
-                    const data = JSON.parse(xhr.responseText);
-                    console.log('Login successful:', data);
-                    
-                    // Store the token (adjust property name if different)
-                    localStorage.setItem('token', data.token);
-                    // Store admin details if provided by the API.
-                    if (data.admin) {
-                        localStorage.setItem('admin', JSON.stringify(data.admin));
-                    }
-                    
-                    // Redirect to index.html after successful login
-                    window.location.href = 'index.html';
-                } catch (error) {
-                    console.error('Error parsing response:', error);
-                    if (errorMessage) {
-                        errorMessage.innerHTML = 'Error parsing server response<br><br>' +
-                            '<details><summary>Raw Response (click to expand)</summary>' +
-                            '<pre style="background-color: #f5f5f5; padding: 10px; overflow: auto; max-height: 200px;">' + 
-                            escapeHtml(rawResponse) + 
-                            '</pre></details>';
-                    }
-                }
-            } else {
-                // Error
-                try {
-                    const errorData = JSON.parse(xhr.responseText);
-                    console.error('Error response:', errorData);
-                    
-                    // Log detailed debug information if available
-                    if (errorData.debug) {
-                        console.error('Debug info:', errorData.debug);
-                    }
-                    
-                    if (errorMessage) {
-                        if (errorData.message) {
-                            errorMessage.innerText = errorData.message;
-                        } else {
-                            errorMessage.innerText = `HTTP error! status: ${xhr.status}`;
-                        }
-                        
-                        // Add debug information to the error message if available
-                        if (errorData.debug) {
-                            const debugInfo = document.createElement('div');
-                            debugInfo.style.marginTop = '10px';
-                            debugInfo.style.fontSize = '12px';
-                            debugInfo.style.color = '#666';
-                            debugInfo.innerHTML = '<strong>Debug Info:</strong><br>' + 
-                                                 'Request URI: ' + (errorData.debug.request_uri || 'N/A') + '<br>' +
-                                                 'Endpoint: ' + (errorData.debug.endpoint || 'N/A');
-                            errorMessage.appendChild(debugInfo);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error parsing error response:', error);
-                    if (errorMessage) {
-                        errorMessage.innerHTML = `HTTP error! status: ${xhr.status}<br><br>` +
-                            '<details><summary>Raw Response (click to expand)</summary>' +
-                            '<pre style="background-color: #f5f5f5; padding: 10px; overflow: auto; max-height: 200px;">' + 
-                            escapeHtml(rawResponse) + 
-                            '</pre></details>';
-                    }
-                }
-            }
-            
-            // Remove loading state
-            loginButton.classList.remove('loading');
-        };
-        
-        xhr.onerror = function() {
-            console.error('Network error occurred');
-            if (errorMessage) {
-                errorMessage.innerText = 'Network error occurred. Please check your connection.';
-            }
-            loginButton.classList.remove('loading');
-        };
-        
-        xhr.ontimeout = function() {
-            console.error('Request timed out');
-            if (errorMessage) {
-                errorMessage.innerText = 'Request timed out. Please try again later.';
-            }
-            loginButton.classList.remove('loading');
-        };
-        
-        // Send the request
-        xhr.send(JSON.stringify({ email, password }));
-        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const rawResponse = await response.text(); // Read response as text first
+        console.log('Raw API response:', rawResponse); // Log raw response
+
+        // Check if response is HTML (it shouldn't be)
+        if (rawResponse.startsWith('<')) {
+            throw new Error('API returned HTML instead of JSON. Possible server error.');
+        }
+
+        const data = JSON.parse(rawResponse); // Parse JSON if valid
+        console.log('Parsed JSON response:', data);
+
+        if (!data.token) {
+            throw new Error('No token received from server');
+        }
+
+        localStorage.setItem('token', data.token);
+        window.location.href = 'index.html'; 
+
     } catch (error) {
         console.error('Login failed:', error);
-        // Optionally display the error message in the UI
-        if (errorMessage) {
-            errorMessage.innerText = error.message || 'Failed to connect to the server. Please check your network connection.';
-        }
-        loginButton.classList.remove('loading');
+        document.getElementById('errorMessage').innerText = error.message || 'Failed to connect to the server.';
     }
 }

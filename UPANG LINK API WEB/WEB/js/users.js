@@ -90,34 +90,37 @@
   /**
    * Loads all users from /auth/users and initializes pagination.
    */
-  async function loadUsers() {
-    const token = getToken();
-    if (!token) {
-      console.error("No token found.");
-      return;
-    }
-    try {
-      showLoading();
-      const response = await fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(token) });
-      if (!response.ok) {
-        throw new Error(`HTTP error fetching users: ${response.status}`);
-      }
-      const usersData = await response.json();
-      if (usersData.status !== 'success') {
-        throw new Error("Error in users data: " + usersData.message);
-      }
-      allUsersData = usersData.data;
-      displayData = allUsersData;
-      currentPage = 1;
-      updatePaginationControls();
-      displayUsersPage(currentPage);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      showErrorAlert(error.message);
-    } finally {
-      hideLoading();
-    }
+
+// Function to load users from the API
+async function loadUsers() {
+  const token = getToken();
+  if (!token) {
+    console.error("No token found.");
+    return;
   }
+  try {
+    showLoading();
+    const response = await fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(token) });
+    if (!response.ok) {
+      throw new Error(`HTTP error fetching users: ${response.status}`);
+    }
+    const usersData = await response.json();
+    if (usersData.status !== 'success') {
+      throw new Error("Error in users data: " + usersData.message);
+    }
+    allUsersData = usersData.data;
+    displayData = allUsersData;
+    currentPage = 1;
+    updatePaginationControls();
+    displayUsersPage(currentPage);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    showErrorAlert(error.message);
+  } finally {
+    hideLoading();
+  }
+}
+
 
   /**
    * Displays a page of users.
@@ -135,19 +138,66 @@
   function renderUsers(users) {
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
-    if (!users || users.length === 0) {
-      // Now there are 5 columns
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center">No users to display</td></tr>`;
+
+    // Filter users: Show only students, hide admins
+    const studentUsers = users.filter(user => user.role && user.role.toLowerCase() === 'student');
+
+    if (studentUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center">No students to display</td></tr>`;
     } else {
-      tbody.innerHTML = users.map(user => `
-        <tr>
-          <td>${user.user_id || 'N/A'}</td>
-          <td>${user.first_name || 'N/A'} ${user.last_name || ''}</td>
-          <td>${user.email || 'N/A'}</td>
-        </tr>
-      `).join('');
+        tbody.innerHTML = studentUsers.map(user => `
+            <tr>
+                <td>${user.user_id || 'N/A'}</td>
+                <td>${user.first_name || 'N/A'} ${user.last_name || ''}</td>
+                <td>${user.email || 'N/A'}</td>
+                <td>
+                    <button class="view-btn" onclick="openUserModal(${user.user_id})">
+                        <i class="fas fa-eye"></i> VIEW
+                    </button>
+                </td>
+            </tr>
+        `).join('');
     }
+}
+
+// Function to open the user modal with user data
+// Function to open the modal
+function openUserModal(userId) {
+  const user = allUsersData.find(u => u.user_id === userId); // Find user by user_id in allUsersData
+  if (!user) return;
+
+  // Populate the modal with user data
+  document.getElementById('modalUserId').textContent = user.user_id || 'N/A';
+  document.getElementById('modalUserName').textContent = `${user.first_name || ''} ${user.last_name || ''}`;
+  document.getElementById('modalUserEmail').textContent = user.email || 'N/A';
+
+  // New fields from your user data
+  document.getElementById('modalUserStudentNumber').textContent = user.student_number || 'N/A';
+  document.getElementById('modalUserBirthdate').textContent = user.birthdate || 'N/A';
+  document.getElementById('modalUserEmergencyContact').textContent = user.emergency_contact || 'N/A';
+  document.getElementById('modalUserCourse').textContent = user.course || 'N/A';
+  document.getElementById('modalUserCurrentYear').textContent = user.current_year || 'N/A';
+
+  // Show the modal
+  document.getElementById('userModal').style.display = "flex";
+}
+
+// Function to close the modal
+function closeUserModal() {
+  document.getElementById('userModal').style.display = "none";
+}
+
+// Close the modal if the user clicks outside of the modal content
+window.onclick = function(event) {
+  const modal = document.getElementById('userModal');
+  if (event.target === modal) {
+    closeUserModal();
   }
+}
+
+// Make sure it's globally accessible
+window.openUserModal = openUserModal;
+window.closeUserModal = closeUserModal;
 
   /**
    * Updates pagination controls in the element with ID "paginationContainer".

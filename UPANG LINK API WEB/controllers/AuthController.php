@@ -573,20 +573,29 @@ class AuthController {
     private function getAllUsers() {
         $stmt = $this->user->read();
         $num = $stmt->rowCount();
+    
         if ($num > 0) {
             $users_arr = [];
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                // Remove sensitive fields.
-                unset($row['password'], $row['email_verification_token'], $row['password_reset_token'], $row['password_reset_expires']);
-                array_push($users_arr, $row);
+                // Remove sensitive fields
+                unset(
+                    $row['password'], 
+                    $row['email_verification_token'], 
+                    $row['email_token_expiry'], 
+                    $row['reset_password_token'], 
+                    $row['reset_token_expiry']
+                );
+                $users_arr[] = $row;
             }
+    
             http_response_code(200);
             echo json_encode([
-                'status' => 'success',
-                'data'   => $users_arr
+                'status'  => 'success',
+                'message' => 'Users retrieved successfully',
+                'data'    => $users_arr
             ]);
         } else {
-            $this->sendError('No users found');
+            $this->sendError('No users found', 404);
         }
     }
     
@@ -607,23 +616,33 @@ class AuthController {
     }
     
     public function validateToken($token) {
-        // Check for admin tokens.
-        $stmt = $this->db->prepare("SELECT admin_id AS id, expires_at FROM admin_tokens WHERE token = ?");
+        // Check for user tokens in user_sessions table.
+        $stmt = $this->db->prepare("SELECT user_id AS id, expires_at FROM user_sessions WHERE token = ?");
         $stmt->execute([$token]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
         if ($row) {
             $currentTime = new DateTime();
             $expiresAt = new DateTime($row['expires_at']);
+            
+            // If token is expired, delete it and return false
             if ($currentTime > $expiresAt) {
-                $del = $this->db->prepare("DELETE FROM admin_tokens WHERE token = ?");
+                $del = $this->db->prepare("DELETE FROM user_sessions WHERE token = ?");
                 $del->execute([$token]);
                 return false;
             }
+            
+            // Extend token expiration by 1 day (86400 seconds)
             $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
-            $updateStmt = $this->db->prepare("UPDATE admin_tokens SET expires_at = ? WHERE token = ?");
+            $updateStmt = $this->db->prepare("UPDATE user_sessions SET expires_at = ? WHERE token = ?");
             $updateStmt->execute([$newExpiresAt, $token]);
-            return ['id' => $row['id'], 'type' => 'admin'];
+            
+            return ['id' => $row['id'], 'type' => 'user'];
         }
+        
+        return false; // Token not found or invalid
+    
+    
         
         // Check for user tokens.
         $stmt = $this->db->prepare("SELECT user_id AS id, expires_at FROM user_sessions WHERE token = ?");

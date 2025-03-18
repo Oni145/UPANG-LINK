@@ -426,7 +426,7 @@ class AdminController {
             return;
         }
         
-        $stmt = $this->db->prepare("DELETE FROM admin_tokens WHERE token = ?");
+        $stmt = $this->db->prepare("DELETE FROM user_sessions WHERE token = ?");
         $stmt->execute([$token]);
         
         if ($stmt->rowCount() > 0) {
@@ -443,81 +443,80 @@ class AdminController {
     /**
      * GetUsers: Validates the token and retrieves admin details.
      */
-    private function getUsers($adminId = null) {
+    private function getUsers($userId = null) {
         $headers = function_exists('getallheaders') ? getallheaders() : [];
-        $authHeader = null;
-        if (isset($headers['Authorization'])) {
-            $authHeader = $headers['Authorization'];
-        } elseif (isset($headers['authorization'])) {
-            $authHeader = $headers['authorization'];
-        } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-            $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
-        } else {
+        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+    
+        if (!$authHeader) {
             $this->sendError("Authorization token not provided", 401);
             return;
         }
-        
-        if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $token = $matches[1];
-        } else {
+    
+        if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
             $this->sendError("Invalid Authorization header format", 400);
             return;
         }
-        
+    
+        $token = $matches[1];
+    
         if (empty($token)) {
             $this->sendError("Token is empty", 401);
             return;
         }
-        
+    
         // Validate the token exists and has not expired
-        $stmt = $this->db->prepare("SELECT * FROM admin_tokens WHERE token = ? AND expires_at > NOW()");
+        $stmt = $this->db->prepare("SELECT * FROM user_sessions WHERE token = ? AND expires_at > NOW()");
         $stmt->execute([$token]);
         $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
+    
         if (!$tokenData) {
             $this->sendError("Invalid or expired token", 401);
             return;
         }
-
-        if ($adminId !== null) {
-            if (method_exists($this->adminModel, 'getById')) {
-                $admin = $this->adminModel->getById($adminId);
+    
+        if ($userId !== null) {
+            if (method_exists($this->userModel, 'getById')) {
+                $user = $this->userModel->getById($userId);
             } else {
-                $stmt = $this->db->prepare("SELECT * FROM admins WHERE admin_id = ?");
-                $stmt->execute([$adminId]);
-                $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+                $stmt = $this->db->prepare("SELECT * FROM users WHERE user_id = ?");
+                $stmt->execute([$userId]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
             }
-            
-            if (!$admin) {
-                $this->sendError("Admin not found", 404);
+    
+            if (!$user) {
+                $this->sendError("User not found", 404);
                 return;
             }
-            if (isset($admin['password'])) {
-                unset($admin['password']);
+            if (isset($user['password'])) {
+                unset($user['password']);
             }
+    
             http_response_code(200);
             echo json_encode([
                 'status'  => 'success',
-                'message' => 'Admin details retrieved successfully',
-                'data'    => $admin
+                'message' => 'User details retrieved successfully',
+                'data'    => $user
             ]);
         } else {
-            $stmt = $this->db->prepare("SELECT * FROM admins");
+            $stmt = $this->db->prepare("SELECT * FROM users");
             $stmt->execute();
-            $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($admins as &$admin) {
-                if (isset($admin['password'])) {
-                    unset($admin['password']);
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            foreach ($users as &$user) {
+                if (isset($user['password'])) {
+                    unset($user['password']);
                 }
             }
+    
             http_response_code(200);
             echo json_encode([
                 'status'  => 'success',
-                'message' => 'Admins list retrieved successfully',
-                'data'    => $admins
+                'message' => 'Users list retrieved successfully',
+                'data'    => $users
             ]);
         }
     }
-
+    
     /**
      * forgotPassword: Generates a reset token, stores it in the admins table,
      * and sends a plain text email containing only the token using PHPMailer.
