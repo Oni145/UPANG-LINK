@@ -42,9 +42,6 @@ function getAuthHeaders() {
 // ---- Usage ----
 // Call `checkTokenAndRedirect();` on login/signup pages.
 
-
-
-
 // ----- LOGIN FUNCTIONALITY -----
 document.addEventListener('DOMContentLoaded', function() {
     // Call checkTokenAndRedirect on page load to redirect if already logged in
@@ -78,7 +75,7 @@ async function handleLogin(event) {
     event.preventDefault(); // Prevent default form submission
 
     // Get the form values
-    const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     
     // Display loading state
@@ -98,7 +95,7 @@ async function handleLogin(event) {
     console.log('API endpoint path:', '/admin/login');
 
     try {
-        console.log('Sending login request with data:', { username, password: '********' });
+        console.log('Sending login request with data:', { email, password: '********' });
         
         // Create a new XMLHttpRequest object
         const xhr = new XMLHttpRequest();
@@ -203,7 +200,7 @@ async function handleLogin(event) {
         };
         
         // Send the request
-        xhr.send(JSON.stringify({ username, password }));
+        xhr.send(JSON.stringify({ email, password }));
         
     } catch (error) {
         console.error('Login failed:', error);

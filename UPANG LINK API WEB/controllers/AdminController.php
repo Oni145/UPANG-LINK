@@ -88,6 +88,7 @@ class AdminController {
                         } else {
                             $this->sendError("Notification ID is required", 400);
                         }
+                        
                         break;
                     default:
                         $this->sendError("Invalid endpoint or method", 400);
@@ -280,56 +281,79 @@ class AdminController {
      * Login: Validates required fields, checks credentials, generates a token,
      * and returns a success response along with token details.
      */
-    private function login() {
+    
+     private function login() {
         $data = json_decode(file_get_contents("php://input"));
         if (!$data) {
             $this->sendError("Invalid JSON data", 400);
             return;
         }
         
-        $missing = $this->checkMissingFields($data, ['username', 'password']);
+        // Check for required fields
+        $missing = $this->checkMissingFields($data, ['email', 'password']);
         if (!empty($missing)) {
             $this->sendError("Missing field(s): " . implode(", ", $missing), 400);
             return;
         }
         
-        $admin = $this->adminModel->getByUsername($data->username);
-        if (!$admin) {
-            $this->sendError("Admin not found", 404);
+        // Fetch user by email
+        $user = $this->adminModel->getByEmail($data->email);
+        
+        if (!$user) {
+            $this->sendError("User not found", 404);
             return;
         }
-        if (!password_verify($data->password, $admin['password'])) {
+    
+        // Ensure 'user_id' exists
+        if (!isset($user['user_id'])) {
+            $this->sendError("Invalid user data", 500);
+            return;
+        }
+    
+        // Verify password
+        if (!password_verify($data->password, $user['password'])) {
             $this->sendError("Password is incorrect", 401);
             return;
         }
-        
-        // Invalidate any existing tokens for this admin
-        $stmt = $this->db->prepare("DELETE FROM admin_tokens WHERE admin_id = ?");
-        $stmt->execute([$admin['admin_id']]);
-
-        // Generate a new token for admin access
-        $token = bin2hex(random_bytes(16)); // 32-character hex token
+    
+        // Invalidate any existing session tokens for this user
+        $stmt = $this->db->prepare("DELETE FROM user_sessions WHERE user_id = ?");
+        $stmt->execute([$user['user_id']]);
+    
+        // Generate new token
+        $token = bin2hex(random_bytes(32)); // 64-character hex token
         $expiresAt = date('Y-m-d H:i:s', time() + 86400); // Token expires in 24 hours
-
-        // Insert the token into the admin_tokens table
-        $stmt = $this->db->prepare("INSERT INTO admin_tokens (token, admin_id, login_time, expires_at) VALUES (?, ?, NOW(), ?)");
-        if (!$stmt->execute([$token, $admin['admin_id'], $expiresAt])) {
-            $this->sendError("Could not generate token", 500);
+    
+        // Get device info and IP address
+        $deviceInfo = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown Device';
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    
+        // Insert the session into user_sessions table
+        $stmt = $this->db->prepare("INSERT INTO user_sessions (user_id, token, device_info, ip_address, last_activity, expires_at, is_active, created_at) 
+                                    VALUES (?, ?, ?, ?, NOW(), ?, 1, NOW())");
+        if (!$stmt->execute([$user['user_id'], $token, $deviceInfo, $ipAddress, $expiresAt])) {
+            $this->sendError("Could not generate session token", 500);
             return;
         }
         
-        // Remove password from response data
-        unset($admin['password']);
-
+        // Remove password from response
+        unset($user['password']);
+    
         http_response_code(200);
         echo json_encode([
-            'status'     => 'success',
-            'message'    => 'Admin login successful',
-            'data'       => $admin,
-            'token'      => $token,
-            'expires_at' => $expiresAt
+            'status'       => 'success',
+            'message'      => 'User login successful',
+            'data'         => $user,
+            'token'        => $token,
+            'expires_at'   => $expiresAt,
+            'device_info'  => $deviceInfo,
+            'ip_address'   => $ipAddress
         ]);
     }
+    
+    
+    
+
 
     /**
      * Register: Validates required fields and registers a new admin.
@@ -343,35 +367,37 @@ class AdminController {
         }
         
         // Check for required fields
-        $requiredFields = ['username', 'password', 'first_name', 'last_name', 'email'];
+        $requiredFields = ['password', 'first_name', 'last_name', 'email'];
         $missing = $this->checkMissingFields($data, $requiredFields);
         if (!empty($missing)) {
             $this->sendError("Missing field(s): " . implode(", ", $missing), 400);
             return;
         }
         
-        // Check if an admin with this username already exists
-        $existingAdmin = $this->adminModel->getByUsername($data->username);
-        if ($existingAdmin) {
-            $this->sendError("Admin already exists", 400);
+        // Check if a user with this email already exists
+        $existingUser = $this->adminModel->getByEmail($data->email);
+        if ($existingUser) {
+            $this->sendError("User already exists", 400);
             return;
         }
-        $this->adminModel->username = $data->username;
+        
+        // Assign user properties
         $this->adminModel->email = $data->email;
         $this->adminModel->first_name = $data->first_name;
         $this->adminModel->last_name = $data->last_name;
         $this->adminModel->password = password_hash($data->password, PASSWORD_DEFAULT);
-
+    
         if ($this->adminModel->create()) {
             http_response_code(201);
             echo json_encode([
                 'status'  => 'success',
-                'message' => 'Admin registered successfully'
+                'message' => 'User registered successfully'
             ]);
         } else {
-            $this->sendError("Unable to create admin", 500);
+            $this->sendError("Unable to create user", 500);
         }
     }
+    
 
     /**
      * Logout: Retrieves the token from the Authorization header and deletes it.
