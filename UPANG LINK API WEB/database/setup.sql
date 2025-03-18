@@ -14,11 +14,13 @@ CREATE TABLE IF NOT EXISTS admins (
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
+    role VARCHAR(50) NOT NULL,
     password_reset_token VARCHAR(64) DEFAULT NULL,
     password_reset_expires DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 -- Create admin_tokens table for authentication
 CREATE TABLE IF NOT EXISTS admin_tokens (

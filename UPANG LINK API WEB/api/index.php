@@ -94,7 +94,7 @@ error_log("URI: " . print_r($uri, true));
 if (empty($endpoint) || $endpoint === '/') {
     echo json_encode([
         'status'    => 'success',
-        'message'   => 'Welcome to UPANG LINK API',
+        'message'   => 'Welcome to UPANG LINK API WEB',
         'endpoints' => [
             'admin'    => '/admin',
             'requests' => '/requests',

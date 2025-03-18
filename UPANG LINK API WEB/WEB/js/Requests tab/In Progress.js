@@ -128,7 +128,7 @@ async function loadRequestsUsingPagination() {
 
     // Filter only "in_progress" status requests
     allRequests = requestsData.data
-      .filter(request => request.status === "in_progress")
+      .filter(request => request.status === "IN_PROGRESS")
       .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
 
     allUsersData = usersData.data;
@@ -197,7 +197,7 @@ function getStatusClass(status) {
           <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
           <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
           <td style="text-align: center;">
-            <span class="badge ${getStatusClass(request.status)}">${request.status.replace('_', ' ')}</span>
+            <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span>
           </td> <!-- Status -->
           <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
           <td style="text-align: center;">
@@ -208,6 +208,9 @@ function getStatusClass(status) {
         </tr>`;
 }).join('');
 }
+
+
+
 
 
 /**
@@ -259,18 +262,36 @@ function updatePaginationControls(currentPage) {
 /**
  * Helper function to build a styled attached file element.
  */
-function buildFileLink(file, label) {
-  const displayText = label || file.file_name;
-  return `<div class="attached-file">
-        <div class="file-info">
-          <i class="fas fa-file"></i>
-          <span>${displayText}</span>
-        </div>
-        <div class="file-actions">
-          <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
-          <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
-        </div>
+function viewRequest(requestId) {
+  showLoading();
+
+  const request = allRequests.find(r => r.request_id == requestId);
+  if (!request) {
+      console.error("Request not found!");
+      hideLoading();
+      return;
+  }
+
+  const user = allUsersData.find(u => u.user_id == request.user_id);
+  const modalTitle = `Ticket Details - Request #${request.request_id}`;
+
+  let ticketDetailsHTML = `
+      <div class="ticket-details">
+          <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+          <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+          <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span></p>
+          <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
       </div>`;
+
+  document.getElementById('ticketModalLabel').innerHTML = modalTitle;
+  document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+
+  // Build file links if a file is attached
+  let fileLinks = request.file_path ? buildFileLink(request, "Attached File") : "<p>No attached files.</p>";
+  
+  document.getElementById('ticketFiles').innerHTML = fileLinks;
+
+  hideLoading();
 }
 
 /**
@@ -290,12 +311,13 @@ function viewRequest(requestId) {
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
   // Ticket Details Section
-  let ticketDetailsHTML = `<div class="ticket-details">
-        <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-        <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-<p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status.replace('_', ' ')}</span></p>
-        <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-      </div>`;
+let ticketDetailsHTML = `<div class="ticket-details">
+      <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+      <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+      <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span></p>
+      <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+    </div>`;
+
 
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
   document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
@@ -304,30 +326,66 @@ function viewRequest(requestId) {
 
 
   
-  // Attached Files Section
-  const fileLabels = {
-    "Clearance": "Clearance Form",
-    "RequestLetter": "Request Letter",
-    "StudentID": "Student ID",
-    "1x1_id_picture_(white_background,_formal_attire)": "1x1 ID Picture",
-    "RegistrationForm": "Registration Form",
-    "IDPicture": "ID Picture",
-    "ProfessorApproval": "Professor Approval"
-  };
-  let fileLinks = '';
-  for (const key in fileLabels) {
-    if (request[key] && Array.isArray(request[key]) && request[key].length > 0) {
-      request[key].forEach(file => {
-        fileLinks += buildFileLink(file, fileLabels[key]);
-      });
+
+  
+ // Function to build file links
+ function buildFileLink(file, label) {
+  if (!file.file_path) {
+    console.warn("Skipping file due to missing file_path:", file);
+    return ''; // Prevent broken file links
+  }
+
+  const fileName = file.file_path.split('/').pop(); // Extract actual file name
+  const displayText = label || fileName; // Use label if available, otherwise use file name
+
+  return `<div class="attached-file">
+      <div class="file-info">
+        <i class="fas fa-file"></i>
+        <span>${displayText}</span>
+      </div>
+      <div class="file-actions">
+        <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
+        <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
+      </div>
+    </div>`;
+}
+
+// Base URL for file uploads
+const baseUrl = "http://localhost/UPANG-LINK/uploads/";
+let fileLinks = "";
+
+// Check if `files` array exists in request
+if (request.files && Array.isArray(request.files)) {
+  console.log(`Processing ${request.files.length} files...`);
+
+  request.files.forEach(file => {
+    if (file && file.file_path) {
+      file.file_path = baseUrl + file.file_path; // Ensure full URL
+      const fileLabel = file.field_name.replace(/_/g, ' ').toUpperCase(); // Format label (e.g., "affidavit_of_loss" → "AFFIDAVIT OF LOSS")
+      fileLinks += buildFileLink(file, fileLabel);
+    } else {
+      console.warn("Skipping invalid file:", file);
     }
-  }
-  const ticketFilesEl = document.getElementById('ticketFiles');
-  if (fileLinks) {
-    ticketFilesEl.innerHTML = `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`;
-  } else {
-    ticketFilesEl.innerHTML = '';
-  }
+  });
+}
+
+// Debugging before updating the DOM
+console.log("Generated File Links:", fileLinks);
+
+// If no multiple files were found, check for a single file_path
+if (!fileLinks && request.file_path) {
+  console.log("Single file detected:", request.file_path);
+  fileLinks += buildFileLink({ file_path: baseUrl + request.file_path }, "Attached File");
+}
+
+// Debugging before updating the DOM
+console.log("Generated File Links:", fileLinks);
+
+const ticketFilesEl = document.getElementById('ticketFiles');
+ticketFilesEl.innerHTML = fileLinks 
+  ? `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`
+  : '<p>No attached files.</p>';
+
   
   // Inline Comment Editing Section
   const displayCommentTextEl = document.getElementById('displayCommentText');

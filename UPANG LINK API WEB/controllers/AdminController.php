@@ -21,163 +21,116 @@ class AdminController {
     private $adminModel;
 
     public function __construct($db) {
-        // Check if database connection is valid
-        if (!$db) {
-            // Return a proper JSON error response
-            header('Content-Type: application/json');
-            http_response_code(500);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Database connection failed'
-            ]);
-            exit();
-        }
-        
         $this->db = $db;
         $this->adminModel = new Admin($db);
     }
 
-    public function handleRequest($method, $request = []) {
-        // Check if we're at the base endpoint (/admin)
-        if (empty($request)) {
-            // Check the method to determine the action
-            switch ($method) {
-                case 'GET':
-                    $this->getAdminInfo();
-                    break;
-                case 'POST':
-                    $this->createAdmin();
-                    break;
-                default:
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'Method not allowed'
-                    ]);
-                    http_response_code(405);
-                    break;
+    public function handleRequest($method, $uri) {
+        try {
+            error_log("Request Method: $method");
+            error_log("Request URI: " . implode('/', $uri));
+    
+            if (!isset($uri[0]) || $uri[0] !== 'admin') {
+                $this->sendError("Invalid admin route", 400);
+                return;
             }
+    
+            if ($method === 'POST' && isset($uri[1])) {
+                switch ($uri[1]) {
+                    case 'login':
+                        $this->login();
+                        break;
+                    case 'register':
+                        $this->register();
+                        break;
+                    case 'logout':
+                        $this->logout();
+                        break;
+                    case 'forgot_password':
+                        $this->forgotPassword();
+                        break;
+                    case 'reset_password':
+                        $this->resetPassword();
+                        break;
+                    case 'notifications':
+                        if (isset($uri[2]) && $uri[2] === 'mark_all_as_read') {
+                            $this->markAllNotificationsAsRead();
+                        } else {
+                            $this->sendError("Invalid notifications endpoint", 400);
+                        }
+                        break;
+                    default:
+                        $this->sendError("Invalid endpoint or method", 400);
+                }
+                return;
+            }
+    
+            if ($method === 'GET' && isset($uri[1])) {
+                switch ($uri[1]) {
+                    case 'users':
+                        $this->getUsers();
+                        break;
+                    case 'profile': // ✅ NEW: Fetch Logged-in Admin Profile
+                        $this->getAdminProfile();
+                        break;
+                    case 'notifications':
+                        if (isset($uri[2]) && $uri[2] === 'read') {
+                            $this->getReadNotifications();
+                        } else if (isset($uri[2]) && $uri[2] === 'unread') {
+                            $this->getUnreadNotifications();
+                        } else {
+                            $this->getNotifications();
+                        }
+                        break;
+                    case 'notification':
+                        if (isset($uri[2])) {
+                            $this->getNotificationById($uri[2]);
+                        } else {
+                            $this->sendError("Notification ID is required", 400);
+                        }
+                        break;
+                    default:
+                        $this->sendError("Invalid endpoint or method", 400);
+                }
+                return;
+            }
+    
+            $this->sendError("Invalid endpoint or method", 400);
+        } catch (Exception $e) {
+            $this->sendError("Server error: " . $e->getMessage(), 500);
+        }
+    }
+
+    
+
+
+
+
+    // Admin Profile //
+
+    public function getAdminProfile() {
+        if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            echo json_encode(["status" => "error", "message" => "No authorization token provided"]);
             return;
         }
-
-        // Handle other endpoints
-        switch ($request[0]) {
-            case 'login':
-                if ($method === 'POST') {
-                    $this->login();
-                } else {
-                    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
-                    http_response_code(405);
-                }
-                break;
-                
-            case 'check':
-                if ($method === 'GET') {
-                    $this->checkAuthentication();
-                } else {
-                    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
-                    http_response_code(405);
-                }
-                break;
-
-            case 'logout':
-                if ($method === 'POST') {
-                    $this->logout();
-                } else {
-                    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
-                    http_response_code(405);
-                }
-                break;
-
-            case 'register':
-                if (isset($request[1])) {
-                    switch ($request[1]) {
-                        case 'login':
-                            $this->login();
-                            break;
-                        case 'register':
-                            $this->register();
-                            break;
-                        case 'logout':
-                            $this->logout();
-                            break;
-                        case 'forgot_password':
-                            $this->forgotPassword();
-                            break;
-                        case 'reset_password':
-                            $this->resetPassword();
-                            break;
-                        case 'notifications':
-                            if (isset($request[2]) && $request[2] === 'mark_all_as_read') {
-                                $this->markAllNotificationsAsRead();
-                            } else {
-                                $this->sendError("Invalid endpoint for notifications", 400);
-                            }
-                            break;
-                        default:
-                            $this->sendError("Invalid endpoint or method", 400);
-                    }
-                } else {
-                    $this->sendError("Invalid endpoint or method", 400);
-                }
-                break;
-
-            case 'users':
-                if ($method === 'GET') {
-                    $this->getUsers();
-                } else {
-                    $this->sendError("Invalid endpoint or method", 400);
-                }
-                break;
-
-            case 'notifications':
-                if (isset($request[1])) {
-                    switch ($request[1]) {
-                        case 'read':
-                            if ($method === 'GET') {
-                                $this->getReadNotifications();
-                            } else {
-                                $this->sendError("Invalid endpoint or method", 400);
-                            }
-                            break;
-                        case 'unread':
-                            if ($method === 'GET') {
-                                $this->getUnreadNotifications();
-                            } else {
-                                $this->sendError("Invalid endpoint or method", 400);
-                            }
-                            break;
-                        case 'notifications':
-                            if ($method === 'GET') {
-                                $this->getNotifications();
-                            } else {
-                                $this->sendError("Invalid endpoint or method", 400);
-                            }
-                            break;
-                        default:
-                            $this->sendError("Invalid endpoint or method", 400);
-                    }
-                } else {
-                    $this->sendError("Invalid endpoint or method", 400);
-                }
-                break;
-
-            case 'notification':
-                if (isset($request[1])) {
-                    if ($method === 'GET') {
-                        $this->getNotificationById($request[1]);
-                    } else {
-                        $this->sendError("Invalid endpoint or method", 400);
-                    }
-                } else {
-                    $this->sendError("Notification ID is required", 400);
-                }
-                break;
-
-            default:
-                $this->sendError("Invalid endpoint or method", 400);
+    
+        // Extract token from header
+        $token = str_replace("Bearer ", "", $_SERVER['HTTP_AUTHORIZATION']);
+    
+        // Get admin details using token
+        $admin = $this->adminModel->getAdminByToken($token);
+        
+        if ($admin) {
+            // Remove sensitive fields
+            unset($admin['password'], $admin['password_reset_token'], $admin['password_reset_expires'], $admin['created_at'], $admin['updated_at']);
+            
+            echo json_encode(["status" => "success", "data" => $admin]);
+        } else {
+            echo json_encode(["status" => "error", "message" => "Admin not found or invalid token"]);
         }
     }
     
+  
     // ✅ Mark All Notifications as Read
     public function markAllNotificationsAsRead() {
         try {
@@ -185,7 +138,7 @@ class AdminController {
             if (!$adminId) return;
     
             // Update all notifications for the admin to 'read'
-            $stmt = $this->db->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?");
+            $stmt = $this->db->prepare("UPDATE admin_notifications SET is_read = 1 WHERE admin_id = ?");
             $stmt->execute([$adminId]);
     
             echo json_encode([
@@ -203,7 +156,7 @@ class AdminController {
             $adminId = $this->validateToken();
             if (!$adminId) return;
     
-            $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ?");
+            $stmt = $this->db->prepare("SELECT * FROM admin_notifications WHERE admin_id = ?");
             $stmt->execute([$adminId]);
             $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -224,7 +177,7 @@ class AdminController {
             $adminId = $this->validateToken();
             if (!$adminId) return;
     
-            $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ? AND is_read = 1");
+            $stmt = $this->db->prepare("SELECT * FROM admin_notifications WHERE admin_id = ? AND is_read = 1");
             $stmt->execute([$adminId]);
             $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -245,7 +198,7 @@ class AdminController {
             $adminId = $this->validateToken();
             if (!$adminId) return;
     
-            $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ? AND is_read = 0");
+            $stmt = $this->db->prepare("SELECT * FROM admin_notifications WHERE admin_id = ? AND is_read = 0");
             $stmt->execute([$adminId]);
             $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -265,8 +218,8 @@ class AdminController {
         $adminId = $this->validateToken();
         if (!$adminId) return;
     
-        $stmt = $this->db->prepare("SELECT is_read FROM notifications WHERE notification_id = ? AND user_id = ?");
-        $stmt->execute([$notificationId, $adminId]);
+        $stmt = $this->db->prepare("SELECT is_read FROM admin_notifications WHERE notification_id = ?");
+        $stmt->execute([$notificationId]);
         $notification = $stmt->fetch(PDO::FETCH_ASSOC);
     
         if (!$notification) {
@@ -276,8 +229,8 @@ class AdminController {
     
         $newStatus = ($notification['is_read'] == 1) ? 0 : 1;
     
-        $updateStmt = $this->db->prepare("UPDATE notifications SET is_read = ? WHERE notification_id = ? AND user_id = ?");
-        $updateStmt->execute([$newStatus, $notificationId, $adminId]);
+        $updateStmt = $this->db->prepare("UPDATE admin_notifications SET is_read = ? WHERE notification_id = ?");
+        $updateStmt->execute([$newStatus, $notificationId]);
     
         echo json_encode([
             "status" => "success",
@@ -295,26 +248,16 @@ class AdminController {
             return false;
         }
     
-        $stmt = $this->db->prepare("SELECT user_id FROM user_sessions WHERE token = ? AND expires_at > NOW() AND is_active = 1");
+        $stmt = $this->db->prepare("SELECT admin_id FROM admin_tokens WHERE token = ?");
         $stmt->execute([$token]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
     
-        if (!$user) {
+        if (!$admin) {
             $this->sendError("Invalid or expired token", 401);
             return false;
         }
     
-        // Get admin user
-        $stmt = $this->db->prepare("SELECT user_id FROM users WHERE user_id = ? AND role = 'admin'");
-        $stmt->execute([$user['user_id']]);
-        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$admin) {
-            $this->sendError("User is not an admin", 403);
-            return false;
-        }
-    
-        return $admin['user_id'];
+        return $admin['admin_id'];
     }
     
     // ✅ Extract Token from Request Headers
@@ -337,87 +280,55 @@ class AdminController {
      * Login: Validates required fields, checks credentials, generates a token,
      * and returns a success response along with token details.
      */
-    public function login() {
-        try {
-            // Log the raw input for debugging
-            $raw_input = file_get_contents('php://input');
-            error_log("Raw login input: " . $raw_input);
-            
-            // Parse JSON input
-            $data = json_decode($raw_input);
-            
-            // Check for JSON parsing errors
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                $this->sendError("Invalid JSON data: " . json_last_error_msg(), 400);
-                return;
-            }
-            
-            // Validate required fields
-            $missing = $this->checkMissingFields($data, ['username', 'password']);
-            if (!empty($missing)) {
-                $this->sendError("Missing field(s): " . implode(", ", $missing), 400);
-                return;
-            }
-            
-            // Get admin by username (which is actually the email in the users table)
-            $admin = $this->adminModel->getByUsername($data->username);
-            if (!$admin) {
-                $this->sendError("Admin not found", 404);
-                return;
-            }
-            
-            // Verify password
-            if (!password_verify($data->password, $admin['password'])) {
-                $this->sendError("Password is incorrect", 401);
-                return;
-            }
-            
-            // Invalidate any existing tokens for this admin
-            $stmt = $this->db->prepare("DELETE FROM user_sessions WHERE user_id = ?");
-            if (!$stmt->execute([$admin['user_id']])) {
-                $this->sendError("Failed to invalidate existing tokens", 500);
-                return;
-            }
-
-            // Generate a new token for admin access
-            $token = bin2hex(random_bytes(16)); // 32-character hex token
-            $expiresAt = date('Y-m-d H:i:s', time() + 86400); // Token expires in 24 hours
-
-            // Insert the token into the user_sessions table
-            $stmt = $this->db->prepare("INSERT INTO user_sessions (user_id, token, ip_address, device_info, expires_at, is_active) VALUES (?, ?, ?, ?, ?, 1)");
-            if (!$stmt->execute([
-                $admin['user_id'], 
-                $token, 
-                $_SERVER['REMOTE_ADDR'], 
-                $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown', 
-                $expiresAt
-            ])) {
-                $this->sendError("Could not generate token", 500);
-                return;
-            }
-            
-            // Remove password from response data
-            unset($admin['password']);
-
-            // Set the content type to JSON
-            header('Content-Type: application/json');
-            
-            // Return the success response
-            http_response_code(200);
-            echo json_encode([
-                'status'     => 'success',
-                'message'    => 'Admin login successful',
-                'data'       => $admin,
-                'token'      => $token,
-                'expires_at' => $expiresAt
-            ]);
-        } catch (Exception $e) {
-            // Log the exception
-            error_log("Login error: " . $e->getMessage());
-            
-            // Return a proper error response
-            $this->sendError("Login failed: " . $e->getMessage(), 500);
+    private function login() {
+        $data = json_decode(file_get_contents("php://input"));
+        if (!$data) {
+            $this->sendError("Invalid JSON data", 400);
+            return;
         }
+        
+        $missing = $this->checkMissingFields($data, ['username', 'password']);
+        if (!empty($missing)) {
+            $this->sendError("Missing field(s): " . implode(", ", $missing), 400);
+            return;
+        }
+        
+        $admin = $this->adminModel->getByUsername($data->username);
+        if (!$admin) {
+            $this->sendError("Admin not found", 404);
+            return;
+        }
+        if (!password_verify($data->password, $admin['password'])) {
+            $this->sendError("Password is incorrect", 401);
+            return;
+        }
+        
+        // Invalidate any existing tokens for this admin
+        $stmt = $this->db->prepare("DELETE FROM admin_tokens WHERE admin_id = ?");
+        $stmt->execute([$admin['admin_id']]);
+
+        // Generate a new token for admin access
+        $token = bin2hex(random_bytes(16)); // 32-character hex token
+        $expiresAt = date('Y-m-d H:i:s', time() + 86400); // Token expires in 24 hours
+
+        // Insert the token into the admin_tokens table
+        $stmt = $this->db->prepare("INSERT INTO admin_tokens (token, admin_id, login_time, expires_at) VALUES (?, ?, NOW(), ?)");
+        if (!$stmt->execute([$token, $admin['admin_id'], $expiresAt])) {
+            $this->sendError("Could not generate token", 500);
+            return;
+        }
+        
+        // Remove password from response data
+        unset($admin['password']);
+
+        http_response_code(200);
+        echo json_encode([
+            'status'     => 'success',
+            'message'    => 'Admin login successful',
+            'data'       => $admin,
+            'token'      => $token,
+            'expires_at' => $expiresAt
+        ]);
     }
 
     /**
@@ -489,7 +400,7 @@ class AdminController {
             return;
         }
         
-        $stmt = $this->db->prepare("UPDATE user_sessions SET is_active = 0 WHERE token = ?");
+        $stmt = $this->db->prepare("DELETE FROM admin_tokens WHERE token = ?");
         $stmt->execute([$token]);
         
         if ($stmt->rowCount() > 0) {
@@ -533,21 +444,22 @@ class AdminController {
         }
         
         // Validate the token exists and has not expired
-        $stmt = $this->db->prepare("SELECT u.* FROM user_sessions s 
-                                   JOIN users u ON s.user_id = u.user_id 
-                                   WHERE s.token = ? AND s.expires_at > NOW() AND s.is_active = 1 AND u.role = 'admin'");
+        $stmt = $this->db->prepare("SELECT * FROM admin_tokens WHERE token = ? AND expires_at > NOW()");
         $stmt->execute([$token]);
-        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$admin) {
+        $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$tokenData) {
             $this->sendError("Invalid or expired token", 401);
             return;
         }
 
         if ($adminId !== null) {
-            $stmt = $this->db->prepare("SELECT * FROM users WHERE user_id = ? AND role = 'admin'");
-            $stmt->execute([$adminId]);
-            $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (method_exists($this->adminModel, 'getById')) {
+                $admin = $this->adminModel->getById($adminId);
+            } else {
+                $stmt = $this->db->prepare("SELECT * FROM admins WHERE admin_id = ?");
+                $stmt->execute([$adminId]);
+                $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+            }
             
             if (!$admin) {
                 $this->sendError("Admin not found", 404);
@@ -563,7 +475,7 @@ class AdminController {
                 'data'    => $admin
             ]);
         } else {
-            $stmt = $this->db->prepare("SELECT * FROM users WHERE role = 'admin'");
+            $stmt = $this->db->prepare("SELECT * FROM admins");
             $stmt->execute();
             $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($admins as &$admin) {
@@ -581,7 +493,7 @@ class AdminController {
     }
 
     /**
-     * forgotPassword: Generates a reset token, stores it in the users table,
+     * forgotPassword: Generates a reset token, stores it in the admins table,
      * and sends a plain text email containing only the token using PHPMailer.
      */
     private function forgotPassword() {
@@ -609,9 +521,9 @@ class AdminController {
         $resetToken = bin2hex(random_bytes(16));
         $expiresAt = date('Y-m-d H:i:s', time() + 3600);
         
-        // Update the users table with the reset token and expiry
-        $stmt = $this->db->prepare("UPDATE users SET reset_password_token = ?, reset_token_expiry = ? WHERE user_id = ?");
-        if (!$stmt->execute([$resetToken, $expiresAt, $admin['user_id']])) {
+        // Update the admins table with the reset token and expiry
+        $stmt = $this->db->prepare("UPDATE admins SET password_reset_token = ?, password_reset_expires = ? WHERE admin_id = ?");
+        if (!$stmt->execute([$resetToken, $expiresAt, $admin['admin_id']])) {
             $this->sendError("Could not set reset token", 500);
             return;
         }
@@ -636,7 +548,7 @@ class AdminController {
 
             $mail->isHTML(false); // Send as plain text
             $mail->setFrom('your-email@example.com', 'Admin Support');
-            $mail->addAddress($admin['email'], $admin['email']);
+            $mail->addAddress($admin['email'], $admin['username']);
 
             $mail->Subject = $subject;
             $mail->Body    = $body;
@@ -656,7 +568,7 @@ class AdminController {
 
     /**
      * resetPassword: Validates the reset token, updates the password,
-     * and clears the token fields in the users table.
+     * and clears the token fields in the admins table.
      */
     private function resetPassword() {
         $data = json_decode(file_get_contents("php://input"));
@@ -665,7 +577,7 @@ class AdminController {
             return;
         }
         
-        $stmt = $this->db->prepare("SELECT user_id, reset_token_expiry FROM users WHERE reset_password_token = ? AND role = 'admin'");
+        $stmt = $this->db->prepare("SELECT admin_id, password_reset_expires FROM admins WHERE password_reset_token = ?");
         $stmt->execute([$data->token]);
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$admin) {
@@ -673,15 +585,15 @@ class AdminController {
             return;
         }
         
-        if (new DateTime() > new DateTime($admin['reset_token_expiry'])) {
+        if (new DateTime() > new DateTime($admin['password_reset_expires'])) {
             $this->sendError("Reset token has expired", 400);
             return;
         }
         
         $newPasswordHashed = password_hash($data->new_password, PASSWORD_DEFAULT);
         
-        $stmt = $this->db->prepare("UPDATE users SET password = ?, reset_password_token = NULL, reset_token_expiry = NULL WHERE user_id = ?");
-        if ($stmt->execute([$newPasswordHashed, $admin['user_id']])) {
+        $stmt = $this->db->prepare("UPDATE admins SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE admin_id = ?");
+        if ($stmt->execute([$newPasswordHashed, $admin['admin_id']])) {
             echo json_encode([
                 'status'  => 'success',
                 'message' => 'Password has been reset successfully.'
@@ -702,71 +614,12 @@ class AdminController {
     }
 
     private function sendError($message, $code = 400) {
-        // Make sure we set the content type to JSON
-        header('Content-Type: application/json');
-        
-        // Set the HTTP response code
         http_response_code($code);
-        
-        // Log the error message
-        error_log("API Error: " . $message . " (Code: " . $code . ")");
-        
-        // Send the error response as JSON
         echo json_encode([
             'status'  => 'error',
             'message' => $message
         ]);
-        
-        // Exit the script
         exit();
-    }
-
-    // Method to check if the authentication token is valid
-    private function checkAuthentication() {
-        $headers = apache_request_headers();
-        $token = null;
-        
-        if (isset($headers['Authorization'])) {
-            $token = str_replace('Bearer ', '', $headers['Authorization']);
-        } elseif (isset($headers['authorization'])) {
-            $token = str_replace('Bearer ', '', $headers['authorization']);
-        }
-        
-        if (!$token) {
-            http_response_code(401);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'No authentication token provided'
-            ]);
-            return;
-        }
-        
-        try {
-            $stmt = $this->db->prepare("SELECT * FROM admin_tokens WHERE token = ? AND expires_at > NOW()");
-            $stmt->execute([$token]);
-            
-            if ($stmt->rowCount() === 0) {
-                http_response_code(401);
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Invalid or expired token'
-                ]);
-                return;
-            }
-            
-            // Token is valid
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'Authentication valid'
-            ]);
-            
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Error checking authentication: ' . $e->getMessage()
-            ]);
-        }
     }
 }
 ?>

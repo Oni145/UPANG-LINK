@@ -1,4 +1,3 @@
-// API //
 // Use the API_BASE_URL from config.js instead of hardcoding the URL
 const notificationButton = document.getElementById('notificationButton');
 const notificationDialog = document.getElementById('notificationDialog');
@@ -228,4 +227,4 @@ notificationsList.addEventListener('click', (event) => {
 markAllReadBtn.addEventListener('click', markAllNotificationsAsRead);
 
 // Unless needed //           
-// <button class="mark-as-read" data-id="${notification.notification_id}">MARK AS READ</button>
+// <button class="mark-as-read" data-id="${notification.notification_id}">MARK AS READ</button> //

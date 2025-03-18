@@ -66,6 +66,56 @@ CREATE TABLE requests (
     FOREIGN KEY (type_id) REFERENCES request_types(type_id)
 );
 
+
+
+
+-- Create admins table
+CREATE TABLE IF NOT EXISTS admins (
+    admin_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    password_reset_token VARCHAR(64) DEFAULT NULL,
+    password_reset_expires DATETIME DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- Create admin_tokens table for authentication
+CREATE TABLE IF NOT EXISTS admin_tokens (
+    token CHAR(64) PRIMARY KEY,
+    admin_id INT NOT NULL,
+    login_time DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Create admin_notifications table
+CREATE TABLE IF NOT EXISTS admin_notifications (
+    notification_id INT PRIMARY KEY AUTO_INCREMENT,
+    admin_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+
+
+
+
+
+
+
+
+
+
 -- Request notes table (for admin comments and additional information)
 CREATE TABLE request_notes (
     note_id INT PRIMARY KEY AUTO_INCREMENT,

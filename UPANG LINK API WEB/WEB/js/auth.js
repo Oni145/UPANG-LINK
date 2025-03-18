@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage.style.backgroundColor = '#ffeeee';
             errorMessage.style.padding = '10px';
             errorMessage.style.borderRadius = '5px';
-            errorMessage.style.marginBottom = '15px';
+            errorMessage.style.marginBottom = '15px';   
         }
     }
     

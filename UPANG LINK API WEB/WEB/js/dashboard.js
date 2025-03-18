@@ -37,41 +37,41 @@ const headers = getAuthHeaders();
 /**
  * Displays the loading indicator.
  */
-function showLoading() {
-  const loadingEl = document.getElementById('loadingIndicator');
-  if (loadingEl) {
-    loadingEl.style.display = 'flex';
+  function showLoading() {
+    const loadingEl = document.getElementById('loadingIndicator');
+    if (loadingEl) {
+      loadingEl.style.display = 'flex';
+    }
   }
-}
 
-/**
- * Hides the loading indicator.
- */
-function hideLoading() {
-  const loadingEl = document.getElementById('loadingIndicator');
-  if (loadingEl) {
-    loadingEl.style.display = 'none';
+  /**
+   * Hides the loading indicator.
+   */
+  function hideLoading() {
+    const loadingEl = document.getElementById('loadingIndicator');
+    if (loadingEl) {
+      loadingEl.style.display = 'none';
+    }
   }
-}
 
-/**
- * Displays the loading indicator.
- */
-function showLoading() {
-  const loadingEl = document.getElementById('loadingIndicator');
-  if (loadingEl) {
-    loadingEl.style.display = 'flex';
+  /**
+   * Displays the loading indicator.
+   */
+  function showLoading() {
+    const loadingEl = document.getElementById('loadingIndicator');
+    if (loadingEl) {
+      loadingEl.style.display = 'flex';
+    }
   }
-}
 
-/**
- * Hides the loading indicator.
- */
-function hideLoading() {
-  const loadingEl = document.getElementById('loadingIndicator');
-  if (loadingEl) {
-    loadingEl.style.display = 'none';
-  }
+  /**
+   * Hides the loading indicator.
+   */
+  function hideLoading() {
+    const loadingEl = document.getElementById('loadingIndicator');
+    if (loadingEl) {
+      loadingEl.style.display = 'none';
+    }
 }
 
 /**
@@ -178,7 +178,7 @@ function displayRequestsPage(page) {
  */
 function getStatusClass(status) {
   const classes = {
-    'pending': 'status-PENDING',
+    'PENDING': 'status-pending',
     'approved': 'status-approved',
     'rejected': 'status-rejected',
     'in_progress': 'status-in_progress',
@@ -187,43 +187,9 @@ function getStatusClass(status) {
   return classes[status] || 'status-secondary';
 }
 
-/**
- * Renders the list of requests into the table.
- */
-function displayRequests(requests, usersData) {
-  const userMap = {};
-  usersData.forEach(user => {
-    userMap[user.user_id] = user;
-  });
-  const tbody = document.getElementById('requestsTableBody');
-  if (!tbody) {
-    console.error("requestsTableBody element not found.");
-    return;
-  }
-  if (!requests || requests.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No requests to display</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = requests.map(request => {
-    const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
-    return `
-      <tr>
-        <td>${user.first_name} ${user.last_name}</td>
-        <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
-        <td>
-<span id="status-badge" class="badge"> ${request.status}
-</span>
-        </td>
-        <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
-        <td>
-          <button class="btn btn-primary" onclick="viewRequest(${request.request_id})">
-            View
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
+
+
+
 
 /**
  * Updates pagination controls.
@@ -475,29 +441,42 @@ class Dashboard {
   }
 
   async displayUserName() {
-    console.log("Displaying logged-in user name...");
+    console.log("Fetching logged-in admin profile...");
+
     try {
-      let endpoint = `${API_BASE_URL}/admin/users`;
-      let response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(this.token) });
-      let result = await response.json();
-      if (response.ok && result.status === 'success') {
-        window.currentUserRole = 'admin';
-        console.log("Admin endpoint successful. Detected role: admin.");
-      } else {
-        throw new Error("Unable to fetch admin user details.");
-      }
-      const currentUser = result.data[0];
-      const nameEl = document.getElementById('userFullName');
-      if (nameEl) {
-        const displayName = currentUser.username || `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
-        nameEl.textContent = displayName;
-      }
-      console.log("Logged in user data:", currentUser);
+        let endpoint = `${API_BASE_URL}/admin/profile`; // No hardcoding, uses the logged-in admin
+        let response = await fetch(endpoint, { 
+            method: 'GET',
+            headers: getAuthHeaders(this.token) 
+        });
+
+        let text = await response.text();
+        console.log("Raw response from server:", text); // Debugging: log raw response
+
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (jsonError) {
+            console.error("JSON Parse Error:", jsonError);
+            return;
+        }
+
+        console.log("Parsed API response:", result); // Debugging: log parsed response
+
+        if (!response.ok || result.status !== 'success' || !result.data) {
+            console.error("Error: Invalid admin profile data.");
+            return;
+        }
+
+        console.log("Logged-in admin data:", result.data); // Final log for debugging
+
     } catch (error) {
-      console.error("Error fetching user details:", error);
-      this.showErrorAlert(error.message);
+        console.error("Error fetching admin details:", error);
     }
-  }
+}
+
+
+
 
   async initializeData() {
     console.log("Fetching requests and users data...");
@@ -759,41 +738,48 @@ class Dashboard {
   displayRequests(requests) {
     console.log("Displaying requests in table...");
     if (!this.usersData) {
-      console.error("No users data available.");
-      return;
+        console.error("No users data available.");
+        return;
     }
+
     const userMap = {};
     this.usersData.forEach(user => {
-      userMap[user.user_id] = user;
+        userMap[user.user_id] = user;
     });
+
     const tbody = document.getElementById('requestsTableBody');
     if (!tbody) {
-      console.error("requestsTableBody element not found in the DOM.");
-      return;
+        console.error("requestsTableBody element not found in the DOM.");
+        return;
     }
+
     if (!requests || requests.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-center">No recent requests</td></tr>`;
-      console.log("No recent requests to display.");
-      return;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center">No recent requests</td></tr>`;
+        console.log("No recent requests to display.");
+        return;
     }
+
     tbody.innerHTML = requests.map(request => {
-      const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
-      return `
+        const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+        return `
         <tr>
           <td>${user.first_name} ${user.last_name}</td>
           <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
           <td>
-<span class="badge status-${request.status} fs-6 py-8 px-6">
-    ${request.status}
-</span>
+            <span class="badge status-${request.status.toLowerCase()}">
+                ${request.status}
             </span>
           </td>
           <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
         </tr>
       `;
     }).join('');
+
     console.log("Requests table updated.");
-  }
+}
+
+
+
 }
 
 // Initialize Dashboard after DOM loads

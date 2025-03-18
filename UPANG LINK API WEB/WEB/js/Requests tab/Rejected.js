@@ -127,7 +127,7 @@ async function loadRequestsUsingPagination() {
 
     // Filter only "rejected" status requests
     allRequests = requestsData.data
-      .filter(request => request.status === "rejected")
+      .filter(request => request.status === "REJECTED")
       .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
 
     allUsersData = usersData.data;
@@ -193,21 +193,24 @@ function displayRequests(requests, usersData) {
 
   tbody.innerHTML = requests.map(request => {
     const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+    const formattedRequestId = String(request.request_id).padStart(2, '0'); // Ensures "01", "02", etc.
+
     return `<tr>
-          <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
-          <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
-          <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
-          <td style="text-align: center;">
-            <span class="badge ${getStatusClass(request.status)}">${request.status.replace('_', ' ')}</span>
+          <td>${user.first_name} ${user.last_name}</td> <!-- Name -->
+          <td>${formattedRequestId}</td> <!-- Request Number with leading zero -->
+          <td>${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
+          <td>
+            <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
           </td> <!-- Status -->
-          <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
-          <td style="text-align: center;">
+          <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Centered Date -->
+          <td>
             <div style="display: flex; justify-content: center; gap: 5px;">
               <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button>
             </div>
           </td> <!-- Action -->
         </tr>`;
 }).join('');
+
 }
 
 /**
@@ -291,43 +294,39 @@ function viewRequest(requestId) {
   
   // Ticket Details Section
   let ticketDetailsHTML = `<div class="ticket-details">
-        <p><strong>Name:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-        <p><strong>Request Type:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-        <p><strong>Status:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
-        <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+        <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+        <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+        <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
+        <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
       </div>`;
-
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
   document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
 
-
-
-
-  
-  // Attached Files Section
-  const fileLabels = {
-    "Clearance": "Clearance Form",
-    "RequestLetter": "Request Letter",
-    "StudentID": "Student ID",
-    "1x1_id_picture_(white_background,_formal_attire)": "1x1 ID Picture",
-    "RegistrationForm": "Registration Form",
-    "IDPicture": "ID Picture",
-    "ProfessorApproval": "Professor Approval"
-  };
+  // Base URL for file uploads
+  const baseUrl = "http://localhost/UPANG-LINK/uploads/";
   let fileLinks = '';
-  for (const key in fileLabels) {
-    if (request[key] && Array.isArray(request[key]) && request[key].length > 0) {
-      request[key].forEach(file => {
-        fileLinks += buildFileLink(file, fileLabels[key]);
-      });
-    }
+
+  // Check if `files` array exists in request
+  if (request.files && Array.isArray(request.files)) {
+    console.log(`Processing ${request.files.length} files...`);
+
+    request.files.forEach(file => {
+      if (file && file.file_path) {
+        file.file_path = baseUrl + file.file_path; // Ensure full URL
+        const fileLabel = file.field_name.replace(/_/g, ' ').toUpperCase(); // Format label
+        fileLinks += buildFileLink(file, fileLabel);
+      } else {
+        console.warn("Skipping invalid file:", file);
+      }
+    });
   }
+
+  // Attached Files Section
   const ticketFilesEl = document.getElementById('ticketFiles');
-  if (fileLinks) {
-    ticketFilesEl.innerHTML = `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`;
-  } else {
-    ticketFilesEl.innerHTML = '';
-  }
+  ticketFilesEl.innerHTML = fileLinks
+    ? `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`
+    : '';
+
   
   // Inline Comment Editing Section
   const displayCommentTextEl = document.getElementById('displayCommentText');

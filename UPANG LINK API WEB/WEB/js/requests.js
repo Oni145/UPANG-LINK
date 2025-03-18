@@ -127,7 +127,7 @@ async function loadRequestsUsingPagination() {
 
     // Filter only "pending" status requests
     allRequests = requestsData.data
-      .filter(request => request.status === "pending")
+      .filter(request => request.status === "PENDING")
       .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
 
     allUsersData = usersData.data;
@@ -200,16 +200,19 @@ function displayRequests(requests, usersData) {
           <td>${formattedRequestId}</td> <!-- Request Number with leading zero -->
           <td>${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
           <td>
-            <span class="badge ${getStatusClass(request.status)}">${request.status}</span>
+            <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
           </td> <!-- Status -->
-          <td>${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
+          <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Centered Date -->
           <td>
             <div style="display: flex; justify-content: center; gap: 5px;">
               <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button>
             </div>
           </td> <!-- Action -->
         </tr>`;
-  }).join('');
+}).join('');
+
+
+
 }
 
 
@@ -289,47 +292,43 @@ function viewRequest(requestId) {
   }
 
   const user = allUsersData.find(u => u.user_id == request.user_id);
-  const modalTitle = `TICKET DETAILS - REQUEST #${request.request_id}`;
+  const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
   // Ticket Details Section
   let ticketDetailsHTML = `<div class="ticket-details">
         <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
         <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-        <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
+        <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
         <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
       </div>`;
-
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
   document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
 
-
-
-
-  
-  // Attached Files Section
-  const fileLabels = {
-    "Clearance": "CLEARANCE FORM",
-    "RequestLetter": "REQUEST LETTER",
-    "StudentID": "STUDENT ID",
-    "1x1_id_picture_(white_background,_formal_attire)": "1x1 ID PICTURE",
-    "RegistrationForm": "REGISTRATION FORM",
-    "IDPicture": "ID PICTURE",
-    "ProfessorApproval": "PROFESSOR APPROVAL"
-  };
+  // Base URL for file uploads
+  const baseUrl = "http://localhost/UPANG-LINK/uploads/";
   let fileLinks = '';
-  for (const key in fileLabels) {
-    if (request[key] && Array.isArray(request[key]) && request[key].length > 0) {
-      request[key].forEach(file => {
-        fileLinks += buildFileLink(file, fileLabels[key]);
-      });
-    }
+
+  // Check if `files` array exists in request
+  if (request.files && Array.isArray(request.files)) {
+    console.log(`Processing ${request.files.length} files...`);
+
+    request.files.forEach(file => {
+      if (file && file.file_path) {
+        file.file_path = baseUrl + file.file_path; // Ensure full URL
+        const fileLabel = file.field_name.replace(/_/g, ' ').toUpperCase(); // Format label
+        fileLinks += buildFileLink(file, fileLabel);
+      } else {
+        console.warn("Skipping invalid file:", file);
+      }
+    });
   }
+
+  // Attached Files Section
   const ticketFilesEl = document.getElementById('ticketFiles');
-  if (fileLinks) {
-    ticketFilesEl.innerHTML = `<div class="attached-files"><h3>ATTACHED FILES</h3>${fileLinks}</div>`;
-  } else {
-    ticketFilesEl.innerHTML = '';
-  }
+  ticketFilesEl.innerHTML = fileLinks
+    ? `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`
+    : '';
+
   
   // Inline Comment Editing Section
   const displayCommentTextEl = document.getElementById('displayCommentText');

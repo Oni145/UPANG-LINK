@@ -125,9 +125,8 @@ async function loadRequestsUsingPagination() {
       return console.error("Error in data response");
     }
 
-    // Filter only "pending" status requests
     allRequests = requestsData.data
-      .filter(request => request.status === "approved")
+      .filter(request => request.status === "APPROVED")
       .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
 
     allUsersData = usersData.data;
@@ -200,16 +199,21 @@ function displayRequests(requests, usersData) {
           <td>${formattedRequestId}</td> <!-- Request Number with leading zero -->
           <td>${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
           <td>
-            <span class="badge ${getStatusClass(request.status)}">${request.status}</span>
+            <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
           </td> <!-- Status -->
-<td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
+          <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Centered Date -->
           <td>
             <div style="display: flex; justify-content: center; gap: 5px;">
               <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button>
             </div>
           </td> <!-- Action -->
         </tr>`;
-  }).join('');
+}).join('');
+
+
+
+
+
 }
 
 
@@ -262,18 +266,47 @@ function updatePaginationControls(currentPage) {
 }
 
 function buildFileLink(file, label) {
-  const displayText = label || file.file_name;
+  if (!file.file_path) {
+    console.warn("Skipping file due to missing file_path:", file);
+    return ''; // Prevent broken file links
+  }
+
+  const fileName = file.file_path.split('/').pop(); // Extract actual file name
+  const displayText = label || fileName; // Use label if available, otherwise use file name
+
   return `<div class="attached-file">
-        <div class="file-info">
-          <i class="fas fa-file"></i>
-          <span>${displayText}</span>
-        </div>
-        <div class="file-actions">
-          <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
-          <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
-        </div>
-      </div>`;
+      <div class="file-info">
+        <i class="fas fa-file"></i>
+        <span>${displayText}</span>
+      </div>
+      <div class="file-actions">
+        <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
+        <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
+      </div>
+    </div>`;
 }
+
+// Base URL for file uploads
+const baseUrl = "http://localhost/UPANG-LINK/uploads/";
+let fileLinks = "";
+
+// Check if `files` array exists in request
+if (request.files && Array.isArray(request.files)) {
+  console.log(`Processing ${request.files.length} files...`);
+
+  request.files.forEach(file => {
+    if (file && file.file_path) {
+      file.file_path = baseUrl + file.file_path; // Ensure full URL
+      const fileLabel = file.field_name.replace(/_/g, ' ').toUpperCase(); // Format label (e.g., "affidavit_of_loss" → "AFFIDAVIT OF LOSS")
+      fileLinks += buildFileLink(file, fileLabel);
+    } else {
+      console.warn("Skipping invalid file:", file);
+    }
+  });
+}
+
+// Debugging before updating the DOM
+console.log("Generated File Links:", fileLinks);
 
 /**
  * Opens the ticket modal with inline comment editing.
@@ -293,11 +326,12 @@ function viewRequest(requestId) {
   
   // Ticket Details Section
   let ticketDetailsHTML = `<div class="ticket-details">
-        <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-        <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-        <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status)}">${request.status}</span></p>
-        <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-      </div>`;
+  <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+  <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+  <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
+  <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+</div>`;
+
 
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
   document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
