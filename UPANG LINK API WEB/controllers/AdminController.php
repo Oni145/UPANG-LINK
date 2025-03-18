@@ -68,10 +68,13 @@ class AdminController {
             if ($method === 'GET' && isset($uri[1])) {
                 switch ($uri[1]) {
                     case 'users':
-                        $this->getUsers();
-                        break;
-                    case 'profile': // ✅ NEW: Fetch Logged-in Admin Profile
-                        $this->getAdminProfile();
+                        // Check if an ID is provided in the URI (like /admin/users/{id})
+                        if (isset($uri[2])) {
+                            // Fetch a specific user by ID
+                            $this->getUserById($uri[2]);
+                        } else {
+                            $this->getUsers();  // Fetch all admin users
+                        }
                         break;
                     case 'notifications':
                         if (isset($uri[2]) && $uri[2] === 'read') {
@@ -88,7 +91,6 @@ class AdminController {
                         } else {
                             $this->sendError("Notification ID is required", 400);
                         }
-                        
                         break;
                     default:
                         $this->sendError("Invalid endpoint or method", 400);
@@ -102,34 +104,57 @@ class AdminController {
         }
     }
 
+    public function getUsers() {
+        try {
+            // Query to fetch all users with the role 'admin', excluding the password
+            $query = "SELECT user_id, first_name, last_name, email, created_at, updated_at FROM users WHERE role = 'admin'";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-
-
-
-
-    // Admin Profile //
-
-    public function getAdminProfile() {
-        if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
-            echo json_encode(["status" => "error", "message" => "No authorization token provided"]);
-            return;
-        }
-    
-        // Extract token from header
-        $token = str_replace("Bearer ", "", $_SERVER['HTTP_AUTHORIZATION']);
-    
-        // Get admin details using token
-        $admin = $this->adminModel->getAdminByToken($token);
-        
-        if ($admin) {
-            // Remove sensitive fields
-            unset($admin['password'], $admin['password_reset_token'], $admin['password_reset_expires'], $admin['created_at'], $admin['updated_at']);
-            
-            echo json_encode(["status" => "success", "data" => $admin]);
-        } else {
-            echo json_encode(["status" => "error", "message" => "Admin not found or invalid token"]);
+            // Check if users exist
+            if ($users) {
+                $this->sendResponse($users);  // Return the list of users
+            } else {
+                $this->sendError("No admin users found", 404);  // If no users are found
+            }
+        } catch (Exception $e) {
+            $this->sendError("Server error: " . $e->getMessage(), 500);  // Handle exceptions
         }
     }
+
+    public function getUserById($id) {
+        try {
+            // Query to fetch the user by ID and ensure the role is 'admin'
+            $query = "SELECT user_id, first_name, last_name, email, created_at, updated_at FROM users WHERE user_id = :user_id AND role = 'admin' LIMIT 1";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(":user_id", $id);
+            $stmt->execute();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            // Check if the user exists and if their role is 'admin'
+            if ($user) {
+                $this->sendResponse($user);  // Send the response
+            } else {
+                $this->sendError("Admin user not found", 404);  // Send error if no admin user
+            }
+        } catch (Exception $e) {
+            $this->sendError("Server error: " . $e->getMessage(), 500);  // Handle exceptions
+        }
+    }
+
+    private function sendResponse($data) {
+        echo json_encode(["status" => "success", "data" => $data]);
+    }
+
+    private function sendError($message, $code) {
+        echo json_encode(["status" => "error", "message" => $message, "code" => $code]);
+    }
+
+
+
+
+    
     
   
     // ✅ Mark All Notifications as Read
@@ -438,31 +463,7 @@ class AdminController {
         } else {
             $this->sendError("Invalid token or already logged out", 401);
         }
-    }
-
-    /**
-     * GetUsers: Validates the token and retrieves admin details.
-     */
-    private function getUsers($userId = null) {
-        $headers = function_exists('getallheaders') ? getallheaders() : [];
-        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? null;
     
-        if (!$authHeader) {
-            $this->sendError("Authorization token not provided", 401);
-            return;
-        }
-    
-        if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $this->sendError("Invalid Authorization header format", 400);
-            return;
-        }
-    
-        $token = $matches[1];
-    
-        if (empty($token)) {
-            $this->sendError("Token is empty", 401);
-            return;
-        }
     
         // Validate the token exists and has not expired
         $stmt = $this->db->prepare("SELECT * FROM user_sessions WHERE token = ? AND expires_at > NOW()");
@@ -636,15 +637,6 @@ class AdminController {
             }
         }
         return $missing;
-    }
-
-    private function sendError($message, $code = 400) {
-        http_response_code($code);
-        echo json_encode([
-            'status'  => 'error',
-            'message' => $message
-        ]);
-        exit();
     }
 }
 ?>

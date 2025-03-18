@@ -62,27 +62,46 @@ function hideLoading() {
  * Fetches and displays the logged-in admin's name.
  */
 async function displayUserName() {
-  const token = localStorage.getItem('token');
-  if (!token) return console.error("No token found in localStorage.");
   try {
-    const endpoint = `${API_BASE_URL}/admin/users`;
-    const response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
+    // Use the logged-in user ID dynamically (from PHP session or another method)
+    const userId = loggedInUserId;  // Dynamically fetched from PHP (or any other method)
+
+    // Fetch logged-in admin details by user_id
+    const endpoint = `${API_BASE_URL}/admin/users/${userId}`;  // Backend API to fetch logged-in admin details
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        // Add other headers like Authorization if needed
+      },
+    });
+
     const result = await response.json();
+
+    console.log("API Response:", result);  // Log the full API response for debugging
+
     if (response.ok && result.status === 'success') {
-      window.currentUserRole = 'admin';
+      const currentUser = result.data;
+
+      // Log the user_id to verify it's correct
+      console.log("Fetched user ID:", currentUser.user_id);  // Log the user_id
+
+      // Construct display name from the fetched details
+      const displayName = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
+
+      // Display the full name in the HTML element with id "userFullName"
+      const userFullNameEl = document.getElementById('userFullName');
+      if (userFullNameEl) {
+        userFullNameEl.textContent = displayName;
+      }
     } else {
-      throw new Error("Unable to fetch admin user details.");
-    }
-    const currentUser = result.data[0];
-    const userFullNameEl = document.getElementById('userFullName');
-    if (userFullNameEl) {
-      const displayName = currentUser.username || `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
-      userFullNameEl.textContent = displayName;
+      throw new Error("Unable to fetch user details.");
     }
   } catch (error) {
     console.error("Error fetching user details:", error);
   }
 }
+
 
 let allRequests = [];
 let allUsersData = [];
