@@ -94,7 +94,29 @@ error_log("Path: " . $path);
 error_log("Endpoint: " . $endpoint);
 error_log("URI: " . print_r($uri, true));
 
+<<<<<<< Updated upstream:api/index.php
 // If no endpoint is provided, return API info.
+=======
+// If the URI is empty after removing the base path, it means we're at the API root
+if (empty($endpoint) || $endpoint === '/') {
+    echo json_encode([
+        'status'    => 'success',
+        'message'   => 'Welcome to UPANG LINK API WEB',
+        'endpoints' => [
+            'admin'    => '/admin',
+            'requests' => '/requests',
+            'students' => [
+                'register' => '/auth/student/register',
+                'login'    => '/auth/student/login',
+            ],
+            'notes'    => '/notes or /requests/notes',
+        ]
+    ]);
+    exit();
+}
+
+// If no endpoint is provided, return API info
+>>>>>>> Stashed changes:UPANG LINK API WEB/api/index.php
 if (!isset($uri[0]) || empty($uri[0])) {
     echo json_encode([
         'status'    => 'success',

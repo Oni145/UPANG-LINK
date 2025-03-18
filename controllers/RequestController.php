@@ -1,4 +1,7 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 if (!class_exists('RequestController')) {
 
     require_once '../controllers/AuthController.php';
@@ -244,45 +247,51 @@ if (!class_exists('RequestController')) {
         
         // GET functions.
         private function getAllRequests() {
-            $stmt = $this->request->read();
-            if ($stmt->rowCount() > 0) {
+            $requests = $this->request->read(); // read() returns an array, not a PDOStatement
+            
+            if (!empty($requests)) { // ✅ Check if the array is empty instead of rowCount()
                 $requests_arr = [];
-                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        
+                foreach ($requests as $row) {
                     if (isset($row['requirements'])) {
                         unset($row['requirements']);
                     }
+        
                     $allowedFields = $this->getAllowedFileKeys($row['type_id']);
                     $docs = $this->getRequiredDocuments($row['request_id'], $allowedFields);
                     $row = array_merge($row, $docs);
-                    
-                    // Fetch notes for this request
+        
+                    // ✅ Fetch notes for this request
                     $note = new RequirementNote($this->db);
                     $noteQuery = "SELECT * FROM " . $note->getTableName() . " WHERE request_id = ? ORDER BY created_at DESC";
                     $stmtNotes = $this->db->prepare($noteQuery);
                     $stmtNotes->execute([$row['request_id']]);
                     $notes = $stmtNotes->fetchAll(PDO::FETCH_ASSOC);
+        
                     if (!empty($notes)) {
-                        // Only display the note text from the first note
-                        $row['note'] = $notes[0]['note'];
+                        $row['note'] = $notes[0]['note']; // ✅ Only add note if it exists
                     }
-                    
-                    // Reorder keys: place 'note' (if exists) right after 'status'
-                    $orderedRow = [];
-                    $orderedRow['request_id'] = $row['request_id'];
-                    $orderedRow['user_id'] = $row['user_id'];
-                    $orderedRow['type_id'] = $row['type_id'];
-                    $orderedRow['status'] = $row['status'];
+        
+                    // ✅ Reorder keys: place 'note' (if exists) right after 'status'
+                    $orderedRow = [
+                        'request_id' => $row['request_id'],
+                        'user_id' => $row['user_id'],
+                        'type_id' => $row['type_id'],
+                        'status' => $row['status']
+                    ];
                     if (isset($row['note'])) {
                         $orderedRow['note'] = $row['note'];
                     }
+        
                     foreach ($row as $key => $value) {
                         if (!isset($orderedRow[$key])) {
                             $orderedRow[$key] = $value;
                         }
                     }
-                    
+        
                     $requests_arr[] = $orderedRow;
                 }
+        
                 http_response_code(200);
                 echo json_encode([
                     'status' => 'success',
@@ -512,46 +521,35 @@ if (!class_exists('RequestController')) {
          * Retrieves all file documents for a request and groups them by a mapped document_type.
          */
         private function getRequiredDocuments($request_id, $allowedFields = null) {
-            $query = "SELECT document_type, file_name, file_path FROM required_documents WHERE request_id = ?";
+            $query = "SELECT field_name, file_path FROM request_files WHERE request_id = ?";
             $stmt = $this->db->prepare($query);
             $stmt->execute([$request_id]);
             $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $result = [];
-            
-            // Mapping from stored document_type to desired display keys.
-            $mapping = [
-                'clearance_form'    => 'Clearance',
-                'request_letter'    => 'RequestLetter',
-                'valid_id'          => 'StudentID',
-                'valid_student_id'  => 'StudentID',
-                'registration_form' => 'RegistrationForm',
-                'affidavit_of_loss' => 'AffidavitOfLoss',
-                'id_picture'        => 'IDPicture',
-                'professor_approval'=> 'ProfessorApproval'
-            ];
-            
+        
             foreach ($documents as $doc) {
-                // Filter: always include clearance_form and request_letter.
-                if (is_array($allowedFields) && 
-                    !in_array($doc['document_type'], $allowedFields) && 
-                    $doc['document_type'] !== 'clearance_form' && 
-                    $doc['document_type'] !== 'request_letter') {
+                // Ensure the file path is correctly formatted
+                $filePath = str_replace('uploads/uploads', 'uploads', $doc['file_path']);
+                $filePath = "../uploads/documents/" . ltrim($filePath, "/");
+        
+                // Filter files based on allowed fields, if provided
+                if (is_array($allowedFields) && !in_array($doc['field_name'], $allowedFields)) {
                     continue;
                 }
-                $filePath = "../uploads/documents/" . str_replace('uploads/uploads', 'uploads', $doc['file_path']);
-                $docType = $doc['document_type'];
-                $displayKey = isset($mapping[$docType]) ? $mapping[$docType] : ucfirst($docType);
-                
-                if (!isset($result[$displayKey])) {
-                    $result[$displayKey] = [];
+        
+                // Group files dynamically by field_name
+                if (!isset($result[$doc['field_name']])) {
+                    $result[$doc['field_name']] = [];
                 }
-                $result[$displayKey][] = [
-                    'file_name' => $doc['file_name'],
+                $result[$doc['field_name']][] = [
+                    'file_name' => $doc['field_name'], // Keeping file name as field_name
                     'file_path' => $filePath
                 ];
             }
+        
             return $result;
         }
+        
         
         private function updateRequest($id) {
             $data = json_decode(file_get_contents("php://input"));

@@ -9,18 +9,66 @@ class Request {
     public $user_id;
     public $type_id;
     public $status;
-
     public function __construct($db) {
         $this->conn = $db;
     }
 
     // Read all requests
+    
+    
     public function read() {
-        $query = "SELECT * FROM requests";
+        $query = "SELECT r.request_id, r.user_id, r.type_id, r.status, r.tracking_number, 
+                         r.submitted_at, r.updated_at, r.purpose, 
+                         rf.field_name, rf.file_path
+                  FROM requests r
+                  LEFT JOIN request_files rf ON r.request_id = rf.request_id
+                  ORDER BY r.request_id ASC";
+    
         $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt;
+        
+        if (!$stmt->execute()) {
+            die("Query failed: " . implode(" ", $stmt->errorInfo())); // Debugging query errors
+        }
+    
+        // ✅ Check if $stmt is valid
+        if (!$stmt || !($stmt instanceof PDOStatement)) {
+            die("Query execution failed or returned an invalid response.");
+        }
+    
+        $requests = [];
+    
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $request_id = $row['request_id'];
+    
+            if (!isset($requests[$request_id])) {
+                $requests[$request_id] = [
+                    'request_id' => $request_id,
+                    'user_id' => $row['user_id'],
+                    'type_id' => $row['type_id'],
+                    'status' => $row['status'],
+                    'tracking_number' => $row['tracking_number'],
+                    'submitted_at' => $row['submitted_at'],
+                    'updated_at' => $row['updated_at'],
+                    'purpose' => $row['purpose'],
+                    'files' => []
+                ];
+            }
+    
+            if (!empty($row['file_path']) && !empty($row['field_name'])) {
+                $requests[$request_id]['files'][] = [
+                    'field_name' => $row['field_name'],
+                    'file_path' => $row['file_path']
+                ];
+            }
+        }
+    
+        return array_values($requests);
     }
+    
+    
+    
+    
+    
 
     // Read one request by request_id
     public function readOne() {
