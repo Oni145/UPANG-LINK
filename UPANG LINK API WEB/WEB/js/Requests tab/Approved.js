@@ -264,53 +264,19 @@ function updatePaginationControls(currentPage) {
     });
   }
 }
-
 function buildFileLink(file, label) {
-  if (!file.file_path) {
-    console.warn("Skipping file due to missing file_path:", file);
-    return ''; // Prevent broken file links
-  }
-
-  const fileName = file.file_path.split('/').pop(); // Extract actual file name
-  const displayText = label || fileName; // Use label if available, otherwise use file name
-
+  const displayText = label || file.file_name;
   return `<div class="attached-file">
-      <div class="file-info">
-        <i class="fas fa-file"></i>
-        <span>${displayText}</span>
-      </div>
-      <div class="file-actions">
-        <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
-        <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
-      </div>
-    </div>`;
+        <div class="file-info">
+          <i class="fas fa-file"></i>
+          <span>${displayText}</span>
+        </div>
+        <div class="file-actions">
+          <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
+          <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
+        </div>
+      </div>`;
 }
-
-// Base URL for file uploads
-const baseUrl = "http://localhost/UPANG-LINK/uploads/";
-let fileLinks = "";
-
-// Check if `files` array exists in request
-if (request.files && Array.isArray(request.files)) {
-  console.log(`Processing ${request.files.length} files...`);
-
-  request.files.forEach(file => {
-    if (file && file.file_path) {
-      file.file_path = baseUrl + file.file_path; // Ensure full URL
-      const fileLabel = file.field_name.replace(/_/g, ' ').toUpperCase(); // Format label (e.g., "affidavit_of_loss" → "AFFIDAVIT OF LOSS")
-      fileLinks += buildFileLink(file, fileLabel);
-    } else {
-      console.warn("Skipping invalid file:", file);
-    }
-  });
-}
-
-// Debugging before updating the DOM
-console.log("Generated File Links:", fileLinks);
-
-/**
- * Opens the ticket modal with inline comment editing.
- */
 function viewRequest(requestId) {
   showLoading();
   
@@ -322,48 +288,46 @@ function viewRequest(requestId) {
   }
 
   const user = allUsersData.find(u => u.user_id == request.user_id);
-  const modalTitle = `TICKET DETAILS - REQUEST #${request.request_id}`;
+  const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
   // Ticket Details Section
   let ticketDetailsHTML = `<div class="ticket-details">
-  <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-  <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-  <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
-  <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-</div>`;
+        <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+        <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+        <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
+        <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+      </div>`;
+  document.getElementById('ticketModalLabel').innerHTML = modalTitle;
+  document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+
+  // Base URL for file uploads
+  const baseUrl = "http://localhost/UPANG-LINK/uploads/";
+  let fileLinks = '';
+
+  // Check if `files` array exists in request
+  if (request.files && Array.isArray(request.files)) {
+    console.log(`Processing ${request.files.length} files...`);
+
+    request.files.forEach(file => {
+      if (file && file.file_path) {
+        file.file_path = baseUrl + file.file_path; // Ensure full URL
+        const fileLabel = file.field_name.replace(/_/g, ' ').toUpperCase(); // Format label
+        fileLinks += buildFileLink(file, fileLabel);
+      } else {
+        console.warn("Skipping invalid file:", file);
+      }
+    });
+  }
+
+  // Attached Files Section
+  const ticketFilesEl = document.getElementById('ticketFiles');
+  ticketFilesEl.innerHTML = fileLinks
+    ? `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`
+    : '';
 
 
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
   document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
-
-
-
-
-  
-  // Attached Files Section
-  const fileLabels = {
-    "Clearance": "CLEARANCE FORM",
-    "RequestLetter": "REQUEST LETTER",
-    "StudentID": "STUDENT ID",
-    "1x1_id_picture_(white_background,_formal_attire)": "1x1 ID PICTURE",
-    "RegistrationForm": "REGISTRATION FORM",
-    "IDPicture": "ID PICTURE",
-    "ProfessorApproval": "PROFESSOR APPROVAL"
-  };
-  let fileLinks = '';
-  for (const key in fileLabels) {
-    if (request[key] && Array.isArray(request[key]) && request[key].length > 0) {
-      request[key].forEach(file => {
-        fileLinks += buildFileLink(file, fileLabels[key]);
-      });
-    }
-  }
-  const ticketFilesEl = document.getElementById('ticketFiles');
-  if (fileLinks) {
-    ticketFilesEl.innerHTML = `<div class="attached-files"><h3>ATTACHED FILES</h3>${fileLinks}</div>`;
-  } else {
-    ticketFilesEl.innerHTML = '';
-  }
   
   // Inline Comment Editing Section
   const displayCommentTextEl = document.getElementById('displayCommentText');

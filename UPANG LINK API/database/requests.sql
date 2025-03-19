@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS requests (
     user_id INT NOT NULL,
     type_id INT NOT NULL,
     description TEXT,
-    status ENUM('pending', 'processing', 'completed', 'rejected') DEFAULT 'pending',
+    status ENUM('pending', 'approved', 'completed', 'rejected', ) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (type_id) REFERENCES request_types(id)
-); 
+);

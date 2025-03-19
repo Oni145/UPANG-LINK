@@ -6,7 +6,7 @@ if (!class_exists('RequirementNoteController')) {
     class RequirementNoteController {
         private $db;
         private $requirementNote;
-        private $adminId; // holds the admin_id from admin_tokens
+        private $UserId; // holds the admin_id from admin_tokens
 
         public function __construct($db) {
             $this->db = $db;
@@ -59,28 +59,28 @@ if (!class_exists('RequirementNoteController')) {
             }
             
             // Check admin_tokens table first.
-            $stmtAdmin = $this->db->prepare("SELECT admin_id, expires_at FROM admin_tokens WHERE token = ?");
+            $stmtAdmin = $this->db->prepare("SELECT user_id, expires_at FROM user_sessions WHERE token = ?");
             $stmtAdmin->execute([$token]);
             $adminRow = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
             if ($adminRow) {
                 $currentTime = new DateTime();
                 $expiresAt = new DateTime($adminRow['expires_at']);
                 if ($currentTime > $expiresAt) {
-                    $delStmt = $this->db->prepare("DELETE FROM admin_tokens WHERE token = ?");
+                    $delStmt = $this->db->prepare("DELETE FROM user_sessions WHERE token = ?");
                     $delStmt->execute([$token]);
                     $this->sendError("Access Denied: Admin token expired", 401);
                     exit;
                 }
                 // Extend expiration (sliding expiration, e.g., one day)
                 $newExpiresAt = date('Y-m-d H:i:s', time() + 86400);
-                $updateStmt = $this->db->prepare("UPDATE admin_tokens SET expires_at = ? WHERE token = ?");
+                $updateStmt = $this->db->prepare("UPDATE user_sessions SET expires_at = ? WHERE token = ?");
                 $updateStmt->execute([$newExpiresAt, $token]);
-                $this->adminId = $adminRow['admin_id'];
+                $this->adminId = $adminRow['user_id'];
                 return; // Authenticated as admin.
             }
             
             // If token is found in auth_tokens, disallow posting.
-            $stmtStudent = $this->db->prepare("SELECT user_id, expires_at FROM auth_tokens WHERE token = ?");
+            $stmtStudent = $this->db->prepare("SELECT user_id, expires_at FROM user_sessions WHERE token = ?");
             $stmtStudent->execute([$token]);
             $studentRow = $stmtStudent->fetch(PDO::FETCH_ASSOC);
             if ($studentRow) {

@@ -74,8 +74,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+
 async function handleLogin(event) {
-    event.preventDefault(); 
+    event.preventDefault();
 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -104,15 +105,26 @@ async function handleLogin(event) {
         const data = JSON.parse(rawResponse); // Parse JSON if valid
         console.log('Parsed JSON response:', data);
 
-        if (!data.token) {
-            throw new Error('No token received from server');
+        if (response.status !== 200) {
+            // Handle specific error messages from server response
+            if (data.message) {
+                throw new Error(data.message); // Use message from server, like "Invalid email or password"
+            } else {
+                throw new Error('An unexpected error occurred. Please try again.');
+            }
         }
 
+        if (!data.token) {
+            throw new Error('Authentication failed. Please check your credentials and try again.');
+        }
+
+        // Store the token and redirect on successful login
         localStorage.setItem('token', data.token);
-        window.location.href = 'index.html'; 
+        window.location.href = 'index.html'; // Redirect to the dashboard after login
 
     } catch (error) {
         console.error('Login failed:', error);
         document.getElementById('errorMessage').innerText = error.message || 'Failed to connect to the server.';
     }
 }
+

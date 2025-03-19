@@ -4,7 +4,7 @@ USE upang_link;
 ALTER TABLE request_types MODIFY COLUMN requirements JSON NULL;
 
 -- Update enum values in requests table to match Android app
-ALTER TABLE requests MODIFY COLUMN status ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'REJECTED') DEFAULT 'PENDING';
+ALTER TABLE requests MODIFY COLUMN status ENUM('APPROVED','PENDING', 'IN_PROGRESS', 'COMPLETED', 'REJECTED') DEFAULT 'PENDING';
 
 -- Convert existing status values to uppercase and standardize
 UPDATE requests SET status = UPPER(status);

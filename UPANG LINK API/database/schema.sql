@@ -71,6 +71,7 @@ CREATE TABLE requests (
     FOREIGN KEY (type_id) REFERENCES request_types(type_id)
 );
 
+
 -- Request notes table (for admin comments and additional information)
 CREATE TABLE request_notes (
     note_id INT PRIMARY KEY AUTO_INCREMENT,

@@ -178,7 +178,7 @@ function displayRequestsPage(page) {
  */
 function getStatusClass(status) {
   const classes = {
-    'PENDING': 'status-pending',
+    'pending': 'status-pending',
     'approved': 'status-approved',
     'rejected': 'status-rejected',
     'in_progress': 'status-in_progress',
@@ -747,17 +747,19 @@ async initializeData() {
     tbody.innerHTML = requests.map(request => {
       const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
       return `<tr>
-            <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
-            <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
-            <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
-            <td style="text-align: center;">
-              <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span>
-            </td> <!-- Status -->
-            <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
-              </div>
-            </td> <!-- Action -->
-          </tr>`;
-  }).join('');
+                <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
+                <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
+                <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
+                <td style="text-align: center;">
+                  <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
+                </td> <!-- Status -->
+                <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
+                <td style="text-align: center;">
+                  <!-- Action Column -->
+                </td> <!-- Action -->
+              </tr>`;
+    }).join('');
+    
   }
   
 
