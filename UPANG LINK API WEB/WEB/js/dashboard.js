@@ -754,9 +754,6 @@ async initializeData() {
                   <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
                 </td> <!-- Status -->
                 <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
-                <td style="text-align: center;">
-                  <!-- Action Column -->
-                </td> <!-- Action -->
               </tr>`;
     }).join('');
     

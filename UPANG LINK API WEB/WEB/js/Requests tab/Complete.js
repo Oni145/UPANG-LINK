@@ -183,19 +183,19 @@ function getStatusClass(status) {
 
   const tbody = document.getElementById('requestsTableBody');
   if (!tbody) return console.error("requestsTableBody element not found.");
-
+  
   if (!requests || requests.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No pending requests to display</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No approved requests to display</td></tr>`;
     return;
   }
-
+  
   tbody.innerHTML = requests.map(request => {
     const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
-    const formattedRequestId = String(request.request_id).padStart(2, '0'); // Ensures "01", "02", etc.
-
+    const formattedTrackingNumber = String(request.tracking_number).padStart(2, '0'); // Updated fetching to use tracking_number
+  
     return `<tr>
           <td>${user.first_name} ${user.last_name}</td> <!-- Name -->
-          <td>${formattedRequestId}</td> <!-- Request Number with leading zero -->
+          <td>${formattedTrackingNumber}</td> <!-- Tracking Number with leading zero -->
           <td>${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
           <td>
             <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
@@ -203,15 +203,11 @@ function getStatusClass(status) {
           <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Centered Date -->
           <td>
             <div style="display: flex; justify-content: center; gap: 5px;">
-              <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button>
+              <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button> <!-- Kept modal content unchanged -->
             </div>
           </td> <!-- Action -->
         </tr>`;
-}).join('');
-
-
-
-
+  }).join('');
 }
 
 /**
@@ -293,13 +289,14 @@ function viewRequest(requestId) {
   const user = allUsersData.find(u => u.user_id == request.user_id);
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
-  // Ticket Details Section
+  // Ticket Details Section (Includes Purpose)
   let ticketDetailsHTML = `<div class="ticket-details">
         <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
         <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
         <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
         <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
       </div>`;
+
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
   document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
 
@@ -321,6 +318,10 @@ function viewRequest(requestId) {
       }
     });
   }
+
+  hideLoading();
+
+
 
   // Attached Files Section
   const ticketFilesEl = document.getElementById('ticketFiles');

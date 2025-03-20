@@ -192,9 +192,12 @@ function getStatusClass(status) {
 
   tbody.innerHTML = requests.map(request => {
     const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+    const formattedRequestId = String(request.request_id).padStart(2, '0'); // Request ID formatted
+    const formattedTrackingNumber = String(request.tracking_number).padStart(2, '0'); // Tracking Number formatted
+
     return `<tr>
           <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
-          <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
+          <td style="text-align: center;">${formattedTrackingNumber}</td> <!-- Tracking Number ✅ -->
           <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
           <td style="text-align: center;">
             <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span>
@@ -207,8 +210,7 @@ function getStatusClass(status) {
           </td> <!-- Action -->
         </tr>`;
 }).join('');
-}
-
+ }
 
 
 
@@ -275,6 +277,12 @@ function viewRequest(requestId) {
   const user = allUsersData.find(u => u.user_id == request.user_id);
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
 
+  // ✅ Debugging: Check if purpose exists
+  console.log("Request Purpose:", request.purpose);
+
+  // Ensure Purpose Exists
+  const purposeText = request.purpose && request.purpose.trim() !== "" ? request.purpose : "No purpose provided";
+
   let ticketDetailsHTML = `
       <div class="ticket-details">
           <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
@@ -283,16 +291,31 @@ function viewRequest(requestId) {
           <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
       </div>`;
 
+  // Ensure the ticketDetails element exists before updating
+  const detailsContainer = document.getElementById('ticketDetails');
+  if (!detailsContainer) {
+    console.error("ticketDetails element not found!");
+    hideLoading();
+    return;
+  }
+
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
-  document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+  detailsContainer.innerHTML = ticketDetailsHTML;
 
   // Build file links if a file is attached
   let fileLinks = request.file_path ? buildFileLink(request, "Attached File") : "<p>No attached files.</p>";
   
-  document.getElementById('ticketFiles').innerHTML = fileLinks;
+  const fileContainer = document.getElementById('ticketFiles');
+  if (fileContainer) {
+    fileContainer.innerHTML = fileLinks;
+  } else {
+    console.error("ticketFiles element not found!");
+  }
 
   hideLoading();
 }
+
+
 
 /**
  * Opens the ticket modal with inline comment editing.
