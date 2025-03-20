@@ -57,16 +57,17 @@ class AdminController {
                 }
                 return;
             }
-    
             if ($method === 'GET' && isset($uri[1])) {
                 switch ($uri[1]) {
                     case 'users':
-                        // Check if an ID is provided in the URI (like /admin/users/{id})
                         if (isset($uri[2])) {
-                            // Fetch a specific user by ID
-                            $this->getUserById($uri[2]);
+                            if ($uri[2] === 'me') {
+                                $this->getCurrentUser();
+                            } else {
+                                $this->getUserById($uri[2]); // Fetch specific user by ID
+                            }
                         } else {
-                            $this->getUsers();  // Fetch all admin users
+                            $this->getUsers(); // Fetch all admin users
                         }
                         break;
                     default:
@@ -80,6 +81,53 @@ class AdminController {
             $this->sendError("Server error: " . $e->getMessage(), 500);
         }
     }    
+
+
+    public function getCurrentUser() {
+        try {
+            // ✅ Get the token using your existing function
+            $token = $this->getBearerToken();
+            if (!$token) {
+                $this->sendError("Authorization token missing", 401);
+                return;
+            }
+    
+            // ✅ Fetch user_id from user_sessions table
+            $query = "SELECT user_id FROM user_sessions WHERE token = :token LIMIT 1";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':token', $token, PDO::PARAM_STR);
+            $stmt->execute();
+            $session = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if (!$session) {
+                $this->sendError("Invalid or expired token", 401);
+                return;
+            }
+    
+            $user_id = $session['user_id'];
+    
+            // ✅ Fetch user details using user_id
+            $query = "SELECT user_id, first_name, last_name, email, created_at, updated_at FROM users WHERE user_id = :user_id";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if ($user) {
+                $this->sendResponse($user);
+            } else {
+                $this->sendError("User not found", 404);
+            }
+        } catch (Exception $e) {
+            $this->sendError("Server error: " . $e->getMessage(), 500);
+        }
+    }
+    
+
+    
+    
+    
+    
     public function getUsers() {
         try {
             // Query to fetch all users with the role 'admin', excluding the password

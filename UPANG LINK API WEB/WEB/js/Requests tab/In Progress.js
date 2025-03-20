@@ -63,22 +63,42 @@ function hideLoading() {
  * Fetches and displays the logged-in admin's name.
  */
 async function displayUserName() {
-  const token = localStorage.getItem('token');
-  if (!token) return console.error("No token found in localStorage.");
+  const token = localStorage.getItem('token'); // Get the token from local storage
+
+  if (!token) {
+    console.error("No token found in localStorage.");
+    return;
+  }
+
   try {
-    const endpoint = `${API_BASE_URL}/admin/users`;
-    const response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
+    // Use the "me" endpoint to get the logged-in user details
+    const endpoint = `${API_BASE_URL}/admin/users/me`; 
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`, // Include the token in the headers
+      },
+    });
+
     const result = await response.json();
+    console.log("API Response:", result); // Debugging
+
     if (response.ok && result.status === 'success') {
-      window.currentUserRole = 'admin';
+      const currentUser = result.data;
+
+      console.log("Fetched user:", currentUser); // Debugging
+
+      // Construct display name
+      const displayName = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
+
+      // Display user name in the element with id "userFullName"
+      const userFullNameEl = document.getElementById('userFullName');
+      if (userFullNameEl) {
+        userFullNameEl.textContent = displayName || 'Unknown User';
+      }
     } else {
-      throw new Error("Unable to fetch admin user details.");
-    }
-    const currentUser = result.data[0];
-    const userFullNameEl = document.getElementById('userFullName');
-    if (userFullNameEl) {
-      const displayName = currentUser.username || `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
-      userFullNameEl.textContent = displayName;
+      throw new Error("Unable to fetch user details.");
     }
   } catch (error) {
     console.error("Error fetching user details:", error);
