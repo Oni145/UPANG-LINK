@@ -315,14 +315,22 @@ function viewRequest(requestId) {
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
   // Ticket Details Section
-  let ticketDetailsHTML = `<div class="ticket-details">
-        <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-        <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-        <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
-        <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-      </div>`;
-  document.getElementById('ticketModalLabel').innerHTML = modalTitle;
-  document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+  let ticketDetailsHTML = `
+  <div class="ticket-details">
+    <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}
+      <button type="button" class="view-btn" data-user-id="${request.user_id}">
+        <i class="fas fa-user"></i> VIEW STUDENT DETAILS
+      </button>
+    </p>
+    <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+    <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
+    <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+  </div>`;
+  
+
+document.getElementById('ticketModalLabel').innerHTML = modalTitle;
+document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML
+
 
   // Base URL for file uploads
   const baseUrl = "http://localhost/UPANG-LINK/uploads/";
@@ -603,21 +611,21 @@ document.addEventListener('DOMContentLoaded', () => {
         displayData = allRequests;
       } else {
         displayData = allRequests.filter(request => {
-          const requestNumber = String(request.request_id).padStart(2, "0"); // Ensure proper request_id format
-          const status = request.status.replace("_", " ").toLowerCase(); // Ensure underscores are replaced
-          const date = new Date(request.submitted_at).toLocaleDateString(); // Match displayed date format
+          const trackingNumber = request.tracking_number.toLowerCase(); // Use tracking number
+          const status = request.status.replace(/_/g, " ").toLowerCase(); // Replace all underscores
+          const date = new Date(request.submitted_at).toLocaleDateString(); // Format date properly
           const type = (requestTypeNames[request.type_id] || "Unknown").toLowerCase();
   
           // Ensure user data is properly retrieved and formatted
           const user = allUsersData.find(u => u.user_id === request.user_id);
           const name = user ? `${user.first_name} ${user.last_name}`.trim().toLowerCase() : "unknown";
   
-          // Only search within displayed columns (excluding hidden data)
-          return requestNumber.includes(query) || // Request Number
-                 status.includes(query) ||        // Status
-                 date.includes(query) ||          // Date
-                 type.includes(query) ||          // Request Type
-                 name.includes(query);            // User Name
+          // Only search within displayed columns
+          return trackingNumber.includes(query) || // Search by Tracking Number
+                 status.includes(query) ||        // Search by Status
+                 date.includes(query) ||          // Search by Date
+                 type.includes(query) ||          // Search by Request Type
+                 name.includes(query);            // Search by User Name
         });
       }
   
@@ -627,6 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
       updatePaginationControls(currentPage);
     });
   }
+  
+
   
   
 

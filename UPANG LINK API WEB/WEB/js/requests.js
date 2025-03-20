@@ -318,14 +318,31 @@ function viewRequest(requestId) {
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
   // Ticket Details Section
-  let ticketDetailsHTML = `<div class="ticket-details">
-        <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-        <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-        <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
-        <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-      </div>`;
-  document.getElementById('ticketModalLabel').innerHTML = modalTitle;
-  document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+  let ticketDetailsHTML = `
+  <div class="ticket-details">
+    <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}
+      <button type="button" class="view-btn" data-user-id="${request.user_id}">
+        <i class="fas fa-user"></i> VIEW STUDENT DETAILS
+      </button>
+    </p>
+    <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+    <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
+    <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+  </div>`;
+  
+// Insert content into modal
+document.getElementById('ticketModalLabel').innerHTML = modalTitle;
+document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+
+// Attach event listener AFTER inserting the button into the DOM
+document.querySelectorAll('.view-btn').forEach(button => {
+  button.addEventListener('click', function () {
+    const userId = this.getAttribute('data-user-id'); // Get user ID from button
+    openUserModal(userId); // Open modal with user data
+  });
+});
+
+
 
   // Base URL for file uploads
   const baseUrl = "http://localhost/UPANG-LINK/uploads/";
@@ -599,32 +616,39 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bind the search input event
   const searchInput = document.getElementById("searchInput");
   if (searchInput) {
-    searchInput.addEventListener("input", function() {
+    searchInput.addEventListener("input", function () {
       const query = this.value.trim().toLowerCase();
+      
       if (query === "") {
         displayData = allRequests;
       } else {
         displayData = allRequests.filter(request => {
-          const requestNumber = String(request.request_id || "").padStart(2, "0").toLowerCase(); // Ensure request_id is treated as a string
-          const status = (request.status || "").toLowerCase();
-          const date = new Date(request.submitted_at).toLocaleDateString().toLowerCase();
-          const type = (requestTypeNames[request.type_id] || "").toLowerCase();
-          const user = allUsersData.find(u => u.user_id === request.user_id);
-          const name = user ? ((user.first_name || "") + " " + (user.last_name || "")).toLowerCase() : "";
+          const trackingNumber = request.tracking_number.toLowerCase(); // Use tracking number
+          const status = request.status.replace(/_/g, " ").toLowerCase(); // Replace all underscores
+          const date = new Date(request.submitted_at).toLocaleDateString(); // Format date properly
+          const type = (requestTypeNames[request.type_id] || "Unknown").toLowerCase();
   
-          return requestNumber.includes(query) || // Search by request number
-                 status.includes(query) ||
-                 date.includes(query) ||
-                 type.includes(query) ||
-                 name.includes(query);
+          // Ensure user data is properly retrieved and formatted
+          const user = allUsersData.find(u => u.user_id === request.user_id);
+          const name = user ? `${user.first_name} ${user.last_name}`.trim().toLowerCase() : "unknown";
+  
+          // Only search within displayed columns
+          return trackingNumber.includes(query) || // Search by Tracking Number
+                 status.includes(query) ||        // Search by Status
+                 date.includes(query) ||          // Search by Date
+                 type.includes(query) ||          // Search by Request Type
+                 name.includes(query);            // Search by User Name
         });
       }
+  
       currentPage = 1;
       totalPages = Math.ceil(displayData.length / itemsPerPage);
       displayRequestsPage(currentPage);
       updatePaginationControls(currentPage);
     });
   }
+  
+
   
   
   // Bind the update status button

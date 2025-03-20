@@ -82,25 +82,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $purpose = $_POST['purpose'] ?? null;
     $student_id = $_POST['student_id'] ?? null;
 
-    // Fetch the request type name
-    $requestTypeQuery = "SELECT name FROM request_types WHERE type_id = ?";
-    $requestTypeStmt = $pdo->prepare($requestTypeQuery);
-    $requestTypeStmt->execute([$type_id]);
-    $typeResult = $requestTypeStmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$typeResult) {
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Invalid request type',
-            'code' => 400
-        ]);
-        exit;
+    // Get the request type name to check if it's a special type
+    $isSpecialType = false;
+    $typeNameQuery = "SELECT name FROM request_types WHERE type_id = ?";
+    $typeStmt = $pdo->prepare($typeNameQuery);
+    $typeStmt->execute([$type_id]);
+    $typeResult = $typeStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($typeResult) {
+        $requestTypeName = $typeResult['name'];
+        if (stripos($requestTypeName, 'Course Module') !== false || 
+            stripos($requestTypeName, 'Enrollment Certificate') !== false ||
+            stripos($requestTypeName, 'ID Replacement') !== false ||
+            stripos($requestTypeName, 'New Student ID') !== false ||
+            stripos($requestTypeName, 'Uniform') !== false ||
+            stripos($requestTypeName, 'Transcript of Records') !== false) {
+            $isSpecialType = true;
+        }
     }
 
-    $requestTypeName = $typeResult['name'];
-
-    // Validate required fields
     if (!$type_id || !$purpose) {
         http_response_code(400);
         echo json_encode([
@@ -111,13 +111,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    if (!$isSpecialType && !$student_id) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Student ID is required for this request type',
+            'code' => 400
+        ]);
+        exit;
+    }
+
     try {
         $pdo->beginTransaction();
 
+        // Generate tracking number
         $date = date('Ymd');
         $random = str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
         $tracking_number = "REQ-{$date}-{$random}";
 
+        // Insert the request
         $query = "INSERT INTO requests (tracking_number, user_id, type_id, purpose) VALUES (?, ?, ?, ?)";
         $stmt = $pdo->prepare($query);
         $stmt->execute([$tracking_number, $user_id, $type_id, $purpose]);
@@ -127,8 +139,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notificationQuery = "INSERT INTO notifications (user_id, title, message, is_read, created_at) VALUES (?, ?, ?, ?, NOW())";
         $notificationStmt = $pdo->prepare($notificationQuery);
         $notificationTitle = "New Request Submitted";
-        $notificationMessage = $requestTypeName; // Set message as request type name
+        $notificationMessage = $requestTypeName;
         $notificationStmt->execute([$user_id, $notificationTitle, $notificationMessage, 0]);
+
+        // Add request details
+        $query = "INSERT INTO request_notes (request_id, user_id, note) VALUES (?, ?, ?)";
+        $stmt = $pdo->prepare($query);
+        
+        $noteData = ['purpose' => $purpose];
+        if ($student_id) {
+            $noteData['student_id'] = $student_id;
+        }
+        
+        if ($isSpecialType) {
+            $userQuery = "SELECT current_year FROM users WHERE user_id = ?";
+            $userStmt = $pdo->prepare($userQuery);
+            $userStmt->execute([$user_id]);
+            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+            
+            $noteData['year_level'] = $userData['current_year'] ?? 'Not specified';
+        }
+        
+        $stmt->execute([
+            $request_id,
+            $user_id,
+            json_encode($noteData)
+        ]);
+
+        // Handle file uploads
+        $upload_dir = dirname(API_ROOT) . '/uploads/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        $uploaded_files = [];
+        foreach ($_FILES as $field_name => $file_info) {
+            if ($file_info['error'] === UPLOAD_ERR_OK) {
+                $file_extension = pathinfo($file_info['name'], PATHINFO_EXTENSION);
+                $unique_filename = uniqid() . '_' . time() . '.' . $file_extension;
+                $upload_path = $upload_dir . $unique_filename;
+
+                if (move_uploaded_file($file_info['tmp_name'], $upload_path)) {
+                    $query = "INSERT INTO request_files (request_id, field_name, original_name, file_path) 
+                              VALUES (?, ?, ?, ?)";
+                    $stmt = $pdo->prepare($query);
+                    $stmt->execute([
+                        $request_id,
+                        $field_name,
+                        $file_info['name'],
+                        $unique_filename
+                    ]);
+                    $uploaded_files[$field_name] = $unique_filename;
+                }
+            }
+        }
 
         $pdo->commit();
 
@@ -140,13 +204,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'tracking_number' => $tracking_number,
                 'token' => $token,
                 'status' => 'PENDING',
-                'submitted_at' => date('Y-m-d H:i:s')
+                'submitted_at' => date('Y-m-d H:i:s'),
+                'uploaded_files' => $uploaded_files
             ]
         ]);
 
     } catch (Exception $e) {
         $pdo->rollBack();
-
         http_response_code(500);
         echo json_encode([
             'status' => 'error',

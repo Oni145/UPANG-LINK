@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <link rel="stylesheet" href="../WEB/css/requests.css" />
   <link rel="stylesheet" href="../WEB/css/notifications.css" />
+  <link rel="stylesheet" href="../WEB/css/userdetails.css" />
   <style>
     /* Additional inline styles if needed */
     /* Style for the toggle header with arrow icon */
@@ -95,7 +96,23 @@
   <ul id="notificationsList"></ul>             
   </div>
 </header>
-
+  <!-- User Details Modal -->
+  <div id="user_modal" class="user-modal">
+    <div class="user-modal-content">
+        <button onclick="closeUserModal()" class="user-close">&times;</button>
+        <h2>User Details</h2>
+        <div class="user-modal-body">
+            <p><strong>USER ID:</strong> <span id="modalUserId"></span></p>
+            <p><strong>Name:</strong> <span id="modalUserName"></span></p>
+            <p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
+            <p><strong>Student Number:</strong> <span id="modalUserStudentNumber"></span></p>
+            <p><strong>Birthdate:</strong> <span id="modalUserBirthdate"></span></p>
+            <p><strong>Emergency Contact:</strong> <span id="modalUserEmergencyContact"></span></p>
+            <p><strong>Course:</strong> <span id="modalUserCourse"></span></p>
+            <p><strong>Current Year:</strong> <span id="modalUserCurrentYear"></span></p>
+        </div>
+    </div>
+  </div>
 <script>
   document.getElementById('profileBtn').addEventListener('click', function () {
       var dropdown = document.getElementById('dropdownMenu');
@@ -222,6 +239,6 @@ function closeModal() {
   <script src="../WEB/js/Requests tab/Rejected.js"></script>
   <script src="./js/config.js"></script>
   <script src="../WEB/js/notifications.js"></script>
-
+  <script src="./js/usersdetails.js"></script>
 </body>
 </html>
