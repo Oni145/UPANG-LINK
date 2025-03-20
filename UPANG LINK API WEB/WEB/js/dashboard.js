@@ -576,31 +576,36 @@ updateUserDisplay(user) {
         console.error("Missing requests or users data for stats.");
         return;
     }
+
+    // Count pending and completed requests
     const stats = this.requestsData.reduce((acc, request) => {
-        // Normalize the status to lowercase for comparison
         const status = request.status.toLowerCase();
-  
         if (status === 'pending') acc.pending++;
         if (status === 'completed') acc.completed++;
         return acc;
     }, { pending: 0, completed: 0 });
-  
+
     const totalRequests = this.requestsData.length;
-    const totalUsers = Array.isArray(this.usersData) ? this.usersData.length : 0;
-  
+    
+    // Filter out users with role "admin"
+    const totalUsers = Array.isArray(this.usersData)
+        ? this.usersData.filter(user => user.role.toLowerCase() !== 'admin').length
+        : 0;
+
     console.log("Stats calculated:", {
         totalRequests,
         totalUsers,
         pendingRequests: stats.pending,
         completedRequests: stats.completed
     });
-  
+
     // Update DOM with calculated stats
     document.getElementById('totalUsers').textContent = totalUsers;
     document.getElementById('totalRequests').textContent = totalRequests;
     document.getElementById('pendingRequests').textContent = stats.pending;
     document.getElementById('completedRequests').textContent = stats.completed;
-  }
+}
+
   
   
     loadMonthlyChartUsingData() {
