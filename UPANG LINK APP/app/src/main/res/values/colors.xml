@@ -81,4 +81,6 @@
     <color name="colorPrimaryDark">#388E3C</color>
     <color name="colorPrimaryLight">#C8E6C9</color>
     <color name="colorAccent">#FF9800</color>
+
+    <color name="sky_blue">#2196F3</color>
 </resources> 

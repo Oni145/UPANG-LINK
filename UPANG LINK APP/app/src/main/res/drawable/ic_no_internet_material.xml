@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    
+    <!-- Main circle with warning color -->
+    <path
+        android:fillColor="#FFCC0000"
+        android:pathData="M480,880Q398,880 325,848.5Q252,817 197,762Q142,707 111,634Q80,561 80,480Q80,397 111.5,324Q143,251 198,197Q253,142 326,111Q399,80 480,80Q563,80 636,111.5Q709,143 763,198Q818,253 849,326Q880,399 880,480Q880,563 848.5,636Q817,709 762,763Q707,818 634,849Q561,880 480,880Z"/>
+    
+    <!-- WiFi icon in white -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M254,500L340,586Q398,536 474,536Q550,536 608,586L694,500Q610,428 474,428Q338,428 254,500ZM154,400L240,486Q342,400 474,400Q606,400 708,486L794,400Q662,286 474,286Q286,286 154,400ZM474,706Q508,706 532.5,681.5Q557,657 557,623Q557,589 532.5,564.5Q508,540 474,540Q440,540 415.5,564.5Q391,589 391,623Q391,657 415.5,681.5Q440,706 474,706Z"/>
+    
+    <!-- Red diagonal slash -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M213,814L146,747L746,147L813,214L213,814Z"
+        android:strokeWidth="50"
+        android:strokeColor="#FFCC0000"/>
+</vector> 

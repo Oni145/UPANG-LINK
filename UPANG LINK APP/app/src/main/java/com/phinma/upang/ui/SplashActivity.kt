@@ -2,14 +2,17 @@ package com.phinma.upang.ui
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.phinma.upang.R
+import com.phinma.upang.data.NetworkUtils
 import com.phinma.upang.data.SessionManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -20,6 +23,8 @@ import javax.inject.Inject
 class SplashActivity : AppCompatActivity() {
     @Inject
     lateinit var sessionManager: SessionManager
+    
+    private var noInternetDialog: Dialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,10 +46,23 @@ class SplashActivity : AppCompatActivity() {
         // Play all animations
         bounceAnimator.start()
 
-        // Check token and user profile after animations
+        // Check for internet connectivity first
         lifecycleScope.launch {
             delay(1500) // Wait for animations to complete
-            
+            checkInternetAndProceed()
+        }
+    }
+    
+    private fun checkInternetAndProceed() {
+        if (NetworkUtils.isNetworkAvailable(this)) {
+            proceedWithAuthentication()
+        } else {
+            showNoInternetDialog()
+        }
+    }
+    
+    private fun proceedWithAuthentication() {
+        lifecycleScope.launch {
             val token = sessionManager.getAuthToken()
             Log.d("SplashActivity", "Current token: $token")
             
@@ -80,5 +98,46 @@ class SplashActivity : AppCompatActivity() {
             })
             finish()
         }
+    }
+    
+    private fun showNoInternetDialog() {
+        if (noInternetDialog?.isShowing == true) return
+        
+        noInternetDialog = Dialog(this, R.style.NoInternetDialogStyle).apply {
+            setContentView(R.layout.dialog_no_internet)
+            setCancelable(false)
+            
+            // Set dialog width to 90% of screen width
+            window?.setLayout(
+                (resources.displayMetrics.widthPixels * 0.9).toInt(),
+                android.view.WindowManager.LayoutParams.WRAP_CONTENT
+            )
+            
+            // Ensure button has the correct background
+            findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.btnTryAgain)?.apply {
+                setBackgroundResource(R.drawable.sky_blue_button)
+            }
+            
+            findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.btnTryAgain).setOnClickListener {
+                if (NetworkUtils.isNetworkAvailable(this@SplashActivity)) {
+                    dismiss()
+                    proceedWithAuthentication()
+                } else {
+                    // Shake animation or some feedback to indicate still no internet
+                    val tryAgainButton = findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.btnTryAgain)
+                    val shakeAnimation = ObjectAnimator.ofFloat(tryAgainButton, "translationX", 0f, 25f, -25f, 25f, -25f, 15f, -15f, 6f, -6f, 0f)
+                    shakeAnimation.duration = 500
+                    shakeAnimation.start()
+                }
+            }
+            
+            show()
+        }
+    }
+    
+    override fun onDestroy() {
+        noInternetDialog?.dismiss()
+        noInternetDialog = null
+        super.onDestroy()
     }
 } 

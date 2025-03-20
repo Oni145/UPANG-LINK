@@ -139,4 +139,20 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">8dp</item>
     </style>
+
+    <!-- Base application theme. -->
+    <style name="NoInternetDialogStyle" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowBackground">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.7</item>
+    </style>
+
+    <style name="TryAgainButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:backgroundTint">#2196F3</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="cornerRadius">24dp</item>
+        <item name="android:padding">12dp</item>
+    </style>
 </resources> 
