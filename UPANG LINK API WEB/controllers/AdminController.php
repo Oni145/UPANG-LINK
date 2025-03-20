@@ -536,10 +536,10 @@ class AdminController {
             return;
         }
         
-        // Retrieve admin by email using getByEmail method
-        $admin = $this->adminModel->getByEmail($data->email);
-        if (!$admin) {
-            $this->sendError("Admin not found", 404);
+        // Retrieve user by email using getByEmail method
+        $user = $this->adminModel->getByEmail($data->email);
+        if (!$user) {
+            $this->sendError("User not found", 404);
             return;
         }
         
@@ -547,9 +547,9 @@ class AdminController {
         $resetToken = bin2hex(random_bytes(16));
         $expiresAt = date('Y-m-d H:i:s', time() + 3600);
         
-        // Update the admins table with the reset token and expiry
-        $stmt = $this->db->prepare("UPDATE admins SET password_reset_token = ?, password_reset_expires = ? WHERE admin_id = ?");
-        if (!$stmt->execute([$resetToken, $expiresAt, $admin['admin_id']])) {
+        // Update the users table with the reset token and expiry
+        $stmt = $this->db->prepare("UPDATE users SET reset_password_token = ?, reset_token_expiry = ? WHERE user_id = ?");
+        if (!$stmt->execute([$resetToken, $expiresAt, $user['user_id']])) {
             $this->sendError("Could not set reset token", 500);
             return;
         }
@@ -567,18 +567,18 @@ class AdminController {
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
-            $mail->Username   = '';
-            $mail->Password   = '';
-            $mail->SMTPSecure = 'TLS';
+            $mail->Username   = 'librariansystem1@gmail.com';
+            $mail->Password   = 'tyjq vblg ekex nivi';
+            $mail->SMTPSecure = 'tls';
             $mail->Port       = 587;
-
+    
             $mail->isHTML(false); // Send as plain text
             $mail->setFrom('your-email@example.com', 'Admin Support');
-            $mail->addAddress($admin['email'], $admin['username']);
-
+            $mail->addAddress($user['email'], $user['first_name']); // Use first_name instead of username
+    
             $mail->Subject = $subject;
             $mail->Body    = $body;
-
+    
             $mail->send();
         } catch (Exception $e) {
             $this->sendError("Mailer Error: " . $mail->ErrorInfo, 500);
@@ -591,10 +591,10 @@ class AdminController {
             'message' => 'Password reset email sent successfully'
         ]);
     }
-
+    
     /**
      * resetPassword: Validates the reset token, updates the password,
-     * and clears the token fields in the admins table.
+     * and clears the token fields in the users table.
      */
     private function resetPassword() {
         $data = json_decode(file_get_contents("php://input"));
@@ -603,23 +603,24 @@ class AdminController {
             return;
         }
         
-        $stmt = $this->db->prepare("SELECT admin_id, password_reset_expires FROM admins WHERE password_reset_token = ?");
+        $stmt = $this->db->prepare("SELECT user_id, reset_token_expiry FROM users WHERE reset_password_token = ?");
         $stmt->execute([$data->token]);
-        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$admin) {
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
             $this->sendError("Invalid reset token", 400);
             return;
         }
         
-        if (new DateTime() > new DateTime($admin['password_reset_expires'])) {
+        if (new DateTime() > new DateTime($user['reset_token_expiry'])) {
             $this->sendError("Reset token has expired", 400);
             return;
         }
         
         $newPasswordHashed = password_hash($data->new_password, PASSWORD_DEFAULT);
         
-        $stmt = $this->db->prepare("UPDATE admins SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE admin_id = ?");
-        if ($stmt->execute([$newPasswordHashed, $admin['admin_id']])) {
+        $stmt = $this->db->prepare("UPDATE users SET password = ?, reset_password_token = NULL, reset_token_expiry = NULL WHERE user_id = ?");
+        if ($stmt->execute([$newPasswordHashed, $user['user_id']])) {
             echo json_encode([
                 'status'  => 'success',
                 'message' => 'Password has been reset successfully.'
@@ -628,6 +629,7 @@ class AdminController {
             $this->sendError("Unable to reset password", 500);
         }
     }
+    
 
     private function checkMissingFields($data, array $fields) {
         $missing = [];

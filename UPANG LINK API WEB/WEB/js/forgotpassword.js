@@ -21,7 +21,7 @@ document.getElementById('forgotPasswordForm').addEventListener('submit', async f
     if (!isResetPhase) {
         // Step 1: Request reset token using the provided email.
         try {
-            const response = await fetch(API_BASE_URL + 'admin/forgot_password', {
+            const response = await fetch(API_BASE_URL + '/admin/forgot_password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })
@@ -52,7 +52,7 @@ document.getElementById('forgotPasswordForm').addEventListener('submit', async f
         }
 
         try {
-            const response = await fetch(API_BASE_URL + 'admin/reset_password', {
+            const response = await fetch(API_BASE_URL + '/admin/reset_password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, new_password: newPassword })
