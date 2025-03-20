@@ -355,7 +355,7 @@ document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML
   const ticketFilesEl = document.getElementById('ticketFiles');
   ticketFilesEl.innerHTML = fileLinks
     ? `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`
-    : '';
+    : '<p>No attached files.</p>';
 
   
   // Inline Comment Editing Section

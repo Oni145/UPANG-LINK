@@ -234,19 +234,32 @@ function closeModal() {
         }
       });
     });
-    window.onclick = function(event) {
-    var modal = document.getElementById("ticketModal");
-    if (event.target === modal) {
-        closeModal();
-    }
-};
+// Get the modal reference
+let modal = document.getElementById("ticketModal");
 
-window.onclick = function(event) {
-    var modal = document.getElementById("ticketModal");
-    if (event.target === modal) {
+// Open the modal
+function viewRequest(requestId) {
+    if (modal) {
+        modal.style.display = "block";
+    } else {
+        console.error("Modal element not found!");
+    }
+}
+
+// Close the modal
+function closeModal() {
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+// Event listener for clicking outside the modal
+window.addEventListener("click", function(event) {
+    if (modal && event.target === modal) {
         closeModal();
     }
-};
+});
+
   </script>
   <!-- Include the external JavaScript file -->
   <script src="./js/Requests tab/Approved.js"></script>

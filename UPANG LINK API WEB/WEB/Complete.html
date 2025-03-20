@@ -111,48 +111,6 @@
   <!-- Notifications List -->
   <ul id="notificationsList"></ul>
 </header>
-
-<script>
-  document.getElementById('profileBtn').addEventListener('click', function () {
-      var dropdown = document.getElementById('dropdownMenu');
-      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-  });
-
-  document.addEventListener('click', function (event) {
-      var dropdown = document.getElementById('dropdownMenu');
-      var profileBtn = document.getElementById('profileBtn');
-
-      if (!profileBtn.contains(event.target) && !dropdown.contains(event.target)) {
-          dropdown.style.display = 'none';
-      }
-  });
-  
-  window.onclick = function(event) {
-    var modal = document.getElementById("ticketModal");
-    if (event.target === modal) {
-        closeModal();
-    }
-};
-
-window.onclick = function(event) {
-    var modal = document.getElementById("ticketModal");
-    if (event.target === modal) {
-        closeModal();
-    }
-};
-
-// Function to close the modal
-function closeModal() {
-    document.getElementById("ticketModal").style.display = "none";
-}
-
-// Function to close the modal
-function closeModal() {
-    document.getElementById("ticketModal").style.display = "none";
-}
-</script>
-
-
       <!-- Main Content -->
       <main>
         <div class="card">
@@ -236,6 +194,45 @@ function closeModal() {
         }
       });
     });
+    // Get the modal reference
+let modal = document.getElementById("ticketModal");
+
+// Open the modal
+function viewRequest(requestId) {
+    if (modal) {
+        modal.style.display = "block";
+    } else {
+        console.error("Modal element not found!");
+    }
+}
+
+// Close the modal
+function closeModal() {
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+// Event listener for clicking outside the modal
+window.addEventListener("click", function(event) {
+    if (modal && event.target === modal) {
+        closeModal();
+    }
+});
+
+document.getElementById('profileBtn').addEventListener('click', function () {
+      var dropdown = document.getElementById('dropdownMenu');
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+  });
+
+  document.addEventListener('click', function (event) {
+      var dropdown = document.getElementById('dropdownMenu');
+      var profileBtn = document.getElementById('profileBtn');
+
+      if (!profileBtn.contains(event.target) && !dropdown.contains(event.target)) {
+          dropdown.style.display = 'none';
+      }
+  });
   </script>
   <!-- Include the external JavaScript file -->
   <script src="./js/Requests tab/Complete.js"></script>

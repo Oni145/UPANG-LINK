@@ -323,7 +323,7 @@ function viewRequest(requestId) {
   detailsContainer.innerHTML = ticketDetailsHTML;
 
   // Build file links if a file is attached
-  let fileLinks = request.file_path ? buildFileLink(request, "Attached File") : "<p>No attached files.</p>";
+  let fileLinks = request.file_path ? buildFileLink(request, "Attached File") : "";
   
   const fileContainer = document.getElementById('ticketFiles');
   if (fileContainer) {
