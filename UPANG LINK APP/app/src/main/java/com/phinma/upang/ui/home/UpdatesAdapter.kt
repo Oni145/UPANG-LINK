@@ -37,13 +37,17 @@ class UpdatesAdapter : ListAdapter<Update, UpdatesAdapter.UpdateViewHolder>(Upda
         private val cardView: CardView = itemView as CardView
 
         fun bind(update: Update) {
+            // Use safe operations with null checks
             tvTitle.text = update.title
             tvDescription.text = update.description
             tvDate.text = update.date
             
             // Set status icon and card background based on status
             ivStatus?.visibility = View.VISIBLE
-            when (update.status) {
+            
+            // Safely handle null or empty status
+            val status = update.status.lowercase()
+            when (status) {
                 "approved" -> {
                     ivStatus?.setImageResource(R.drawable.ic_check_circle)
                     ivStatus?.imageTintList = ColorStateList.valueOf(
@@ -87,7 +91,10 @@ class UpdatesAdapter : ListAdapter<Update, UpdatesAdapter.UpdateViewHolder>(Upda
         }
 
         override fun areContentsTheSame(oldItem: Update, newItem: Update): Boolean {
-            return oldItem == newItem
+            return oldItem.id == newItem.id && 
+                   oldItem.title == newItem.title &&
+                   oldItem.description == newItem.description &&
+                   oldItem.status == newItem.status
         }
     }
 }
@@ -96,17 +103,18 @@ class UpdatesAdapter : ListAdapter<Update, UpdatesAdapter.UpdateViewHolder>(Upda
  * Data class representing a request update item
  */
 data class Update(
-    val id: String,
-    val title: String,
-    val description: String,
-    val date: String,
+    val id: String = "",
+    val title: String = "",
+    val description: String = "",
+    val date: String = "",
     val type: UpdateType = UpdateType.REQUEST_STATUS,
-    val status: String
+    val status: String = ""
 )
 
 /**
  * Enum representing update types
  */
 enum class UpdateType {
-    REQUEST_STATUS  // Updates about request status changes
+    REQUEST_STATUS,  // Updates about request status changes
+    ADMIN_NOTE       // Notes/messages from admin regarding requests
 } 

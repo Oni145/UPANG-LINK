@@ -272,7 +272,7 @@ $config = require_once __DIR__ . '/../config/config.php';
             loading.style.display = 'block';
             form.style.display = 'none';
 
-            fetch('<?php echo $config['app']['api_url']; ?>/api/auth/student/validate-token', {
+            fetch('<?php echo $config['app']['api_url']; ?>/api/auth/student/validate-reset-token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -39,9 +39,69 @@ foreach ($headers as $name => $value) {
     error_log("Header: $name = $value");
 }
 
-// For testing purposes, hardcode the token and user ID
-$user_id = 2;
-error_log("Using hardcoded user ID: " . $user_id);
+// Extract user ID from JWT token
+$user_id = null;
+$authorization = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+
+if (strpos($authorization, 'Bearer ') === 0) {
+    $token = substr($authorization, 7);
+    
+    // Include JWT helper
+    $jwt_helper_path = __DIR__ . '/../../helpers/jwt_helper.php';
+    if (!file_exists($jwt_helper_path)) {
+        error_log("JWT helper file not found at: " . $jwt_helper_path);
+        $absolute_path = realpath(dirname(__FILE__) . '/../../helpers/jwt_helper.php');
+        error_log("Absolute path: " . $absolute_path);
+        if ($absolute_path && file_exists($absolute_path)) {
+            require_once $absolute_path;
+        } else {
+            error_log("Could not find JWT helper with absolute path either.");
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Internal server error: JWT helper not found'
+            ]);
+            exit;
+        }
+    } else {
+        require_once $jwt_helper_path;
+    }
+    
+    try {
+        // Decode the token and extract user ID
+        $decoded = JWT::decode($token);
+        if (isset($decoded->user_id)) {
+            $user_id = $decoded->user_id;
+            error_log("Extracted user ID from token: " . $user_id);
+        } else {
+            error_log("Token does not contain user_id");
+            http_response_code(401);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid token: missing user_id'
+            ]);
+            exit;
+        }
+    } catch (Exception $e) {
+        error_log("Token validation error: " . $e->getMessage());
+        http_response_code(401);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid or expired token'
+        ]);
+        exit;
+    }
+} else {
+    error_log("No valid authorization token provided");
+    http_response_code(401);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Authorization token required'
+    ]);
+    exit;
+}
+
+error_log("Using user ID from token: " . $user_id);
 
 // Create request object
 $request = new Request($pdo);

@@ -106,9 +106,14 @@ class RequestController {
 
     private function getAllRequests() {
         try {
-            // For testing purposes, hardcode the user ID
-            $user_id = 2;
-            error_log("Using hardcoded user ID: " . $user_id);
+            // Extract user ID from JWT token
+            $user_id = $this->getUserIdFromToken();
+            if (!$user_id) {
+                http_response_code(401);
+                return ['status' => 'error', 'message' => 'Unauthorized: Invalid token'];
+            }
+            
+            error_log("Using user ID from token: " . $user_id);
             
             $result = $this->request->getAll($user_id);
             return ['status' => 'success', 'data' => $result];
@@ -120,9 +125,14 @@ class RequestController {
 
     private function getRequest($id) {
         try {
-            // For testing purposes, hardcode the user ID
-            $user_id = 2;
-            error_log("Using hardcoded user ID: " . $user_id);
+            // Extract user ID from JWT token
+            $user_id = $this->getUserIdFromToken();
+            if (!$user_id) {
+                http_response_code(401);
+                return ['status' => 'error', 'message' => 'Unauthorized: Invalid token'];
+            }
+            
+            error_log("Using user ID from token: " . $user_id);
             
             // Try to get request by tracking number first
             if (preg_match('/^REQ-\d{8}-\d{4}$/', $id) || preg_match('/^REQ-\d{4}-\d{3}$/', $id)) {
@@ -735,9 +745,14 @@ class RequestController {
 
     private function getRequestByTrackingNumber($tracking_number) {
         try {
-            // For testing purposes, hardcode the user ID
-            $user_id = 2;
-            error_log("Using hardcoded user ID: " . $user_id);
+            // Extract user ID from JWT token
+            $user_id = $this->getUserIdFromToken();
+            if (!$user_id) {
+                http_response_code(401);
+                return ['status' => 'error', 'message' => 'Unauthorized: Invalid token'];
+            }
+            
+            error_log("Using user ID from token: " . $user_id);
             
             error_log("Getting request by tracking number: " . $tracking_number);
             $result = $this->request->getDetailsByTrackingNumber($tracking_number, $user_id);
@@ -752,5 +767,50 @@ class RequestController {
             http_response_code(500);
             return ['status' => 'error', 'message' => 'Failed to fetch request: ' . $e->getMessage()];
         }
+    }
+
+    private function getUserIdFromToken() {
+        $headers = getallheaders();
+        $authorization = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+
+        if (strpos($authorization, 'Bearer ') === 0) {
+            $token = substr($authorization, 7);
+            
+            // Include JWT helper if not already included
+            $jwt_helper_path = __DIR__ . '/../helpers/jwt_helper.php';
+            error_log("Looking for JWT helper at: " . $jwt_helper_path);
+            
+            if (!file_exists($jwt_helper_path)) {
+                error_log("JWT helper file not found at: " . $jwt_helper_path);
+                $absolute_path = realpath(dirname(__FILE__) . '/../helpers/jwt_helper.php');
+                error_log("Absolute path: " . $absolute_path);
+                if ($absolute_path && file_exists($absolute_path)) {
+                    require_once $absolute_path;
+                } else {
+                    error_log("Could not find JWT helper with absolute path either.");
+                    return null;
+                }
+            } else {
+                require_once $jwt_helper_path;
+            }
+            
+            try {
+                // Decode the token and extract user ID
+                $decoded = JWT::decode($token);
+                
+                if (isset($decoded->user_id)) {
+                    return $decoded->user_id;
+                }
+                
+                error_log("Token does not contain user_id");
+                return null;
+            } catch (Exception $e) {
+                error_log("Token validation error: " . $e->getMessage());
+                return null;
+            }
+        }
+        
+        error_log("No valid authorization token provided");
+        return null;
     }
 } 

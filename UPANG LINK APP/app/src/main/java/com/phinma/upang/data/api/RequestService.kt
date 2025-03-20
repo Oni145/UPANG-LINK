@@ -3,6 +3,7 @@ package com.phinma.upang.data.api
 import com.phinma.upang.data.model.ApiResponse
 import com.phinma.upang.data.model.CreateRequestResponse
 import com.phinma.upang.data.model.RequestType
+import com.phinma.upang.data.model.RequirementNote
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -32,4 +33,7 @@ interface RequestService {
         @Part("student_id") studentId: RequestBody,
         @Part files: List<MultipartBody.Part>
     ): Response<ApiResponse<CreateRequestResponse>>
+    
+    @GET("requests/{requestId}/notes")
+    suspend fun getRequestNotes(@Path("requestId") requestId: String): Response<ApiResponse<List<RequirementNote>>>
 } 

@@ -377,20 +377,28 @@ class Request {
             if($result) {
                 // Parse requirements JSON if it exists
                 if(!empty($result['requirements'])) {
-                    $requirements = json_decode($result['requirements'], true);
-                    if(json_last_error() === JSON_ERROR_NONE) {
-                        // Only include fields that are relevant to this request type
-                        if (isset($requirements['fields'])) {
-                            $relevantFields = [];
-                            foreach ($requirements['fields'] as $field) {
-                                // Check if this field is specific to this request type
-                                // For now, we include all fields since we're already filtering by request type
-                                $relevantFields[] = $field;
+                    if (is_string($result['requirements'])) {
+                        $requirements = json_decode($result['requirements'], true);
+                        if(json_last_error() === JSON_ERROR_NONE) {
+                            // Only include fields that are relevant to this request type
+                            if (isset($requirements['fields'])) {
+                                $relevantFields = [];
+                                foreach ($requirements['fields'] as $field) {
+                                    // Check if this field is specific to this request type
+                                    // For now, we include all fields since we're already filtering by request type
+                                    $relevantFields[] = $field;
+                                }
+                                $requirements['fields'] = $relevantFields;
                             }
-                            $requirements['fields'] = $relevantFields;
+                            $result['requirements'] = $requirements;
+                        } else {
+                            error_log("Error parsing requirements JSON in getRequestType: " . json_last_error_msg());
+                            // If JSON parsing fails, create a basic structure
+                            $result['requirements'] = [
+                                'fields' => [],
+                                'instructions' => 'Please fill out all required fields.'
+                            ];
                         }
-                        
-                        $result['requirements'] = $requirements;
                     }
                 }
                 
@@ -606,18 +614,55 @@ class Request {
             if($result) {
                 error_log("Found request with tracking number: $tracking_number. Request ID: " . $result['request_id']);
                 
+                // Initialize requirements with a safe default structure
+                $result['requirements'] = [
+                    'fields' => [],
+                    'instructions' => 'Please fill out all required fields.'
+                ];
+                
                 // Parse requirements JSON if it exists
                 if(!empty($result['requirements'])) {
-                    error_log("Requirements before parsing: " . $result['requirements']);
-                    $requirements = json_decode($result['requirements'], true);
-                    if(json_last_error() === JSON_ERROR_NONE) {
-                        $result['requirements'] = $requirements;
-                        error_log("Requirements parsed successfully");
-                    } else {
-                        error_log("Error parsing requirements JSON: " . json_last_error_msg());
+                    error_log("Requirements before parsing: " . print_r($result['requirements'], true));
+                    try {
+                        if (is_string($result['requirements'])) {
+                            $requirements = json_decode($result['requirements'], true);
+                            if(json_last_error() === JSON_ERROR_NONE && is_array($requirements)) {
+                                // Ensure the requirements have the correct structure
+                                if (!isset($requirements['fields'])) {
+                                    $requirements['fields'] = [];
+                                }
+                                if (!isset($requirements['instructions'])) {
+                                    $requirements['instructions'] = 'Please fill out all required fields.';
+                                }
+                                $result['requirements'] = $requirements;
+                                error_log("Requirements parsed successfully");
+                            } else {
+                                error_log("Error parsing requirements JSON: " . json_last_error_msg());
+                                // Keep the default structure
+                            }
+                        } else if (is_array($result['requirements'])) {
+                            // If it's already an array, ensure it has the correct structure
+                            if (!isset($result['requirements']['fields'])) {
+                                $result['requirements']['fields'] = [];
+                            }
+                            if (!isset($result['requirements']['instructions'])) {
+                                $result['requirements']['instructions'] = 'Please fill out all required fields.';
+                            }
+                        }
+                    } catch (Exception $e) {
+                        error_log("Error processing requirements: " . $e->getMessage());
+                        // Keep the default structure
                     }
                 } else {
                     error_log("No requirements found for this request type");
+                }
+                
+                // Ensure requirements is properly structured before proceeding
+                if (!is_array($result['requirements']) || !isset($result['requirements']['fields'])) {
+                    $result['requirements'] = [
+                        'fields' => [],
+                        'instructions' => 'Please fill out all required fields.'
+                    ];
                 }
                 
                 try {
@@ -653,9 +698,12 @@ class Request {
                         
                         // Get the list of valid field names for this request type
                         $validFieldNames = [];
-                        if (!empty($result['requirements']) && is_array($result['requirements']) && isset($result['requirements']['fields'])) {
-                            foreach ($result['requirements']['fields'] as $field) {
-                                $validFieldNames[] = $field['name'];
+                        if (!empty($result['requirements'])) {
+                            $requirements = is_string($result['requirements']) ? json_decode($result['requirements'], true) : $result['requirements'];
+                            if (is_array($requirements) && isset($requirements['fields'])) {
+                                foreach ($requirements['fields'] as $field) {
+                                    $validFieldNames[] = $field['name'];
+                                }
                             }
                         }
                         
@@ -694,34 +742,90 @@ class Request {
                     
                     // Check if all required files have been uploaded
                     $requirementStatus = [];
-                    if (!empty($result['requirements']) && is_array($result['requirements']) && isset($result['requirements']['fields'])) {
-                        error_log("Processing requirement fields for status check");
+                    try {
+                        // For course modules, we want to set an empty requirements structure
+                        if (stripos($result['request_type'], 'Course Module') !== false) {
+                            error_log("Setting up course module requirements structure");
+                            $result['requirements'] = [
+                                'fields' => [],
+                                'instructions' => 'No additional information needed for this request.',
+                                'key' => $result['request_type'] . '_' . $result['type_id'] . '_' . time(),
+                                'force_refresh' => true
+                            ];
+                        }
+                        
+                        // Ensure we have a valid requirements structure
+                        if (!isset($result['requirements']) || !is_array($result['requirements'])) {
+                            $result['requirements'] = [
+                                'fields' => [],
+                                'instructions' => 'Please fill out all required fields.'
+                            ];
+                        }
+                        
+                        // Ensure fields is an array
+                        if (!isset($result['requirements']['fields']) || !is_array($result['requirements']['fields'])) {
+                            $result['requirements']['fields'] = [];
+                        }
+                        
+                        // Process each field safely
                         foreach ($result['requirements']['fields'] as $field) {
-                            // Only process file type fields that are required and match the current request type
-                            if ($field['type'] === 'file' && $field['required']) {
-                                $fieldName = $field['name'];
-                                
-                                // Get files for this field
-                                $fieldFiles = isset($organizedFiles[$fieldName]) ? $organizedFiles[$fieldName] : [];
-                                
-                                // Create status object with only non-empty fields
-                                $status = [
-                                    'name' => $fieldName,
-                                    'label' => $field['label'],
-                                    'required' => $field['required'],
-                                    'uploaded' => !empty($fieldFiles)
-                                ];
-                                
-                                // Only add files if they exist
-                                if (!empty($fieldFiles)) {
-                                    $status['files'] = $fieldFiles;
+                            try {
+                                if (!is_array($field)) {
+                                    error_log("Invalid field structure (not an array): " . print_r($field, true));
+                                    continue;
                                 }
                                 
-                                $requirementStatus[$fieldName] = $status;
+                                if (!isset($field['type']) || !isset($field['name'])) {
+                                    error_log("Invalid field structure (missing required properties): " . print_r($field, true));
+                                    continue;
+                                }
+                                
+                                // Only process file type fields that are required
+                                if ($field['type'] === 'file' && ($field['required'] ?? false)) {
+                                    $fieldName = $field['name'];
+                                    
+                                    // Get files for this field
+                                    $fieldFiles = isset($organizedFiles[$fieldName]) ? $organizedFiles[$fieldName] : [];
+                                    
+                                    // Create status object with only non-empty fields
+                                    $status = [
+                                        'name' => $fieldName,
+                                        'label' => $field['label'] ?? $fieldName,
+                                        'required' => true,
+                                        'uploaded' => !empty($fieldFiles)
+                                    ];
+                                    
+                                    // Only add files if they exist and are properly structured
+                                    if (!empty($fieldFiles) && is_array($fieldFiles)) {
+                                        $cleanFiles = [];
+                                        foreach ($fieldFiles as $file) {
+                                            if (is_array($file)) {
+                                                $cleanFile = [];
+                                                foreach ($file as $key => $value) {
+                                                    if ($value !== null && $value !== '') {
+                                                        $cleanFile[$key] = $value;
+                                                    }
+                                                }
+                                                if (!empty($cleanFile)) {
+                                                    $cleanFiles[] = $cleanFile;
+                                                }
+                                            }
+                                        }
+                                        if (!empty($cleanFiles)) {
+                                            $status['files'] = $cleanFiles;
+                                        }
+                                    }
+                                    
+                                    $requirementStatus[$fieldName] = $status;
+                                }
+                            } catch (Exception $e) {
+                                error_log("Error processing field: " . $e->getMessage());
+                                continue;
                             }
                         }
-                    } else {
-                        error_log("No requirement fields found to process for status check");
+                    } catch (Exception $e) {
+                        error_log("Error processing requirements and files: " . $e->getMessage());
+                        $requirementStatus = [];
                     }
                 } catch (Exception $e) {
                     error_log("Error processing files: " . $e->getMessage());
@@ -761,58 +865,82 @@ class Request {
                         // Get the valid field names for this request type
                         $validFieldNames = [];
                         if (!empty($requirements)) {
-                            foreach ($requirements as $requirement) {
-                                if (isset($requirement['field_name'])) {
-                                    $validFieldNames[] = $requirement['field_name'];
+                            // Handle course modules specially
+                            if (stripos($result['request_type'], 'Course Module') !== false) {
+                                // No fields to validate for course modules
+                                $validFieldNames = [];
+                                error_log("Course module request - skipping field validation");
+                            } else {
+                                try {
+                                    // Make sure requirements is an array
+                                    if (is_string($requirements)) {
+                                        $requirements = json_decode($requirements, true);
+                                        if (json_last_error() !== JSON_ERROR_NONE) {
+                                            error_log("JSON decode error in notes section: " . json_last_error_msg());
+                                            $requirements = ['fields' => []];
+                                        }
+                                    }
+                                    
+                                    // Ensure requirements is an array
+                                    if (!is_array($requirements)) {
+                                        error_log("Requirements is not an array, setting default structure");
+                                        $requirements = ['fields' => []];
+                                    }
+                                    
+                                    // Extract field names from requirements
+                                    if (isset($requirements['fields']) && is_array($requirements['fields'])) {
+                                        foreach ($requirements['fields'] as $field) {
+                                            if (isset($field['name'])) {
+                                                $validFieldNames[] = $field['name'];
+                                            }
+                                        }
+                                    }
+                                } catch (Exception $e) {
+                                    error_log("Error processing requirements for field names: " . $e->getMessage());
+                                    $validFieldNames = [];
                                 }
                             }
-                        }
-
-                        // Filter requirement_status to only include requirements relevant to this request type
-                        if (!empty($requirementStatus) && !empty($validFieldNames)) {
-                            $filteredRequirementStatus = [];
-                            foreach ($requirementStatus as $requirement) {
-                                if (isset($requirement['requirement_name']) && 
-                                    in_array($requirement['requirement_name'], $validFieldNames)) {
-                                    $filteredRequirementStatus[] = $requirement;
-                                }
-                            }
-                            $requirementStatus = $filteredRequirementStatus;
                         }
 
                         // Filter out empty or null values from each note record
                         // And try to parse the note content to check if it's relevant to this request type
                         $notes = [];
                         foreach ($rawNotes as $note) {
-                            // Try to parse the note content if it's JSON
-                            $noteContent = $note['note'];
-                            $isRelevant = true; // Assume all notes are relevant by default
-                            $parsedContent = null;
-                            
-                            if ($noteContent && substr($noteContent, 0, 1) === '{') {
-                                $parsedNote = json_decode($noteContent, true);
-                                if (json_last_error() === JSON_ERROR_NONE) {
-                                    // Check if the note contains fields that are part of this request type
-                                    $hasRelevantField = false;
-                                    $relevantFields = [];
-                                    
-                                    if (!empty($validFieldNames)) {
-                                        foreach ($parsedNote as $key => $value) {
-                                            if (in_array($key, $validFieldNames) || $key === 'purpose') {
-                                                $hasRelevantField = true;
-                                                $relevantFields[$key] = $value;
+                            try {
+                                // Try to parse the note content if it's JSON
+                                $noteContent = isset($note['note']) ? $note['note'] : '';
+                                if (empty($noteContent)) {
+                                    continue;
+                                }
+                                
+                                $isRelevant = true; // Assume all notes are relevant by default
+                                $parsedContent = null;
+                                
+                                if (is_string($noteContent) && substr($noteContent, 0, 1) === '{') {
+                                    $parsedNote = json_decode($noteContent, true);
+                                    if (json_last_error() === JSON_ERROR_NONE && is_array($parsedNote)) {
+                                        // For course modules, include all notes
+                                        if (stripos($result['request_type'], 'Course Module') !== false) {
+                                            $parsedContent = $parsedNote;
+                                        } else {
+                                            // Check if the note contains fields that are part of this request type
+                                            $relevantFields = [];
+                                            
+                                            foreach ($parsedNote as $key => $value) {
+                                                // Include if it's a valid field name or a special field like 'purpose'
+                                                if (empty($validFieldNames) || in_array($key, $validFieldNames) || $key === 'purpose') {
+                                                    $relevantFields[$key] = $value;
+                                                }
                                             }
-                                        }
-                                        $isRelevant = $hasRelevantField;
-                                        if ($isRelevant) {
-                                            $parsedContent = $relevantFields;
+                                            
+                                            if (!empty($relevantFields)) {
+                                                $parsedContent = $relevantFields;
+                                            }
                                         }
                                     }
                                 }
-                            }
-                            
-                            // Only include relevant notes
-                            if ($isRelevant) {
+                                
+                                // Create the clean note object
                                 $cleanNote = [
                                     'note_id' => $note['note_id'],
                                     'request_id' => $note['request_id'],
@@ -820,15 +948,17 @@ class Request {
                                     'created_at' => $note['created_at']
                                 ];
                                 
-                                // If we successfully parsed the content, include the parsed fields
-                                // Otherwise include the original note content
-                                if ($parsedContent) {
+                                // Add either parsed content or original note
+                                if ($parsedContent !== null) {
                                     $cleanNote['content'] = $parsedContent;
                                 } else {
                                     $cleanNote['note'] = $noteContent;
                                 }
                                 
                                 $notes[] = $cleanNote;
+                            } catch (Exception $e) {
+                                error_log("Error processing note: " . $e->getMessage());
+                                continue;
                             }
                         }
                     } else {
@@ -1199,61 +1329,65 @@ class Request {
                         
                         // Filter and process notes
                         $notes = [];
-                        foreach ($rawNotes as $note) {
-                            // Try to parse the note content if it's JSON
-                            $noteContent = $note['note'];
-                            $isRelevant = true; // Assume all notes are relevant by default
-                            $parsedContent = null;
-                            
-                            if ($noteContent && substr($noteContent, 0, 1) === '{') {
-                                $parsedNote = json_decode($noteContent, true);
-                                if (json_last_error() === JSON_ERROR_NONE) {
-                                    // Check if the note contains fields that are part of this request type
-                                    $hasRelevantField = false;
-                                    $relevantFields = [];
-                                    
-                                    if (!empty($validFieldNames)) {
-                                        foreach ($parsedNote as $key => $value) {
-                                            if (in_array($key, $validFieldNames) || $key === 'purpose') {
-                                                $hasRelevantField = true;
-                                                $relevantFields[$key] = $value;
+                        try {
+                            if (!empty($result['notes'])) {
+                                foreach ($result['notes'] as $noteContent) {
+                                    try {
+                                        // Skip empty notes
+                                        if (empty($noteContent)) {
+                                            continue;
+                                        }
+
+                                        // If noteContent is already an array, use it directly
+                                        if (is_array($noteContent)) {
+                                            $note = $noteContent;
+                                        } else {
+                                            // Try to decode if it's a JSON string
+                                            $note = json_decode($noteContent, true);
+                                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                                error_log("Failed to decode note JSON: " . json_last_error_msg());
+                                                continue;
                                             }
                                         }
-                                        $isRelevant = $hasRelevantField;
-                                        if ($isRelevant) {
-                                            $parsedContent = $relevantFields;
+
+                                        // Validate note structure
+                                        if (!is_array($note) || !isset($note['content']) || !isset($note['timestamp'])) {
+                                            error_log("Invalid note structure: " . print_r($note, true));
+                                            continue;
                                         }
+
+                                        // Clean the note data
+                                        $cleanNote = [
+                                            'content' => strip_tags($note['content']),
+                                            'timestamp' => $note['timestamp']
+                                        ];
+
+                                        // Only add optional fields if they exist and are not empty
+                                        if (isset($note['user']) && !empty($note['user'])) {
+                                            $cleanNote['user'] = strip_tags($note['user']);
+                                        }
+                                        if (isset($note['type']) && !empty($note['type'])) {
+                                            $cleanNote['type'] = strip_tags($note['type']);
+                                        }
+
+                                        $notes[] = $cleanNote;
+                                    } catch (Exception $e) {
+                                        error_log("Error processing individual note: " . $e->getMessage());
+                                        continue;
                                     }
                                 }
                             }
-                            
-                            // Only include relevant notes
-                            if ($isRelevant) {
-                                $cleanNote = [
-                                    'note_id' => $note['note_id'],
-                                    'request_id' => $note['request_id'],
-                                    'admin_id' => $note['admin_id'],
-                                    'created_at' => $note['created_at']
-                                ];
-                                
-                                // If we successfully parsed the content, include the parsed fields
-                                // Otherwise include the original note content
-                                if ($parsedContent) {
-                                    $cleanNote['content'] = $parsedContent;
-                                } else {
-                                    $cleanNote['note'] = $noteContent;
-                                }
-                                
-                                $notes[] = $cleanNote;
-                            }
+                        } catch (Exception $e) {
+                            error_log("Error processing notes: " . $e->getMessage());
                         }
-                        
-                        if (!empty($notes)) {
-                            $request['notes'] = $notes;
-                        }
+
+                        // Always ensure we have a valid notes array
+                        $result['notes'] = $notes;
                     }
                 } catch (Exception $e) {
                     error_log("Error processing notes: " . $e->getMessage());
+                    // Continue execution even if there's an error with notes
+                    $notes = [];
                 }
                 
                 return $request;

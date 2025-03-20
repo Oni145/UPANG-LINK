@@ -16,6 +16,9 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
     private val viewModel: RegisterViewModel by viewModels()
+    
+    // Variable to track if button was recently clicked
+    private var isButtonClickable = true
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -31,11 +34,27 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             }
 
             btnRegister.setOnClickListener {
+                // Prevent rapid clicks
+                if (!isButtonClickable) {
+                    return@setOnClickListener
+                }
+                
+                // Disable button immediately
+                setButtonClickable(false)
+                
                 val firstName = etFirstName.text.toString()
                 val lastName = etLastName.text.toString()
                 val email = etEmail.text.toString()
                 val password = etPassword.text.toString()
                 val confirmPassword = etConfirmPassword.text.toString()
+
+                // If validation fails, re-enable the button after a short delay
+                if (firstName.isBlank() || lastName.isBlank() || email.isBlank() || 
+                    password.isBlank() || confirmPassword.isBlank()) {
+                    Snackbar.make(binding.root, "Please fill in all fields", Snackbar.LENGTH_SHORT).show()
+                    setButtonClickableWithDelay()
+                    return@setOnClickListener
+                }
 
                 // Log the input values
                 Log.d("RegisterFragment", "First Name: $firstName")
@@ -81,6 +100,19 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         }
     }
 
+    // Helper method to re-enable button after a delay
+    private fun setButtonClickableWithDelay() {
+        binding.btnRegister.postDelayed({
+            setButtonClickable(true)
+        }, 1500) // 1.5 seconds debounce time
+    }
+    
+    // Helper method to update button clickable state
+    private fun setButtonClickable(clickable: Boolean) {
+        isButtonClickable = clickable
+        binding.btnRegister.isEnabled = clickable
+    }
+
     private fun observeViewModel() {
         viewModel.registerState.observe(viewLifecycleOwner) { state ->
             when (state) {
@@ -90,11 +122,24 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 is RegisterViewModel.RegisterState.Success -> {
                     setLoading(false)
                     Snackbar.make(binding.root, "Registration successful!", Snackbar.LENGTH_LONG).show()
-                    findNavController().navigate(R.id.action_registerFragment_to_emailVerificationFragment)
+                    
+                    // Create a bundle to pass the email
+                    val email = binding.etEmail.text.toString()
+                    val bundle = Bundle().apply {
+                        putString("email", email)
+                    }
+                    
+                    // Navigate with the email as an argument
+                    findNavController().navigate(
+                        R.id.action_registerFragment_to_emailVerificationFragment,
+                        bundle
+                    )
                 }
                 is RegisterViewModel.RegisterState.Error -> {
                     setLoading(false)
                     Snackbar.make(binding.root, state.message, Snackbar.LENGTH_SHORT).show()
+                    // Re-enable button after error
+                    setButtonClickableWithDelay()
                 }
             }
         }
@@ -102,6 +147,8 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
 
     private fun setLoading(isLoading: Boolean) {
         binding.btnRegister.isEnabled = !isLoading
+        // Update clickable state to match
+        isButtonClickable = !isLoading
     }
 
     override fun onDestroyView() {

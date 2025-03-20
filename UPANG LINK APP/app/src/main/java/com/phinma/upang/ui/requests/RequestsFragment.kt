@@ -101,12 +101,20 @@ class RequestsFragment : Fragment() {
                 viewModel.loadRequests(RequestFilter(status = RequestStatus.PENDING.name))
             }
 
+            chipApproved.setOnClickListener {
+                viewModel.loadRequests(RequestFilter(status = RequestStatus.APPROVED.name))
+            }
+
             chipInProgress.setOnClickListener {
                 viewModel.loadRequests(RequestFilter(status = RequestStatus.IN_PROGRESS.name))
             }
 
             chipCompleted.setOnClickListener {
                 viewModel.loadRequests(RequestFilter(status = RequestStatus.COMPLETED.name))
+            }
+
+            chipRejected.setOnClickListener {
+                viewModel.loadRequests(RequestFilter(status = RequestStatus.REJECTED.name))
             }
         }
     }
@@ -125,7 +133,7 @@ class RequestsFragment : Fragment() {
                 if (requests.isEmpty() && !isLoading) {
                     noRequestsText.text = when {
                         viewModel.currentFilter.value?.status != null -> 
-                            getString(R.string.no_filtered_requests, viewModel.currentFilter.value?.status?.toLowerCase())
+                            getString(R.string.no_filtered_requests, viewModel.currentFilter.value?.status?.lowercase())
                         else -> getString(R.string.no_requests_found)
                     }
                 }

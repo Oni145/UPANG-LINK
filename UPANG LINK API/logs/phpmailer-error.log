@@ -1,0 +1,116 @@
+[19-Mar-2025 12:55:52 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d9443c01a7336-225c6bd4ab2sm111591225ad.215 - gsmtp
+
+[19-Mar-2025 12:55:52 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: EHLO localhost
+
+[19-Mar-2025 12:55:52 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2001:4452:343:4e00:606d:bbf5:e0e3:eea5]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[19-Mar-2025 12:55:52 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: STARTTLS
+
+[19-Mar-2025 12:55:52 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[19-Mar-2025 12:55:52 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: EHLO localhost
+
+[19-Mar-2025 12:55:53 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2001:4452:343:4e00:606d:bbf5:e0e3:eea5]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[19-Mar-2025 12:55:53 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: AUTH LOGIN
+
+[19-Mar-2025 12:55:53 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[19-Mar-2025 12:55:53 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: [credentials hidden]
+[19-Mar-2025 12:55:53 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[19-Mar-2025 12:55:53 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: [credentials hidden]
+[19-Mar-2025 12:55:53 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 235 2.7.0 Accepted
+
+[19-Mar-2025 12:55:53 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: MAIL FROM:<jerickogarcia0@gmail.com>
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250 2.1.0 OK d9443c01a7336-225c6bd4ab2sm111591225ad.215 - gsmtp
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: RCPT TO:<jerickogarcia0@gmail.com>
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250 2.1.5 OK d9443c01a7336-225c6bd4ab2sm111591225ad.215 - gsmtp
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: DATA
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 354 Go ahead d9443c01a7336-225c6bd4ab2sm111591225ad.215 - gsmtp
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Date: Wed, 19 Mar 2025 12:55:52 +0100
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: To: jerickogarcia0@gmail.com
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: From: UPANG LINK <jerickogarcia0@gmail.com>
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Subject: PHPMailer Test Email from UPANG LINK API
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Message-ID: <zhmxStzzJEiAFnDGae9Y7kOdQRCrRysoWUTiGCdAY@localhost>
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: X-Mailer: PHPMailer 6.9.3 (https://github.com/PHPMailer/PHPMailer)
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: MIME-Version: 1.0
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Type: multipart/alternative;
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:  boundary="b1=_zhmxStzzJEiAFnDGae9Y7kOdQRCrRysoWUTiGCdAY"
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: --b1=_zhmxStzzJEiAFnDGae9Y7kOdQRCrRysoWUTiGCdAY
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Type: text/plain; charset=us-ascii
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: This is a test email from UPANG LINK. If PHPMailer is working, you'll receive this.
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: --b1=_zhmxStzzJEiAFnDGae9Y7kOdQRCrRysoWUTiGCdAY
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Type: text/html; charset=us-ascii
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:         <h2 style="color: #4a4a4a;">PHPMailer Test Email</h2>
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:         <p>If you're seeing this, the PHPMailer configuration is working correctly!</p>
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:         <p>This test was sent at: 2025-03-19 12:55:52</p>
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:     </div>
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: --b1=_zhmxStzzJEiAFnDGae9Y7kOdQRCrRysoWUTiGCdAY--
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[19-Mar-2025 12:55:54 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: .
+
+[19-Mar-2025 12:55:55 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250 2.0.0 OK  1742385356 d9443c01a7336-225c6bd4ab2sm111591225ad.215 - gsmtp
+
+[19-Mar-2025 12:55:55 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: QUIT
+
+[19-Mar-2025 12:55:55 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 221 2.0.0 closing connection d9443c01a7336-225c6bd4ab2sm111591225ad.215 - gsmtp
+

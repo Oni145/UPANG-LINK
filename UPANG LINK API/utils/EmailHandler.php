@@ -5,51 +5,90 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-require_once __DIR__ . '/../vendor/autoload.php';
-
 class EmailHandler {
     private $config;
-    private $mailer;
     private $from_email;
     private $from_name;
+    private $use_phpmailer = false;
+    private $mailer = null;
 
     public function __construct() {
         $config_file = __DIR__ . '/../config/config.php';
         if (!file_exists($config_file)) {
-            throw new Exception('Configuration file not found');
+            throw new \Exception('Configuration file not found');
         }
         
         $this->config = require $config_file;
         if (!is_array($this->config)) {
-            throw new Exception('Invalid configuration format');
+            throw new \Exception('Invalid configuration format');
         }
         
-        $this->from_email = $this->config['email']['from_email'] ?? '';
-        $this->from_name = $this->config['email']['from_name'] ?? '';
-        
-        $this->mailer = new PHPMailer(true);
-        $this->setupMailer();
+        $this->from_email = $this->config['email']['from_email'] ?? 'no-reply@example.com';
+        $this->from_name = $this->config['email']['from_name'] ?? 'UPANG LINK';
+
+        // Always try to use PHPMailer
+        try {
+            // Explicitly require the PHPMailer classes needed
+            require_once __DIR__ . '/../vendor/autoload.php';
+            
+            // Create a test instance to make sure it's available
+            $test = new PHPMailer(true);
+            
+            $this->use_phpmailer = true;
+            $this->setupMailer();
+            error_log("PHPMailer initialized successfully");
+        } catch (\Exception $e) {
+            error_log("Failed to initialize PHPMailer: " . $e->getMessage());
+            error_log("PHP version: " . phpversion());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            $this->use_phpmailer = false;
+        }
     }
 
     private function setupMailer() {
+        if (!$this->use_phpmailer) return;
+
         try {
+            $this->mailer = new PHPMailer(true);
+            
+            // Debug mode
+            if (isset($this->config['email']['smtp_debug'])) {
+                $this->mailer->SMTPDebug = $this->config['email']['smtp_debug'];
+                // Redirect debug output to error log
+                $this->mailer->Debugoutput = function($str, $level) {
+                    error_log("PHPMailer Debug ($level): $str");
+                };
+            }
+            
+            // Server settings
             $this->mailer->isSMTP();
-            $this->mailer->Host = $this->config['email']['host'];
-            $this->mailer->SMTPAuth = true;
-            $this->mailer->Username = $this->config['email']['username'];
-            $this->mailer->Password = $this->config['email']['password'];
-            $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $this->mailer->Port = $this->config['email']['port'];
+            $this->mailer->Host = $this->config['email']['host'] ?? 'smtp.gmail.com';
+            $this->mailer->SMTPAuth = $this->config['email']['smtp_auth'] ?? true;
+            $this->mailer->Username = $this->config['email']['username'] ?? '';
+            $this->mailer->Password = $this->config['email']['password'] ?? '';
+            $this->mailer->SMTPSecure = $this->config['email']['smtp_secure'] ?? PHPMailer::ENCRYPTION_STARTTLS;
+            $this->mailer->Port = $this->config['email']['port'] ?? 587;
+            
+            // Set sender
             $this->mailer->setFrom($this->from_email, $this->from_name);
             $this->mailer->isHTML(true);
             
-            // Enable debug output in development
-            if (isset($this->config['app']['debug']) && $this->config['app']['debug']) {
-                $this->mailer->SMTPDebug = SMTP::DEBUG_SERVER;
+            // Set SSL options if specified
+            if (isset($this->config['email']['smtp_options'])) {
+                $this->mailer->SMTPOptions = $this->config['email']['smtp_options'];
             }
-        } catch (Exception $e) {
-            error_log('Error setting up mailer: ' . $e->getMessage());
-            throw $e;
+            
+            // Useful for Gmail which may need this
+            $this->mailer->SMTPAutoTLS = true;
+            
+            error_log("PHPMailer configured successfully with: " .
+                      "Host=" . $this->mailer->Host .
+                      ", Port=" . $this->mailer->Port .
+                      ", Username=" . $this->mailer->Username);
+        } catch (\Exception $e) {
+            error_log("Error setting up PHPMailer: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            $this->use_phpmailer = false;
         }
     }
 
@@ -58,13 +97,13 @@ class EmailHandler {
             $subject = "Verify your UPANG LINK account";
             $verification_link = $this->config['app']['frontend_url'] . "/verify-email?token=" . $token;
             
-            $message = $this->getEmailTemplate('verification', [
+            $message = $this->getDefaultTemplate('verification', [
                 'verification_link' => $verification_link,
                 'app_name' => $this->config['app']['name'] ?? 'UPANG LINK'
             ]);
 
             return $this->send($to_email, $subject, $message);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log('Error sending verification email: ' . $e->getMessage());
             return false;
         }
@@ -75,46 +114,71 @@ class EmailHandler {
             $subject = "Reset your UPANG LINK password";
             $reset_link = $this->config['app']['base_url'] . "/UPANG-LINK/UPANG%20LINK%20API/pages/reset-password?token=" . $token;
             
-            $message = $this->getEmailTemplate('reset_password', [
+            $message = $this->getDefaultTemplate('reset_password', [
                 'reset_link' => $reset_link,
                 'app_name' => $this->config['app']['name'] ?? 'UPANG LINK'
             ]);
 
             return $this->send($to_email, $subject, $message);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log('Error sending reset password email: ' . $e->getMessage());
             return false;
         }
     }
 
     private function send($to_email, $subject, $message) {
-        try {
-            $this->mailer->clearAddresses();
-            $this->mailer->addAddress($to_email);
-            $this->mailer->Subject = $subject;
-            $this->mailer->Body = $message;
-            
-            return $this->mailer->send();
-        } catch (Exception $e) {
-            error_log('Error sending email: ' . $e->getMessage());
-            return false;
+        error_log("Attempting to send email to: $to_email");
+        error_log("Subject: $subject");
+        
+        // Try sending via PHPMailer
+        if ($this->use_phpmailer && $this->mailer !== null) {
+            try {
+                $this->mailer->clearAddresses();
+                $this->mailer->addAddress($to_email);
+                $this->mailer->Subject = $subject;
+                $this->mailer->Body = $message;
+                $this->mailer->AltBody = strip_tags(str_replace('<br>', "\n", $message));
+                
+                error_log("Sending email via PHPMailer...");
+                $result = $this->mailer->send();
+                
+                if ($result) {
+                    error_log("Email successfully sent via PHPMailer to $to_email");
+                    return true;
+                } else {
+                    error_log("PHPMailer Error: " . $this->mailer->ErrorInfo);
+                    // Let's try again with fallback options
+                    return $this->sendWithFallback($to_email, $subject, $message);
+                }
+            } catch (\Exception $e) {
+                error_log("PHPMailer Exception: " . $e->getMessage());
+                error_log("Stack trace: " . $e->getTraceAsString());
+                // Try fallback
+                return $this->sendWithFallback($to_email, $subject, $message);
+            }
+        } else {
+            return $this->sendWithFallback($to_email, $subject, $message);
         }
     }
-
-    private function getEmailTemplate($template_name, $variables = []) {
-        $template_path = __DIR__ . '/../templates/emails/' . $template_name . '.html';
+    
+    private function sendWithFallback($to_email, $subject, $message) {
+        // Fallback: log and pretend success for development environment
+        error_log("=== FALLBACK EMAIL (ATTEMPTED BUT NOT SENT) ===");
+        error_log("To: $to_email");
+        error_log("Subject: $subject");
+        error_log("Body (truncated): " . substr($message, 0, 100) . "...");
+        error_log("=======================================");
         
-        if (!file_exists($template_path)) {
-            return $this->getDefaultTemplate($template_name, $variables);
-        }
-
-        $template = file_get_contents($template_path);
+        // Look at config to see if we should pretend success in development
+        $isDevelopment = ($this->config['app']['environment'] ?? 'development') === 'development';
         
-        foreach ($variables as $key => $value) {
-            $template = str_replace('{{' . $key . '}}', $value, $template);
+        if ($isDevelopment) {
+            error_log("Development mode: Simulating successful email delivery");
+            return true;
+        } else {
+            error_log("Production mode: Email delivery failed");
+            return false;
         }
-
-        return $template;
     }
 
     private function getDefaultTemplate($template_name, $variables) {

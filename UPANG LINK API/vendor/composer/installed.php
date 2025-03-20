@@ -3,7 +3,7 @@
         'name' => 'upang-link/api',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '725b82db1124ccc2d322179d394e7c4321fe63d6',
+        'reference' => 'cf2af7dfbb8628bd2dc8067f57b451d34a0a9ee9',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'upang-link/api' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '725b82db1124ccc2d322179d394e7c4321fe63d6',
+            'reference' => 'cf2af7dfbb8628bd2dc8067f57b451d34a0a9ee9',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

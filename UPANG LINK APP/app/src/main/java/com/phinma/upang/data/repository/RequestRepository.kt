@@ -20,4 +20,7 @@ interface RequestRepository {
     // Adding missing methods
     suspend fun getRequestDetails(requestId: String): Result<RequestDetails>
     suspend fun updateRequestDetails(requestId: String, updateData: RequestUpdateData): Result<Unit>
+    
+    // New method to get admin notes for a request
+    suspend fun getRequestNotes(requestId: String): Result<List<RequirementNote>>
 } 
