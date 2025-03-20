@@ -566,25 +566,38 @@ async initializeData() {
 
 
 
-  loadStatsUsingData() {
-    console.log("Updating stats using pre-fetched data...");
-    if (!this.requestsData || !this.usersData) {
+loadStatsUsingData() {
+  console.log("Updating stats using pre-fetched data...");
+  if (!this.requestsData || !this.usersData) {
       console.error("Missing requests or users data for stats.");
       return;
-    }
-    const stats = this.requestsData.reduce((acc, request) => {
-      if (request.status === 'pending') acc.pending++;
-      if (request.status === 'completed') acc.completed++;
-      return acc;
-    }, { pending: 0, completed: 0 });
-    const totalRequests = this.requestsData.length;
-    const totalUsers = Array.isArray(this.usersData) ? this.usersData.length : 0;
-    console.log("Stats calculated:", { totalRequests, totalUsers, pendingRequests: stats.pending, completedRequests: stats.completed });
-    document.getElementById('totalUsers').textContent = totalUsers;
-    document.getElementById('totalRequests').textContent = totalRequests;
-    document.getElementById('pendingRequests').textContent = stats.pending;
-    document.getElementById('completedRequests').textContent = stats.completed;
   }
+  const stats = this.requestsData.reduce((acc, request) => {
+      // Normalize the status to lowercase for comparison
+      const status = request.status.toLowerCase();
+
+      if (status === 'pending') acc.pending++;
+      if (status === 'completed') acc.completed++;
+      return acc;
+  }, { pending: 0, completed: 0 });
+
+  const totalRequests = this.requestsData.length;
+  const totalUsers = Array.isArray(this.usersData) ? this.usersData.length : 0;
+
+  console.log("Stats calculated:", {
+      totalRequests,
+      totalUsers,
+      pendingRequests: stats.pending,
+      completedRequests: stats.completed
+  });
+
+  // Update DOM with calculated stats
+  document.getElementById('totalUsers').textContent = totalUsers;
+  document.getElementById('totalRequests').textContent = totalRequests;
+  document.getElementById('pendingRequests').textContent = stats.pending;
+  document.getElementById('completedRequests').textContent = stats.completed;
+}
+
 
   loadMonthlyChartUsingData() {
     console.log("Rendering monthly chart using pre-fetched data...");
