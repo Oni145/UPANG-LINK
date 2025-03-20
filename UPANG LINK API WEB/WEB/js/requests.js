@@ -1,4 +1,3 @@
-// Mapping for request type IDs to names
 const requestTypeNames = {
   1: 'TOR',
   2: 'ID',

@@ -26,7 +26,8 @@ class AdminNotificationsController {
                     $this->sendResponse(405, 'Method not allowed.');
             }
         } catch (Exception $e) {
-            $this->sendResponse(500, 'Internal server error: ' . $e->getMessage());
+            error_log("Internal server error: " . $e->getMessage() . "\n", 3, "error.log");
+            $this->sendResponse(500, 'Internal server error.');
         }
     }
 
@@ -35,34 +36,35 @@ class AdminNotificationsController {
         try {
             $adminId = $this->authenticateUser();
             if (!$adminId) return;
-    
-            // Fetch all notifications (limit 50) with full details
+
             $stmt = $this->db->prepare("
                 SELECT notification_id, user_id, title, message, is_read, created_at
-                FROM notifications
-                ORDER BY created_at DESC
+                FROM notifications 
+                ORDER BY created_at DESC 
                 LIMIT 50
             ");
             $stmt->execute();
             $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
             $this->sendResponse(200, 'Notifications retrieved successfully.', ['notifications' => $notifications]);
         } catch (Exception $e) {
-            $this->sendResponse(500, 'Error fetching notifications: ' . $e->getMessage());
+            error_log("Error fetching notifications: " . $e->getMessage() . "\n", 3, "error.log");
+            $this->sendResponse(500, 'Error fetching notifications.');
         }
     }
-    
-    
 
     // Store a new notification
     private function storeNotification($userId, $categoryId) {
         try {
-            // Get the requested category name
-            $stmt = $this->db->prepare("SELECT name FROM request_types WHERE category_id = ?");
+            error_log("Preparing to store notification for user_id: $userId, category_id: $categoryId\n", 3, "error.log");
+
+            // Validate category_id exists
+            $stmt = $this->db->prepare("SELECT name FROM request_types WHERE id = ?");
             $stmt->execute([$categoryId]);
             $type = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$type) {
+            if (!$type || !isset($type['name'])) {
+                error_log("Category ID $categoryId not found.\n", 3, "error.log");
                 $this->sendResponse(404, 'Category ID not found.');
                 return;
             }
@@ -75,13 +77,19 @@ class AdminNotificationsController {
                 INSERT INTO notifications (user_id, title, message, is_read, created_at) 
                 VALUES (?, ?, ?, 0, NOW())
             ");
-            $stmt->execute([$userId, $title, $message]);
+            if (!$stmt->execute([$userId, $title, $message])) {
+                error_log("SQL Error: " . implode(" | ", $stmt->errorInfo()) . "\n", 3, "error.log");
+                $this->sendResponse(500, 'Database error while storing notification.');
+                return;
+            }
 
             $notificationId = $this->db->lastInsertId();
+            error_log("Notification $notificationId stored successfully.\n", 3, "error.log");
 
             $this->sendResponse(201, 'Notification created successfully.', ['notification_id' => $notificationId]);
         } catch (Exception $e) {
-            $this->sendResponse(500, 'Error storing notification: ' . $e->getMessage());
+            error_log("Error storing notification: " . $e->getMessage() . "\n", 3, "error.log");
+            $this->sendResponse(500, 'Error storing notification.');
         }
     }
 
@@ -89,6 +97,8 @@ class AdminNotificationsController {
     private function authenticateUser() {
         try {
             $headers = apache_request_headers();
+            error_log("Headers: " . print_r($headers, true) . "\n", 3, "error.log");
+
             $token = $headers['Authorization'] ?? $headers['authorization'] ?? null;
             if ($token) {
                 $token = str_replace('Bearer ', '', $token);
@@ -104,13 +114,15 @@ class AdminNotificationsController {
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$result) {
+                error_log("Invalid token: $token\n", 3, "error.log");
                 $this->sendResponse(401, 'Invalid or expired token.');
                 return false;
             }
 
             return $result['user_id'];
         } catch (Exception $e) {
-            $this->sendResponse(500, 'Error validating token: ' . $e->getMessage());
+            error_log("Error validating token: " . $e->getMessage() . "\n", 3, "error.log");
+            $this->sendResponse(500, 'Error validating token.');
             return false;
         }
     }

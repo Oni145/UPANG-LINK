@@ -160,11 +160,11 @@ class AdminController {
     // ✅ Mark All Notifications as Read
     public function markAllNotificationsAsRead() {
         try {
-            $adminId = $this->validateToken();
+            $adminId = $this->getBearerToken();
             if (!$adminId) return;
     
             // Update all notifications for the admin to 'read'
-            $stmt = $this->db->prepare("UPDATE admin_notifications SET is_read = 1 WHERE admin_id = ?");
+            $stmt = $this->db->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?");
             $stmt->execute([$adminId]);
     
             echo json_encode([
@@ -179,10 +179,10 @@ class AdminController {
     // ✅ Get All Notifications
     public function getNotifications() {
         try {
-            $adminId = $this->validateToken();
+            $adminId = $this->getBearerToken();
             if (!$adminId) return;
     
-            $stmt = $this->db->prepare("SELECT * FROM admin_notifications WHERE admin_id = ?");
+            $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ?");
             $stmt->execute([$adminId]);
             $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -200,10 +200,10 @@ class AdminController {
     // ✅ Get Only Read Notifications
     public function getReadNotifications() {
         try {
-            $adminId = $this->validateToken();
+            $adminId = $this->getBearerToken();
             if (!$adminId) return;
     
-            $stmt = $this->db->prepare("SELECT * FROM admin_notifications WHERE admin_id = ? AND is_read = 1");
+            $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ? AND is_read = 1");
             $stmt->execute([$adminId]);
             $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -221,10 +221,10 @@ class AdminController {
     // ✅ Get Only Unread Notifications
     public function getUnreadNotifications() {
         try {
-            $adminId = $this->validateToken();
+            $adminId = $this->getBearerToken();
             if (!$adminId) return;
     
-            $stmt = $this->db->prepare("SELECT * FROM admin_notifications WHERE admin_id = ? AND is_read = 0");
+            $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ? AND is_read = 0");
             $stmt->execute([$adminId]);
             $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -241,10 +241,10 @@ class AdminController {
     
     // ✅ Toggle Read/Unread Status
     public function toggleNotificationReadStatus($notificationId) {
-        $adminId = $this->validateToken();
+        $adminId = $this->getBearerToken();
         if (!$adminId) return;
     
-        $stmt = $this->db->prepare("SELECT is_read FROM admin_notifications WHERE notification_id = ?");
+        $stmt = $this->db->prepare("SELECT is_read FROM notifications WHERE notification_id = ?");
         $stmt->execute([$notificationId]);
         $notification = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -255,7 +255,7 @@ class AdminController {
     
         $newStatus = ($notification['is_read'] == 1) ? 0 : 1;
     
-        $updateStmt = $this->db->prepare("UPDATE admin_notifications SET is_read = ? WHERE notification_id = ?");
+        $updateStmt = $this->db->prepare("UPDATE notifications SET is_read = ? WHERE notification_id = ?");
         $updateStmt->execute([$newStatus, $notificationId]);
     
         echo json_encode([
@@ -265,27 +265,8 @@ class AdminController {
         ]);
     }
     
-    // ✅ Validate Token and Return Admin ID
-    private function validateToken() {
-        $token = $this->getBearerToken();
     
-        if (!$token) {
-            $this->sendError("Token is required", 401);
-            return false;
-        }
-    
-        $stmt = $this->db->prepare("SELECT admin_id FROM admin_tokens WHERE token = ?");
-        $stmt->execute([$token]);
-        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-        if (!$admin) {
-            $this->sendError("Invalid or expired token", 401);
-            return false;
-        }
-    
-        return $admin['admin_id'];
-    }
-    
+
     // ✅ Extract Token from Request Headers
     private function getBearerToken() {
         $headers = getallheaders();
