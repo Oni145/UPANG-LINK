@@ -77,38 +77,6 @@ async function fetchNotifications() {
     }
 }
 
-// Function to mark a single notification as read
-async function markNotificationAsRead(notificationId) {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        console.error("No authentication token found.");
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/admin/notification/${notificationId}`, {
-            method: "PATCH",
-            headers: getAuthHeaders(token),
-            body: JSON.stringify({ is_read: 1 }), // Ensure correct request body
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP Error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("API Response:", data);
-
-        if (data.status === "success") {
-            fetchNotifications(); // Refresh notifications
-        } else {
-            console.error("Error marking notification as read:", data.message);
-        }
-    } catch (error) {
-        console.error("Error marking notification as read:", error);
-    }
-}
-
 // Function to mark all notifications as read
 async function markAllNotificationsAsRead() {
     const token = localStorage.getItem("token");
@@ -118,10 +86,10 @@ async function markAllNotificationsAsRead() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/admin/notifications/mark_all_as_read`, {
-            method: "POST",
+        const response = await fetch(`${API_BASE_URL}/admin/notifications/mark_all_read`, {
+            method: "PUT",
             headers: getAuthHeaders(token),
-            body: JSON.stringify({ is_read: 1 }), // Include necessary data
+            body: JSON.stringify({ action: "mark_all_read" }),
         });
 
         if (!response.ok) {
@@ -129,16 +97,22 @@ async function markAllNotificationsAsRead() {
         }
 
         const data = await response.json();
-        if (data.status === "success") {
-            alert("All notifications marked as read successfully");
-            fetchNotifications();
+        
+        // Debug: Log the response data to verify what's returned
+        console.log("Response Data:", data);
+
+        // If the message contains the word 'notifications marked as read' treat it as success
+        if (data.status === "success" || data.message.includes("notifications marked as read")) {
+            alert("All notifications marked as read successfully!");
+            fetchNotifications(); // Refresh notifications list if needed
         } else {
-            alert("Failed to mark all notifications as read");
+            alert(`Error: ${data.message || 'Failed to mark notifications as read.'}`);
         }
     } catch (error) {
-        alert("Error marking all notifications as read: " + error.message);
+        alert(`Error: ${error.message || 'Failed to mark all notifications as read.'}`);
     }
 }
+
 
 // Check for unread notifications every 5 seconds
 setInterval(() => {
@@ -217,13 +191,6 @@ notificationButton.addEventListener("click", (event) => {
 
 closeBtn.addEventListener("click", () => {
     notificationDialog.style.display = "none";
-});
-
-notificationsList.addEventListener("click", (event) => {
-    if (event.target.classList.contains("mark-as-read")) {
-        const notificationId = event.target.getAttribute("data-id");
-        markNotificationAsRead(notificationId);
-    }
 });
 
 markAllReadBtn.addEventListener("click", markAllNotificationsAsRead);

@@ -1,5 +1,4 @@
 <?php
-
 class AdminNotificationsController {
     private $db;
 
@@ -11,24 +10,49 @@ class AdminNotificationsController {
     // Handle API requests
     public function handleRequest($method) {
         try {
+            // Debugging: Log the incoming method and input
+            error_log("Handling method: " . $method);
+            error_log("Request body: " . file_get_contents("php://input"));
+    
             switch ($method) {
                 case 'GET':
                     $this->getNotifications();
                     break;
+    
                 case 'POST':
-                    if (!isset($_POST['user_id'], $_POST['category_id'])) {
-                        $this->sendResponse(400, 'Missing required parameters: user_id and category_id.');
-                        return;
-                    }
-                    $this->storeNotification($_POST['user_id'], $_POST['category_id']);
+                    // Handle storing a notification with user_id and category_id
+                    $this->storeNotification($_POST['user_id'] ?? null, $_POST['category_id'] ?? null);
                     break;
+    
+                case 'PUT':
+                    // Check if the request body contains JSON
+                    $inputData = json_decode(file_get_contents("php://input"), true);  // Decode JSON input
+    
+                    // Debugging: Log the parsed input
+                    error_log("Parsed PUT data: " . print_r($inputData, true));
+    
+                    // Check if the action is provided in the body
+                    if (isset($inputData['action']) && $inputData['action'] === 'mark_all_read') {
+                        // No need for user_id in the body for this action
+                        $this->markAsAllRead();
+                    } else {
+                        $this->sendResponse(400, 'Invalid action or missing parameters.');
+                    }
+                    break;
+    
                 default:
                     $this->sendResponse(405, 'Method not allowed.');
             }
         } catch (Exception $e) {
+            // Debugging: Log exception details
+            error_log('Error: ' . $e->getMessage());
             $this->sendResponse(500, 'Internal server error: ' . $e->getMessage());
         }
     }
+    
+    
+    
+    
 
     // Get notifications for authenticated admin
     private function getNotifications() {
@@ -46,12 +70,15 @@ class AdminNotificationsController {
             $stmt->execute();
             $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-            $this->sendResponse(200, 'Notifications retrieved successfully.', ['notifications' => $notifications]);
+            if (empty($notifications)) {
+                $this->sendResponse(200, 'No notifications found.', ['notifications' => []]);
+            } else {
+                $this->sendResponse(200, 'Notifications retrieved successfully.', ['notifications' => $notifications]);
+            }
         } catch (Exception $e) {
             $this->sendResponse(500, 'Error fetching notifications: ' . $e->getMessage());
         }
     }
-    
     
 
     // Store a new notification
@@ -84,6 +111,52 @@ class AdminNotificationsController {
             $this->sendResponse(500, 'Error storing notification: ' . $e->getMessage());
         }
     }
+
+    // Mark all notifications as read
+    private function markAsAllRead() {
+        try {
+            // Authenticate the user using the token
+            $userId = $this->authenticateUser();
+            if (!$userId) {
+                $this->sendResponse(403, 'Unauthorized access. Please log in.');
+                return;
+            }
+    
+            // Get the action parameter from the PUT request body
+            $data = json_decode(file_get_contents("php://input"), true);
+            
+            if (!isset($data['action']) || $data['action'] !== 'mark_all_read') {
+                $this->sendResponse(400, 'Invalid action parameter.');
+                return;
+            }
+    
+            // Fetch all unread notifications by notification_id
+            $stmt = $this->db->prepare("SELECT notification_id FROM notifications WHERE is_read = 0");
+            $stmt->execute();
+            $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            if (empty($notifications)) {
+                $this->sendResponse(404, 'No unread notifications found.');
+                return;
+            }
+    
+            // Extract notification IDs
+            $notificationIds = array_column($notifications, 'notification_id');
+    
+            // Update all unread notifications to 'read'
+            $placeholders = str_repeat('?,', count($notificationIds) - 1) . '?';
+            $updateStmt = $this->db->prepare("UPDATE notifications SET is_read = 1 WHERE notification_id IN ($placeholders)");
+            $updateStmt->execute($notificationIds);
+    
+            $affectedRows = $updateStmt->rowCount();
+            $this->sendResponse(200, "$affectedRows notifications marked as read.");
+        } catch (Exception $e) {
+            $this->sendResponse(500, 'Error updating notifications: ' . $e->getMessage());
+        }
+    }
+    
+    
+    
 
     // Authenticate user based on token
     private function authenticateUser() {

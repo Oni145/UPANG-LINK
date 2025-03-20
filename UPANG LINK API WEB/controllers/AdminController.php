@@ -1,6 +1,6 @@
 <?php
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Credentials: true');
 
@@ -52,13 +52,6 @@ class AdminController {
                     case 'reset_password':
                         $this->resetPassword();
                         break;
-                    case 'notifications':
-                        if (isset($uri[2]) && $uri[2] === 'mark_all_as_read') {
-                            $this->markAllNotificationsAsRead();
-                        } else {
-                            $this->sendError("Invalid notifications endpoint", 400);
-                        }
-                        break;
                     default:
                         $this->sendError("Invalid endpoint or method", 400);
                 }
@@ -76,22 +69,6 @@ class AdminController {
                             $this->getUsers();  // Fetch all admin users
                         }
                         break;
-                    case 'notifications':
-                        if (isset($uri[2]) && $uri[2] === 'read') {
-                            $this->getReadNotifications();
-                        } else if (isset($uri[2]) && $uri[2] === 'unread') {
-                            $this->getUnreadNotifications();
-                        } else {
-                            $this->getNotifications();
-                        }
-                        break;
-                    case 'notification':
-                        if (isset($uri[2])) {
-                            $this->getNotificationById($uri[2]);
-                        } else {
-                            $this->sendError("Notification ID is required", 400);
-                        }
-                        break;
                     default:
                         $this->sendError("Invalid endpoint or method", 400);
                 }
@@ -102,8 +79,7 @@ class AdminController {
         } catch (Exception $e) {
             $this->sendError("Server error: " . $e->getMessage(), 500);
         }
-    }
-
+    }    
     public function getUsers() {
         try {
             // Query to fetch all users with the role 'admin', excluding the password
@@ -150,123 +126,6 @@ class AdminController {
     private function sendError($message, $code) {
         echo json_encode(["status" => "error", "message" => $message, "code" => $code]);
     }
-
-
-
-
-    
-    
-  
-    // ✅ Mark All Notifications as Read
-    public function markAllNotificationsAsRead() {
-        try {
-            $adminId = $this->getBearerToken();
-            if (!$adminId) return;
-    
-            // Update all notifications for the admin to 'read'
-            $stmt = $this->db->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?");
-            $stmt->execute([$adminId]);
-    
-            echo json_encode([
-                "status" => "success",
-                "message" => "All notifications marked as read successfully"
-            ]);
-        } catch (Exception $e) {
-            $this->sendError("Error marking all notifications as read: " . $e->getMessage(), 500);
-        }
-    }
-    
-    // ✅ Get All Notifications
-    public function getNotifications() {
-        try {
-            $adminId = $this->getBearerToken();
-            if (!$adminId) return;
-    
-            $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ?");
-            $stmt->execute([$adminId]);
-            $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-            if (empty($notifications)) {
-                echo json_encode(["status" => "success", "message" => "No notifications found"]);
-                return;
-            }
-    
-            echo json_encode(["status" => "success", "notifications" => $notifications]);
-        } catch (Exception $e) {
-            $this->sendError("Error fetching notifications: " . $e->getMessage(), 500);
-        }
-    }
-    
-    // ✅ Get Only Read Notifications
-    public function getReadNotifications() {
-        try {
-            $adminId = $this->getBearerToken();
-            if (!$adminId) return;
-    
-            $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ? AND is_read = 1");
-            $stmt->execute([$adminId]);
-            $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-            if (empty($notifications)) {
-                echo json_encode(["status" => "success", "message" => "No read notifications found"]);
-                return;
-            }
-    
-            echo json_encode(["status" => "success", "notifications" => $notifications]);
-        } catch (Exception $e) {
-            $this->sendError("Error fetching read notifications: " . $e->getMessage(), 500);
-        }
-    }
-    
-    // ✅ Get Only Unread Notifications
-    public function getUnreadNotifications() {
-        try {
-            $adminId = $this->getBearerToken();
-            if (!$adminId) return;
-    
-            $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ? AND is_read = 0");
-            $stmt->execute([$adminId]);
-            $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-            if (empty($notifications)) {
-                echo json_encode(["status" => "success", "message" => "No unread notifications found"]);
-                return;
-            }
-    
-            echo json_encode(["status" => "success", "notifications" => $notifications]);
-        } catch (Exception $e) {
-            $this->sendError("Error fetching unread notifications: " . $e->getMessage(), 500);
-        }
-    }
-    
-    // ✅ Toggle Read/Unread Status
-    public function toggleNotificationReadStatus($notificationId) {
-        $adminId = $this->getBearerToken();
-        if (!$adminId) return;
-    
-        $stmt = $this->db->prepare("SELECT is_read FROM notifications WHERE notification_id = ?");
-        $stmt->execute([$notificationId]);
-        $notification = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-        if (!$notification) {
-            $this->sendError("Notification not found", 404);
-            return;
-        }
-    
-        $newStatus = ($notification['is_read'] == 1) ? 0 : 1;
-    
-        $updateStmt = $this->db->prepare("UPDATE notifications SET is_read = ? WHERE notification_id = ?");
-        $updateStmt->execute([$newStatus, $notificationId]);
-    
-        echo json_encode([
-            "status" => "success",
-            "message" => "Notification read status toggled successfully",
-            "data" => ["notification_id" => $notificationId, "is_read" => $newStatus]
-        ]);
-    }
-    
-    
-
     // ✅ Extract Token from Request Headers
     private function getBearerToken() {
         $headers = getallheaders();
