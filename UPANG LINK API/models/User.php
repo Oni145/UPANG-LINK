@@ -168,9 +168,7 @@ class User {
     }
 
     public function logout($token) {
-        $query = "UPDATE user_sessions 
-                SET is_active = 0 
-                WHERE token = ?";
+        $query = "DELETE FROM user_sessions WHERE token = ?";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $token);
@@ -302,21 +300,29 @@ class User {
         $query = "SELECT user_id, reset_token_expiry FROM " . $this->table_name . "
                 WHERE reset_password_token = ?";
         
+        error_log("Validating reset token in DB: " . $token);
+        
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $token);
         $stmt->execute();
 
+        error_log("Query result rows: " . $stmt->rowCount());
+        
         if($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             
+            error_log("Token expiry: " . $row['reset_token_expiry'] . ", Current time: " . date('Y-m-d H:i:s'));
+            
             // Check if token has expired
             if(strtotime($row['reset_token_expiry']) < time()) {
+                error_log("Token has expired");
                 return ['status' => 'error', 'message' => 'Reset token has expired'];
             }
 
             return ['status' => 'success', 'user_id' => $row['user_id']];
         }
         
+        error_log("No matching token found in database");
         return ['status' => 'error', 'message' => 'Invalid reset token'];
     }
 

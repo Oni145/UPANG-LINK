@@ -1,12 +1,13 @@
 <?php
 // Define base URL
-$base_url = 'http://192.168.18.159';
+$base_url = 'http://192.168.1.15';
 
 $config = [
     'app' => [
         'name' => 'UPANG LINK',
         'version' => '1.0.0',
         'base_url' => $base_url,
+        'environment' => 'development', // or 'production' when ready
     ],
     'database' => [
         'host' => 'localhost',
@@ -18,9 +19,19 @@ $config = [
         'host' => 'smtp.gmail.com',
         'port' => 587,
         'username' => 'jerickogarcia0@gmail.com',
-        'password' => 'laht squw emyi ggix',
+        'password' => 'laht squw emyi ggix', // Must be an App Password from Google Account
         'from_name' => 'UPANG LINK',
-        'from_email' => 'jerickogarcia0@gmail.com'
+        'from_email' => 'jerickogarcia0@gmail.com',
+        'smtp_auth' => true,
+        'smtp_secure' => 'tls',
+        'smtp_debug' => 2, // 0 = off, 1 = client, 2 = client/server, 3 = client/server + connection, 4 = low-level data output
+        'smtp_options' => [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ]
     ],
     'security' => [
         'token_expiry' => 24, // hours

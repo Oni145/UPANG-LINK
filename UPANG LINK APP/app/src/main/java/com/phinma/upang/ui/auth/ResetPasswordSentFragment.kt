@@ -2,6 +2,7 @@ package com.phinma.upang.ui.auth
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -25,6 +26,19 @@ class ResetPasswordSentFragment : Fragment(R.layout.fragment_reset_password_sent
         setupClickListeners()
         observeViewModel()
         updateEmailText()
+        setupBackPressHandler()
+    }
+
+    private fun setupBackPressHandler() {
+        // Register a back press callback to handle system back button
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Navigate directly to login instead of going back
+                findNavController().navigate(
+                    ResetPasswordSentFragmentDirections.actionResetPasswordSentFragmentToLoginFragment()
+                )
+            }
+        })
     }
 
     private fun updateEmailText() {
@@ -38,7 +52,10 @@ class ResetPasswordSentFragment : Fragment(R.layout.fragment_reset_password_sent
 
     private fun setupClickListeners() {
         binding.btnBack.setOnClickListener {
-            findNavController().navigateUp()
+            // Navigate directly to login screen instead of going back
+            findNavController().navigate(
+                ResetPasswordSentFragmentDirections.actionResetPasswordSentFragmentToLoginFragment()
+            )
         }
 
         binding.btnResendEmail.setOnClickListener {

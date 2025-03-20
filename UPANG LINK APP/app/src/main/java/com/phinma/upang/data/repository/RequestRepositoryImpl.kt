@@ -311,4 +311,36 @@ class RequestRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun getRequestNotes(requestId: String): Result<List<RequirementNote>> {
+        return try {
+            Log.d(TAG, "Fetching notes for request ID: $requestId")
+            val response = api.getRequestNotes(requestId)
+            
+            if (response.status == "success") {
+                val notes = response.data ?: emptyList()
+                Log.d(TAG, "Successfully fetched ${notes.size} notes for request: $requestId")
+                Result.success(notes)
+            } else {
+                // If there are no notes, return an empty list instead of an error
+                if (response.status == "error" && (response.message?.contains("No notes found") == true || response.code == 404)) {
+                    Log.d(TAG, "No notes found for request: $requestId")
+                    Result.success(emptyList())
+                } else {
+                    Log.e(TAG, "Error fetching notes: ${response.message}")
+                    Result.failure(Exception(response.message ?: "Failed to get request notes"))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception fetching notes for request: $requestId", e)
+            
+            // If the API endpoint isn't available yet, return an empty list instead of failing
+            if (e is retrofit2.HttpException && (e.code() == 404 || e.code() == 501)) {
+                Log.e(TAG, "API endpoint for notes not available (${e.code()})")
+                Result.success(emptyList())
+            } else {
+                Result.failure(e)
+            }
+        }
+    }
 } 

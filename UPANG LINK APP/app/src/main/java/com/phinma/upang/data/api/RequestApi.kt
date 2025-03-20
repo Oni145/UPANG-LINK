@@ -54,4 +54,7 @@ interface RequestApi {
         @Path("id") id: String,
         @Body updateData: RequestUpdateData
     ): ApiResponse<Unit>
+
+    @GET("requests/{requestId}/notes")
+    suspend fun getRequestNotes(@Path("requestId") requestId: String): ApiResponse<List<RequirementNote>>
 } 

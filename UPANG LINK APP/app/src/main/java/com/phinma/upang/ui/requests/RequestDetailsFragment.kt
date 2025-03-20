@@ -226,6 +226,9 @@ class RequestDetailsFragment : Fragment() {
             RequestStatus.PENDING -> {
                 Pair(R.color.status_pending, "Pending")
             }
+            RequestStatus.APPROVED -> {
+                Pair(R.color.status_approved, "Approved")
+            }
             RequestStatus.IN_PROGRESS -> {
                 Pair(R.color.status_pending, "In Progress")
             }

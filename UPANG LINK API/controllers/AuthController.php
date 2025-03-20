@@ -72,6 +72,9 @@ class AuthController {
                                     case 'validate-token':
                                         $this->validateToken();
                                         break;
+                                    case 'validate-reset-token':
+                                        $this->validateResetToken();
+                                        break;
                                     default:
                                         $this->sendError('Invalid student endpoint');
                                 }
@@ -337,21 +340,26 @@ class AuthController {
                 $this->user->user_id = $user['user_id'];
                 if($this->user->regenerateVerificationToken()) {
                     // Send new verification email
-                    $this->sendVerificationEmail($user['email'], $this->user->email_verification_token);
+                    $emailHandler = new EmailHandler();
+                    $emailResult = $emailHandler->sendVerificationEmail($user['email'], $this->user->email_verification_token);
                     
-                    http_response_code(200);
-                    echo json_encode([
-                        'status' => 'success',
-                        'message' => 'Verification email sent successfully'
-                    ]);
+                    if ($emailResult) {
+                        http_response_code(200);
+                        echo json_encode([
+                            'status' => 'success',
+                            'message' => 'Verification email sent successfully'
+                        ]);
+                    } else {
+                        $this->sendError('Failed to send verification email', 500, 'EMAIL_SEND_FAILED');
+                    }
                 } else {
-                    $this->sendError('Failed to generate new verification token');
+                    $this->sendError('Failed to generate new verification token', 500, 'TOKEN_GENERATION_FAILED');
                 }
             } else {
-                $this->sendError('Invalid email or account already verified');
+                $this->sendError('Invalid email or account already verified', 400, 'INVALID_EMAIL');
             }
         } else {
-            $this->sendError('Email is required');
+            $this->sendError('Email is required', 400, 'MISSING_EMAIL');
         }
     }
 
@@ -460,36 +468,62 @@ class AuthController {
     }
 
     private function forgotPassword() {
-        $data = json_decode(file_get_contents("php://input"));
-        
-        if(!empty($data->email)) {
-            $user = $this->user->getByEmail($data->email);
+        try {
+            $data = json_decode(file_get_contents("php://input"));
             
-            if($user) {
-                $this->user->user_id = $user['user_id'];
-                if($this->user->generateResetToken()) {
-                    // Send reset password email
-                    $emailHandler = new EmailHandler();
-                    $emailHandler->sendResetPasswordEmail($user['email'], $this->user->reset_password_token);
-                    
+            if(!empty($data->email)) {
+                $user = $this->user->getByEmail($data->email);
+                
+                if($user) {
+                    $this->user->user_id = $user['user_id'];
+                    if($this->user->generateResetToken()) {
+                        try {
+                            // Send reset password email
+                            $emailHandler = new EmailHandler();
+                            $emailResult = $emailHandler->sendResetPasswordEmail($user['email'], $this->user->reset_password_token);
+                            
+                            if ($emailResult) {
+                                http_response_code(200);
+                                echo json_encode([
+                                    'status' => 'success',
+                                    'message' => 'Password reset instructions have been sent to your email'
+                                ]);
+                            } else {
+                                // Email failed to send, but don't reveal this to the user
+                                error_log("Failed to send password reset email to: " . $user['email']);
+                                http_response_code(200);
+                                echo json_encode([
+                                    'status' => 'success',
+                                    'message' => 'Password reset instructions have been sent to your email'
+                                ]);
+                            }
+                        } catch (\Exception $e) {
+                            error_log("Exception when sending password reset email: " . $e->getMessage());
+                            http_response_code(200);
+                            echo json_encode([
+                                'status' => 'success',
+                                'message' => 'Password reset instructions have been sent to your email'
+                            ]);
+                        }
+                    } else {
+                        error_log("Failed to generate reset token for user ID: " . $user['user_id']);
+                        $this->sendError('Failed to generate reset token', 500, 'TOKEN_GENERATION_FAILED');
+                    }
+                } else {
+                    // For security reasons, don't reveal if email exists
+                    error_log("Password reset attempted for non-existent email: " . $data->email);
                     http_response_code(200);
                     echo json_encode([
                         'status' => 'success',
-                        'message' => 'Password reset instructions have been sent to your email'
+                        'message' => 'If an account exists with this email, password reset instructions have been sent'
                     ]);
-                } else {
-                    $this->sendError('Failed to generate reset token', 500, 'TOKEN_GENERATION_FAILED');
                 }
             } else {
-                // For security reasons, don't reveal if email exists
-                http_response_code(200);
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'If an account exists with this email, password reset instructions have been sent'
-                ]);
+                $this->sendError('Email is required', 400, 'MISSING_EMAIL');
             }
-        } else {
-            $this->sendError('Email is required', 400, 'MISSING_EMAIL');
+        } catch (\Exception $e) {
+            error_log("Exception in forgotPassword method: " . $e->getMessage());
+            $this->sendError('Internal server error', 500, 'SERVER_ERROR');
         }
     }
 
@@ -550,6 +584,34 @@ class AuthController {
             ]);
         } else {
             $this->sendError('Invalid or expired token', 401, 'INVALID_TOKEN');
+        }
+    }
+
+    private function validateResetToken() {
+        // Get token from request body
+        $data = json_decode(file_get_contents("php://input"));
+        
+        if(empty($data->token)) {
+            $this->sendError('No token provided', 400, 'TOKEN_MISSING');
+            return;
+        }
+
+        // Log the token for debugging
+        error_log("Validating reset token: " . $data->token);
+        
+        $result = $this->user->validateResetToken($data->token);
+        
+        // Log the validation result
+        error_log("Token validation result: " . json_encode($result));
+        
+        if($result['status'] === 'success') {
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Reset token is valid'
+            ]);
+        } else {
+            $this->sendError($result['message'], 400, 'INVALID_RESET_TOKEN');
         }
     }
 }

@@ -9,9 +9,12 @@ import kotlinx.parcelize.TypeParceler
 import kotlinx.parcelize.Parceler
 import kotlinx.parcelize.RawValue
 import java.util.Date
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 enum class RequestStatus {
     PENDING,
+    APPROVED,
     IN_PROGRESS,
     COMPLETED,
     REJECTED;
@@ -20,6 +23,7 @@ enum class RequestStatus {
         fun fromString(value: String): RequestStatus {
             return when (value.lowercase()) {
                 "pending" -> PENDING
+                "approved" -> APPROVED
                 "in_progress" -> IN_PROGRESS
                 "completed" -> COMPLETED
                 "rejected" -> REJECTED
@@ -156,13 +160,15 @@ data class Request(
 }
 
 object MapParceler : Parceler<Map<String, Any>> {
+    private val gson = Gson()
+    
     override fun create(parcel: Parcel): Map<String, Any> {
         val json = parcel.readString() ?: "{}"
-        return Gson().fromJson(json, object : TypeToken<Map<String, Any>>() {}.type)
+        return gson.fromJson(json, object : TypeToken<Map<String, Any>>() {}.type)
     }
 
     override fun Map<String, Any>.write(parcel: Parcel, flags: Int) {
-        parcel.writeString(Gson().toJson(this))
+        parcel.writeString(gson.toJson(this))
     }
 }
 
@@ -292,4 +298,34 @@ data class RequestUpdateData(
 data class RequirementUpdateItem(
     val id: String,
     val value: String
-) 
+)
+
+data class RequirementNote(
+    val note_id: Int,
+    val request_id: Int,
+    val admin_id: Int,
+    val requirement_name: String?,
+    val note: String,
+    val created_at: String,
+    val first_name: String?,
+    val last_name: String?
+) {
+    fun getAdminName(): String {
+        return if (first_name != null && last_name != null) {
+            "$first_name $last_name"
+        } else {
+            "Admin"
+        }
+    }
+    
+    fun getFormattedDate(): String {
+        return try {
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+            val date = inputFormat.parse(created_at)
+            outputFormat.format(date ?: Date())
+        } catch (e: Exception) {
+            created_at
+        }
+    }
+} 

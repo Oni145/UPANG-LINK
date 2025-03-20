@@ -110,6 +110,24 @@ $requestMethod = $_SERVER["REQUEST_METHOD"];
 // Initialize auth middleware
 $authMiddleware = new AuthMiddleware($db);
 
+// Set error handling
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    error_log("Error: [$errno] $errstr in $errfile on line $errline");
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'error', 'message' => 'Internal server error']);
+    exit;
+});
+
+// Set exception handling
+set_exception_handler(function($e) {
+    error_log("Uncaught Exception: " . $e->getMessage());
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'error', 'message' => 'Internal server error: ' . $e->getMessage()]);
+    exit;
+});
+
 try {
     // Basic routing
     switch($uri[0]) {

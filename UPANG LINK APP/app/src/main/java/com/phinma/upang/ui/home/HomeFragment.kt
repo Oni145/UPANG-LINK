@@ -2,19 +2,22 @@ package com.phinma.upang.ui.home
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
+import androidx.core.view.isVisible
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.phinma.upang.R
 import com.phinma.upang.databinding.FragmentHomeBinding
 import com.phinma.upang.ui.base.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class HomeFragment : BaseFragment(R.layout.fragment_home) {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
+    private val viewModel: HomeViewModel by viewModels()
     private lateinit var updatesAdapter: UpdatesAdapter
     
     // In a real implementation, you would inject your repositories or services
@@ -28,9 +31,7 @@ class HomeFragment : BaseFragment(R.layout.fragment_home) {
         _binding = FragmentHomeBinding.bind(view)
         setupViews()
         setupUpdatesSection()
-        
-        // In a real implementation, you would load actual updates from your data source
-        loadRequestUpdates()
+        observeViewModel()
     }
 
     private fun setupViews() {
@@ -53,51 +54,37 @@ class HomeFragment : BaseFragment(R.layout.fragment_home) {
         binding.rvUpdates.visibility = View.GONE
     }
     
-    // In a real implementation, this method would fetch actual request updates from your backend
-    private fun loadRequestUpdates() {
-        // This is a placeholder for demonstration purposes
-        // In a real app, you would:
-        // 1. Fetch the user's requests from your API or database
-        // 2. Check for status changes or updates
-        // 3. Create Update objects based on those changes
-        // 4. Display them in the RecyclerView
-        
-        // For now, we'll show a message indicating no updates
-        binding.tvNoUpdates.visibility = View.VISIBLE
-        binding.rvUpdates.visibility = View.GONE
-        
-        // Example of how you would implement this with real data:
-        /*
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val requestUpdates = requestRepository.getRequestUpdates()
-                
-                if (requestUpdates.isNotEmpty()) {
-                    val updates = requestUpdates.map { requestUpdate ->
-                        Update(
-                            id = requestUpdate.id,
-                            title = "Request ${requestUpdate.statusText}: ${requestUpdate.requestCode}",
-                            description = requestUpdate.message,
-                            date = requestUpdate.dateUpdated,
-                            type = UpdateType.REQUEST_STATUS,
-                            status = requestUpdate.status
-                        )
-                    }
-                    
-                    binding.tvNoUpdates.visibility = View.GONE
-                    binding.rvUpdates.visibility = View.VISIBLE
-                    updatesAdapter.submitList(updates)
-                } else {
-                    binding.tvNoUpdates.visibility = View.VISIBLE
-                    binding.rvUpdates.visibility = View.GONE
-                }
-            } catch (e: Exception) {
-                // Handle error
+    private fun observeViewModel() {
+        // Observe updates
+        viewModel.updates.observe(viewLifecycleOwner) { updates ->
+            if (updates.isNotEmpty()) {
+                binding.tvNoUpdates.visibility = View.GONE
+                binding.rvUpdates.visibility = View.VISIBLE
+                updatesAdapter.submitList(updates)
+            } else {
                 binding.tvNoUpdates.visibility = View.VISIBLE
                 binding.rvUpdates.visibility = View.GONE
             }
         }
-        */
+        
+        // Observe loading state
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            // You can add a progress indicator here if needed
+        }
+        
+        // Observe error messages
+        viewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
+            errorMessage?.let {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+                viewModel.clearError()
+            }
+        }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Refresh data when returning to the fragment
+        viewModel.loadRequestUpdates()
     }
 
     override fun onDestroyView() {

@@ -1,0 +1,17 @@
+[19-Mar-2025 12:44:17 Europe/Berlin] PHPMailer not found. Falling back to PHP mail() function.
+[19-Mar-2025 12:44:17 Europe/Berlin] Attempting to send email to: jerickogarcia0@gmail.com
+[19-Mar-2025 12:44:17 Europe/Berlin] Subject: Reset your UPANG LINK password
+[19-Mar-2025 12:44:19 Europe/Berlin] PHP Warning:  mail(): Failed to connect to mailserver at "localhost" port 25, verify your "SMTP" and "smtp_port" setting in php.ini or use ini_set() in C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\utils\EmailHandler.php on line 138
+[19-Mar-2025 12:44:19 Europe/Berlin] Failed to send email via mail() function
+[19-Mar-2025 12:45:05 Europe/Berlin] PHPMailer not found. Falling back to PHP mail() function.
+[19-Mar-2025 12:45:05 Europe/Berlin] Attempting to send email to: jerickogarcia0@gmail.com
+[19-Mar-2025 12:45:05 Europe/Berlin] Subject: Reset your UPANG LINK password
+[19-Mar-2025 12:45:05 Europe/Berlin] === EMAIL CONTENT (NOT ACTUALLY SENT) ===
+[19-Mar-2025 12:45:05 Europe/Berlin] To: jerickogarcia0@gmail.com
+[19-Mar-2025 12:45:05 Europe/Berlin] Subject: Reset your UPANG LINK password
+[19-Mar-2025 12:45:05 Europe/Berlin] Body: 
+                <!DOCTYPE html>
+                <html>
+                <head>
+                 ...
+[19-Mar-2025 12:45:05 Europe/Berlin] =======================================
