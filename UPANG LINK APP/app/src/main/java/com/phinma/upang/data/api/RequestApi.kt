@@ -40,14 +40,14 @@ interface RequestApi {
         @Path("requirementId") requirementId: String
     ): ApiResponse<Unit>
 
-    @POST("requests/{id}/cancel")
-    suspend fun cancelRequest(@Path("id") id: String): ApiResponse<Unit>
+    @POST("requests/cancel.php")
+    suspend fun cancelRequest(@Body requestId: RequestBody): ApiResponse<Unit>
 
     @GET("requests/statistics")
     suspend fun getRequestStatistics(): ApiResponse<RequestStatistics>
 
     @GET("requests/{id}/details")
-    suspend fun getRequestDetails(@Path("id") id: String): ApiResponse<RequestDetails>
+    suspend fun getRequestDetails(@Path("id") id: String): ApiResponse<Any>
 
     @PUT("requests/{id}")
     suspend fun updateRequestDetails(
@@ -56,5 +56,11 @@ interface RequestApi {
     ): ApiResponse<Unit>
 
     @GET("requests/{requestId}/notes")
-    suspend fun getRequestNotes(@Path("requestId") requestId: String): ApiResponse<List<RequirementNote>>
+    suspend fun getRequestNotes(@Path("requestId") requestId: String): ApiResponse<List<Any>>
+
+    @GET("requests/{requestId}/requirement_notes")
+    suspend fun getRequestRequirementNotes(@Path("requestId") requestId: String): ApiResponse<List<Any>>
+
+    @GET("requirement_notes.php")
+    suspend fun getDirectRequirementNotes(@Query("request_id") requestId: String): ApiResponse<List<Any>>
 } 

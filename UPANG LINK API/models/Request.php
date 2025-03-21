@@ -29,7 +29,7 @@ class Request {
                 user_id INT NOT NULL,
                 type_id INT NOT NULL,
                 description TEXT,
-                status ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'REJECTED') DEFAULT 'PENDING',
+                status ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'CANCELLED') DEFAULT 'PENDING',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(user_id),
@@ -1398,6 +1398,48 @@ class Request {
         } catch (PDOException $e) {
             error_log("Database error in getRequestDetailsWithType: " . $e->getMessage());
             throw new Exception("Failed to fetch request details: " . $e->getMessage(), 500);
+        }
+    }
+
+    public function cancel($request_id, $user_id) {
+        try {
+            // First verify the request belongs to the user and is in a cancellable state
+            $query = "SELECT status FROM " . $this->table . " 
+                     WHERE request_id = :request_id AND user_id = :user_id";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':request_id', $request_id);
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->execute();
+            
+            $request = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$request) {
+                throw new Exception("Request not found or unauthorized", 404);
+            }
+            
+            // Only allow cancellation of pending requests
+            if ($request['status'] !== 'PENDING') {
+                throw new Exception("Only pending requests can be cancelled", 400);
+            }
+            
+            // Update the request status to cancelled
+            $query = "UPDATE " . $this->table . " 
+                     SET status = 'CANCELLED', updated_at = NOW() 
+                     WHERE request_id = :request_id AND user_id = :user_id";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':request_id', $request_id);
+            $stmt->bindParam(':user_id', $user_id);
+            
+            if ($stmt->execute()) {
+                return $this->getById($request_id);
+            }
+            
+            return false;
+        } catch (PDOException $e) {
+            error_log("Database error: " . $e->getMessage());
+            throw new Exception("Failed to cancel request", 500);
         }
     }
 } 

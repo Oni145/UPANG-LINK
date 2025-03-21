@@ -41,6 +41,24 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^UPANG%20LINK%20API/api/requests/form/(REQ-[0-9]{8}-[0-9]{4})$ UPANG%20LINK%20API/api/requests/requestform.php?id=$1 [QSA,L]
 RewriteRule ^UPANG%20LINK%20API/api/requests/form/(REQ-[0-9]{4}-[0-9]{3})$ UPANG%20LINK%20API/api/requests/requestform.php?id=$1 [QSA,L]
 
+# Rewrite request requirement notes endpoint with tracking number - make this more specific
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# Put the numeric ID rule FIRST so it takes priority
+RewriteRule ^UPANG%20LINK%20API/api/requests/([0-9]+)/requirement_notes$ UPANG%20LINK%20API/api/requests/requirement_notes.php?request_id=$1 [QSA,L]
+RewriteRule ^UPANG%20LINK%20API/api/requests/(REQ-[0-9]{8}-[0-9]{4})/requirement_notes$ UPANG%20LINK%20API/api/requests/requirement_notes.php?request_id=$1 [QSA,L]
+RewriteRule ^UPANG%20LINK%20API/api/requests/(REQ-[0-9]{4}-[0-9]{3})/requirement_notes$ UPANG%20LINK%20API/api/requests/requirement_notes.php?request_id=$1 [QSA,L]
+
+# Direct requirement notes endpoint - absolute path variant
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^UPANG%20LINK%20API/api/direct_notes$ UPANG%20LINK%20API/api/requirement_notes.php [QSA,L]
+
+# Direct requirement notes endpoint - relative path variant
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^direct_notes$ UPANG%20LINK%20API/api/requirement_notes.php [QSA,L]
+
 # Default rewrite for other PHP files
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

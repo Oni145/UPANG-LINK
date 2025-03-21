@@ -36,4 +36,7 @@ interface RequestService {
     
     @GET("requests/{requestId}/notes")
     suspend fun getRequestNotes(@Path("requestId") requestId: String): Response<ApiResponse<List<RequirementNote>>>
+
+    @POST("requests/cancel.php")
+    suspend fun cancelRequest(@Body requestId: RequestBody): Response<ApiResponse<CreateRequestResponse>>
 } 

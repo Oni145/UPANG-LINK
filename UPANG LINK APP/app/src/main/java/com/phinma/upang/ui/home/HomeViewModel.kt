@@ -51,7 +51,7 @@ class HomeViewModel @Inject constructor(
                     
                     // Sort requests by updated_at date (most recent first)
                     val sortedRequests = requests
-                        .filter { request -> request.status?.name != "PENDING" } // Exclude PENDING requests
+                        .filter { request -> request.status?.name != "PENDING" && request.status?.name != "CANCELLED" } // Exclude PENDING and CANCELLED requests
                         .sortedByDescending { 
                         try {
                             dateFormat.parse(it.updated_at)?.time ?: 0
@@ -86,6 +86,7 @@ class HomeViewModel @Inject constructor(
                                 "IN_PROGRESS" -> "Request In Progress: $requestType"
                                 "COMPLETED" -> "Request Completed: $requestType"
                                 "REJECTED" -> "Request Rejected: $requestType"
+                                "CANCELLED" -> "Request Cancelled: $requestType"
                                 else -> "Request Update: $requestType"
                             }
                             
@@ -96,6 +97,7 @@ class HomeViewModel @Inject constructor(
                                 "IN_PROGRESS" -> "Your request for $requestType is currently being processed. Tracking No: ${request.tracking_number ?: "N/A"}"
                                 "COMPLETED" -> "Your request for $requestType has been completed. Tracking No: ${request.tracking_number ?: "N/A"}"
                                 "REJECTED" -> "Your request for $requestType has been rejected. ${request.remarks ?: ""} Tracking No: ${request.tracking_number ?: "N/A"}"
+                                "CANCELLED" -> "Your request for $requestType has been cancelled. Tracking No: ${request.tracking_number ?: "N/A"}"
                                 else -> "Status update for your $requestType request. Tracking No: ${request.tracking_number ?: "N/A"}"
                             }
                             
@@ -116,6 +118,11 @@ class HomeViewModel @Inject constructor(
                                     
                                     // Add each note as an update
                                     for (note in notes) {
+                                        // Skip notes with null content
+                                        if (note.note.isNullOrBlank()) {
+                                            continue
+                                        }
+                                        
                                         val noteDate = note.getFormattedDate()
                                         val adminName = note.getAdminName()
                                         

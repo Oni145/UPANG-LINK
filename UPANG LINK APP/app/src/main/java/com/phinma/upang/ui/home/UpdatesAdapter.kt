@@ -57,6 +57,15 @@ class UpdatesAdapter : ListAdapter<Update, UpdatesAdapter.UpdateViewHolder>(Upda
                         ContextCompat.getColor(itemView.context, R.color.status_completed_bg)
                     )
                 }
+                "completed" -> {
+                    ivStatus?.setImageResource(R.drawable.ic_check_circle)
+                    ivStatus?.imageTintList = ColorStateList.valueOf(
+                        ContextCompat.getColor(itemView.context, R.color.status_approved)
+                    )
+                    cardView.setCardBackgroundColor(
+                        ContextCompat.getColor(itemView.context, R.color.status_completed_bg)
+                    )
+                }
                 "in_progress" -> {
                     ivStatus?.setImageResource(R.drawable.ic_time)
                     ivStatus?.imageTintList = ColorStateList.valueOf(
@@ -67,6 +76,15 @@ class UpdatesAdapter : ListAdapter<Update, UpdatesAdapter.UpdateViewHolder>(Upda
                     )
                 }
                 "rejected" -> {
+                    ivStatus?.setImageResource(R.drawable.ic_cancel)
+                    ivStatus?.imageTintList = ColorStateList.valueOf(
+                        ContextCompat.getColor(itemView.context, R.color.status_rejected)
+                    )
+                    cardView.setCardBackgroundColor(
+                        ContextCompat.getColor(itemView.context, R.color.status_rejected_bg)
+                    )
+                }
+                "cancelled" -> {
                     ivStatus?.setImageResource(R.drawable.ic_cancel)
                     ivStatus?.imageTintList = ColorStateList.valueOf(
                         ContextCompat.getColor(itemView.context, R.color.status_rejected)

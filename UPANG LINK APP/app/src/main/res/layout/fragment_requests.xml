@@ -106,6 +106,16 @@
                         app:chipStrokeWidth="1dp"
                         android:textColor="@color/black" />
 
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipCancelled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cancelled"
+                        app:chipBackgroundColor="@color/white"
+                        app:chipStrokeColor="@color/black"
+                        app:chipStrokeWidth="1dp"
+                        android:textColor="@color/black" />
+
                 </com.google.android.material.chip.ChipGroup>
 
             </HorizontalScrollView>

@@ -116,6 +116,10 @@ class RequestsFragment : Fragment() {
             chipRejected.setOnClickListener {
                 viewModel.loadRequests(RequestFilter(status = RequestStatus.REJECTED.name))
             }
+
+            chipCancelled.setOnClickListener {
+                viewModel.loadRequests(RequestFilter(status = RequestStatus.CANCELLED.name))
+            }
         }
     }
 

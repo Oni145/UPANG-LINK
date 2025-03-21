@@ -5,10 +5,11 @@ import android.util.Log
 import com.phinma.upang.data.api.RequestApi
 import com.phinma.upang.data.model.*
 import dagger.hilt.android.qualifiers.ApplicationContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.HttpException
 import java.io.File
 import javax.inject.Inject
@@ -155,15 +156,15 @@ class RequestRepositoryImpl @Inject constructor(
     ): Result<RequestCreateResponse> {
         return try {
             val typeIdBody = typeId.toString()
-                .toRequestBody("text/plain".toMediaTypeOrNull())
+                .toRequestBody("text/plain".toMediaType())
             val purposeBody = purpose
-                .toRequestBody("text/plain".toMediaTypeOrNull())
+                .toRequestBody("text/plain".toMediaType())
 
             val fileParts = files.map { file ->
                 MultipartBody.Part.createFormData(
                     name = "files[]",
                     filename = file.name,
-                    body = file.asRequestBody("application/octet-stream".toMediaTypeOrNull())
+                    body = file.asRequestBody("application/octet-stream".toMediaType())
                 )
             }
 
@@ -207,7 +208,7 @@ class RequestRepositoryImpl @Inject constructor(
             val filePart = MultipartBody.Part.createFormData(
                 name = "file",
                 filename = file.name,
-                body = file.asRequestBody("application/octet-stream".toMediaTypeOrNull())
+                body = file.asRequestBody("application/octet-stream".toMediaType())
             )
 
             val response = api.uploadRequirement(requestId, requirementId, filePart)
@@ -240,7 +241,24 @@ class RequestRepositoryImpl @Inject constructor(
     override suspend fun cancelRequest(id: String): Result<Unit> {
         return try {
             Log.d(TAG, "Attempting to cancel request with ID: $id")
-            val response = api.cancelRequest(id)
+            
+            // First get the request using getRequest method - this will have the internal request_id
+            val requestResult = getRequest(id)
+            
+            if (requestResult.isFailure) {
+                Log.e(TAG, "Error getting request: ${requestResult.exceptionOrNull()?.message}")
+                return Result.failure(Exception("Failed to find request: ${requestResult.exceptionOrNull()?.message}"))
+            }
+            
+            val request = requestResult.getOrNull() ?: return Result.failure(Exception("Request not found"))
+            
+            // Extract the internal request_id
+            val internalRequestId = request.request_id.toString()
+            Log.d(TAG, "Got internal request_id: $internalRequestId for tracking number: $id")
+            
+            // Now cancel the request using the internal request_id
+            val requestBody = "{\"request_id\":\"$internalRequestId\"}".toRequestBody("application/json".toMediaType())
+            val response = api.cancelRequest(requestBody)
             
             if (response.status == "success") {
                 Log.d(TAG, "Successfully canceled request: $id")
@@ -289,9 +307,38 @@ class RequestRepositoryImpl @Inject constructor(
     override suspend fun getRequestDetails(requestId: String): Result<RequestDetails> {
         return try {
             val response = api.getRequestDetails(requestId)
-            response.data?.let {
-                Result.success(it)
-            } ?: Result.failure(Exception(response.message ?: "Failed to get request details"))
+            
+            // Fix the type casting issue
+            if (response.status == "success" && response.data != null) {
+                when (val data = response.data) {
+                    is RequestDetails -> Result.success(data)
+                    is Map<*, *> -> {
+                        try {
+                            val requestDetails = RequestDetails(
+                                id = data["id"]?.toString() ?: "",
+                                request_id = data["request_id"]?.toString()?.toIntOrNull(),
+                                document_type = data["document_type"]?.toString() ?: "",
+                                purpose = data["purpose"]?.toString() ?: "",
+                                status = data["status"]?.toString() ?: "",
+                                submitted_at = data["submitted_at"]?.toString() ?: "",
+                                updated_at = data["updated_at"]?.toString() ?: "",
+                                can_edit = data["can_edit"] as? Boolean ?: false,
+                                submissions = null // We'll handle this separately if needed
+                            )
+                            Result.success(requestDetails)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error converting Map to RequestDetails: ${e.message}")
+                            Result.failure(Exception("Failed to parse request details"))
+                        }
+                    }
+                    else -> {
+                        Log.e(TAG, "Unexpected data type for request details: ${data?.javaClass?.name}")
+                        Result.failure(Exception("Unexpected data type for request details"))
+                    }
+                }
+            } else {
+                Result.failure(Exception(response.message ?: "Failed to get request details"))
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting request details", e)
             Result.failure(e)
@@ -317,8 +364,47 @@ class RequestRepositoryImpl @Inject constructor(
             Log.d(TAG, "Fetching notes for request ID: $requestId")
             val response = api.getRequestNotes(requestId)
             
+            // Debug output
+            if (response.status == "success" && response.data != null) {
+                val debugData = response.data
+                Log.d(TAG, "Response data class: ${debugData.javaClass.name}")
+                if (debugData is List<*> && debugData.isNotEmpty()) {
+                    val firstItem = debugData[0]
+                    Log.d(TAG, "First item class: ${firstItem?.javaClass?.name}")
+                }
+            }
+
             if (response.status == "success") {
-                val notes = response.data ?: emptyList()
+                val data = response.data
+                // Convert Map objects to RequirementNote objects
+                val notes = if (data is List<*>) {
+                    data.mapNotNull { item ->
+                        if (item is Map<*, *>) {
+                            try {
+                                RequirementNote(
+                                    note_id = (item["note_id"]?.toString() ?: "0"),
+                                    request_id = (item["request_id"]?.toString() ?: requestId),
+                                    admin_id = (item["admin_id"]?.toString() ?: "0"),
+                                    requirement_name = item["requirement_name"]?.toString(),
+                                    note = item["note"]?.toString(),
+                                    created_at = item["created_at"]?.toString() ?: "",
+                                    admin_name = item["admin_name"]?.toString(),
+                                    first_name = item["first_name"]?.toString(),
+                                    last_name = item["last_name"]?.toString()
+                                )
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error converting map to RequirementNote: ${e.message}")
+                                null
+                            }
+                        } else if (item is RequirementNote) {
+                            item
+                        } else {
+                            null
+                        }
+                    }
+                } else {
+                    emptyList()
+                }
                 Log.d(TAG, "Successfully fetched ${notes.size} notes for request: $requestId")
                 Result.success(notes)
             } else {
@@ -337,6 +423,166 @@ class RequestRepositoryImpl @Inject constructor(
             // If the API endpoint isn't available yet, return an empty list instead of failing
             if (e is retrofit2.HttpException && (e.code() == 404 || e.code() == 501)) {
                 Log.e(TAG, "API endpoint for notes not available (${e.code()})")
+                Result.success(emptyList())
+            } else {
+                Result.failure(e)
+            }
+        }
+    }
+    
+    override suspend fun getRequestRequirementNotes(requestId: String): Result<List<RequirementNote>> {
+        return try {
+            Log.d(TAG, "Fetching requirement notes for request ID: $requestId")
+            
+            // Try the direct endpoint first
+            try {
+                Log.d(TAG, "Using direct endpoint for requirement notes")
+                val directResponse = api.getDirectRequirementNotes(requestId)
+                
+                if (directResponse.status == "success" && directResponse.data != null && directResponse.data is List<*>) {
+                    val data = directResponse.data
+                    Log.d(TAG, "Direct endpoint returned data: $data")
+                    
+                    val notes = (data as List<*>).mapNotNull { item ->
+                        if (item is Map<*, *>) {
+                            try {
+                                RequirementNote(
+                                    note_id = (item["note_id"]?.toString() ?: "0"),
+                                    request_id = (item["request_id"]?.toString() ?: requestId),
+                                    admin_id = (item["admin_id"]?.toString() ?: "0"),
+                                    requirement_name = "General", // Default value
+                                    note = item["note"]?.toString(),
+                                    created_at = item["created_at"]?.toString() ?: "",
+                                    admin_name = item["admin_name"]?.toString(),
+                                    first_name = null,
+                                    last_name = null
+                                )
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error converting map from direct endpoint to RequirementNote: ${e.message}")
+                                null
+                            }
+                        } else null
+                    }
+                    
+                    if (notes.isNotEmpty()) {
+                        Log.d(TAG, "Direct endpoint returned ${notes.size} notes: $notes")
+                        return Result.success(notes)
+                    } else {
+                        Log.d(TAG, "Direct endpoint returned empty list, falling back to legacy endpoint")
+                    }
+                } else {
+                    Log.d(TAG, "Direct endpoint failed or returned no data, falling back to legacy endpoint")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error using direct endpoint: ${e.message}")
+                Log.d(TAG, "Falling back to legacy endpoint")
+            }
+            
+            // Fall back to legacy endpoint
+            val response = api.getRequestRequirementNotes(requestId)
+            
+            if (response.status == "success") {
+                val data = response.data
+                
+                // Check if the response data is a list of requests instead of notes
+                if (data != null && data is List<*> && data.isNotEmpty()) {
+                    val firstItem = data[0]
+                    
+                    if (firstItem is Map<*, *> && firstItem.containsKey("tracking_number")) {
+                        // This is likely a list of requests, not requirement notes
+                        Log.d(TAG, "API returned request objects instead of notes. Using fallback.")
+                        
+                        // Try to get remarks from the main request object
+                        // Fetch the request details first
+                        val requestDetails = api.getRequest(requestId)
+                        if (requestDetails.status == "success" && requestDetails.data != null) {
+                            // Check if the request is rejected
+                            val isRejected = requestDetails.data.status == RequestStatus.REJECTED
+                            
+                            // Create a synthetic note from the remarks if available
+                            val remarks = requestDetails.data.remarks
+                            if (!remarks.isNullOrEmpty()) {
+                                val syntheticNote = RequirementNote(
+                                    note_id = "0",
+                                    request_id = requestId,
+                                    admin_id = "0",
+                                    requirement_name = "General",
+                                    note = remarks,
+                                    created_at = requestDetails.data.updated_at ?: "",
+                                    admin_name = "Admin"
+                                )
+                                Log.d(TAG, "Created synthetic note from remarks: ${syntheticNote.note}")
+                                return Result.success(listOf(syntheticNote))
+                            }
+                            // If no remarks but the request is rejected, create a fallback rejection note
+                            else if (isRejected) {
+                                val syntheticNote = RequirementNote(
+                                    note_id = "0",
+                                    request_id = requestId,
+                                    admin_id = "0",
+                                    requirement_name = "General",
+                                    note = "Your request has been rejected.",
+                                    created_at = requestDetails.data.updated_at ?: "",
+                                    admin_name = "Admin"
+                                )
+                                Log.d(TAG, "Created synthetic rejection note for rejected request")
+                                return Result.success(listOf(syntheticNote))
+                            }
+                        }
+                        
+                        // Return empty list if we couldn't create a synthetic note
+                        Log.d(TAG, "No remarks available to create synthetic note")
+                        return Result.success(emptyList())
+                    }
+                }
+                
+                // Standard processing for normal note response
+                val notes = if (data is List<*>) {
+                    data.mapNotNull { item ->
+                        if (item is Map<*, *>) {
+                            try {
+                                RequirementNote(
+                                    note_id = (item["note_id"]?.toString() ?: "0"),
+                                    request_id = (item["request_id"]?.toString() ?: requestId),
+                                    admin_id = (item["admin_id"]?.toString() ?: "0"),
+                                    requirement_name = item["requirement_name"]?.toString(),
+                                    note = item["note"]?.toString(),
+                                    created_at = item["created_at"]?.toString() ?: "",
+                                    admin_name = item["admin_name"]?.toString(),
+                                    first_name = item["first_name"]?.toString(),
+                                    last_name = item["last_name"]?.toString()
+                                )
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error converting map to RequirementNote: ${e.message}")
+                                null
+                            }
+                        } else if (item is RequirementNote) {
+                            item
+                        } else {
+                            null
+                        }
+                    }
+                } else {
+                    emptyList()
+                }
+                Log.d(TAG, "Successfully fetched ${notes.size} requirement notes for request: $requestId")
+                Result.success(notes)
+            } else {
+                // If there are no notes, return an empty list instead of an error
+                if (response.status == "error" && (response.message?.contains("No notes found") == true || response.code == 404)) {
+                    Log.d(TAG, "No requirement notes found for request: $requestId")
+                    Result.success(emptyList())
+                } else {
+                    Log.e(TAG, "Error fetching requirement notes: ${response.message}")
+                    Result.failure(Exception(response.message ?: "Failed to get request requirement notes"))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception fetching requirement notes for request: $requestId", e)
+            
+            // If the API endpoint isn't available yet, return an empty list instead of failing
+            if (e is retrofit2.HttpException && (e.code() == 404 || e.code() == 501)) {
+                Log.e(TAG, "API endpoint for requirement notes not available (${e.code()})")
                 Result.success(emptyList())
             } else {
                 Result.failure(e)

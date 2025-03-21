@@ -7,6 +7,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
@@ -29,6 +31,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.core.content.ContextCompat
+import com.google.android.material.snackbar.Snackbar
 
 @AndroidEntryPoint
 class RequestDetailsFragment : Fragment() {
@@ -94,13 +97,40 @@ class RequestDetailsFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        // Remove cancel button click listener
-        // Hide the cancel button completely
-        binding.cancelButton.visibility = View.GONE
+        binding.cancelButton.setOnClickListener {
+            showCancelConfirmationDialog()
+        }
         
         binding.backButton.setOnClickListener {
             findNavController().navigateUp()
         }
+    }
+
+    private fun setupViews() {
+        binding.apply {
+            // ... existing code ...
+
+            // Show cancel button only for pending requests
+            cancelButton.isVisible = viewModel.request.value?.status == RequestStatus.PENDING
+            cancelButton.setOnClickListener {
+                showCancelConfirmationDialog()
+            }
+        }
+    }
+
+    private fun showCancelConfirmationDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Cancel Request")
+            .setMessage("Are you sure you want to cancel this request? This action cannot be undone.")
+            .setPositiveButton("Cancel Request") { _, _ ->
+                viewModel.request.value?.id?.let { requestId ->
+                    viewModel.cancelRequest(requestId)
+                }
+            }
+            .setNegativeButton("No, Keep It") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun observeViewModel() {
@@ -123,6 +153,9 @@ class RequestDetailsFragment : Fragment() {
                 // Update status views and timeline
                 updateStatusViews(request.status ?: RequestStatus.PENDING)
                 updateStatusTimeline(request.status ?: RequestStatus.PENDING)
+
+                // Update cancel button visibility based on status
+                cancelButton.isVisible = request.status == RequestStatus.PENDING
 
                 // Always hide requirements section as requested by user
                 requirementsLabel.isVisible = false
@@ -179,8 +212,92 @@ class RequestDetailsFragment : Fragment() {
                 // Set request category
                 categoryText.text = request.category_name
                 
-                // Always hide the cancel button
-                cancelButton.visibility = View.GONE
+                // Debug request data to see what fields are available
+                android.util.Log.d("RequestDetails", "Request: ${request.id}, Status: ${request.status}, Remarks: ${request.remarks}")
+                android.util.Log.d("RequestDetails", "Notes array: ${request.notes?.size ?: 0} notes")
+            }
+        }
+
+        // Handle regular notes (from request_notes table)
+        viewModel.requirementNotes.observe(viewLifecycleOwner) { notes ->
+            android.util.Log.d("RequestDetails", "Received ${notes.size} notes")
+        }
+        
+        // Handle notes from request_requirement_notes table
+        viewModel.requestRequirementNotes.observe(viewLifecycleOwner) { notes ->
+            android.util.Log.d("RequestDetails", "Received ${notes.size} requirement notes from the database")
+            android.util.Log.d("RequestDetails", "Notes data: $notes")
+            
+            binding.apply {
+                // For REJECTED status, always show the admin message card even if no notes
+                if (viewModel.request.value?.status == RequestStatus.REJECTED) {
+                    adminMessageCard.isVisible = true
+                    
+                    if (notes.isNotEmpty()) {
+                        // Get the latest requirement note with non-null content
+                        val validNotes = notes.filter { !it.note.isNullOrBlank() }
+                        
+                        if (validNotes.isNotEmpty()) {
+                            val latestNote = validNotes[0]  // Notes are ordered by created_at DESC
+                            adminMessageText.text = latestNote.note
+                            android.util.Log.d("RequestDetails", "Displaying rejection note: ${latestNote.note}")
+                        } else {
+                            // No valid notes available, show default rejection message
+                            adminMessageText.text = "Your request has been rejected. Please contact the admin for more details."
+                            android.util.Log.d("RequestDetails", "Displaying default rejection message (no valid notes)")
+                        }
+                    } else {
+                        // No notes available, but still show a default rejection message
+                        adminMessageText.text = "Your request has been rejected. Please contact the admin for more details."
+                        android.util.Log.d("RequestDetails", "Displaying default rejection message")
+                    }
+                } 
+                // Show admin message based on notes for other statuses
+                else if (notes.isNotEmpty()) {
+                    // Filter out notes with null content
+                    val validNotes = notes.filter { !it.note.isNullOrBlank() }
+                    
+                    // Show admin message for all statuses except PENDING and CANCELLED
+                    if (validNotes.isNotEmpty() && 
+                        viewModel.request.value?.status != RequestStatus.PENDING && 
+                        viewModel.request.value?.status != RequestStatus.CANCELLED) {
+                        
+                        adminMessageCard.isVisible = true
+                        
+                        // Format and display the note
+                        val latestNote = validNotes[0]  // Notes are ordered by created_at DESC
+                        adminMessageText.text = latestNote.note
+                        
+                        // Log for debugging
+                        android.util.Log.d("RequestDetails", "Displaying note: ${latestNote.note}")
+                    } else if (viewModel.request.value?.status != RequestStatus.PENDING && 
+                        viewModel.request.value?.status != RequestStatus.CANCELLED) {
+                        
+                        // No valid notes available
+                        adminMessageCard.isVisible = true
+                        adminMessageText.text = "No Message"
+                    } else {
+                        adminMessageCard.isVisible = false
+                    }
+                } else {
+                    // Check if we can use remarks field for non-rejected statuses
+                    val remarks = viewModel.request.value?.remarks
+                    if (!remarks.isNullOrEmpty() && 
+                        viewModel.request.value?.status != RequestStatus.PENDING && 
+                        viewModel.request.value?.status != RequestStatus.CANCELLED) {
+                        
+                        adminMessageCard.isVisible = true
+                        adminMessageText.text = remarks
+                        android.util.Log.d("RequestDetails", "Using remarks as message: $remarks")
+                    } else if (viewModel.request.value?.status != RequestStatus.PENDING && 
+                        viewModel.request.value?.status != RequestStatus.CANCELLED) {
+                        
+                        adminMessageCard.isVisible = true
+                        adminMessageText.text = "No Message"
+                    } else {
+                        adminMessageCard.isVisible = false
+                    }
+                }
             }
         }
 
@@ -189,14 +306,9 @@ class RequestDetailsFragment : Fragment() {
             binding.contentLayout.isVisible = !isLoading
         }
 
-        viewModel.errorMessage.observe(viewLifecycleOwner) { error ->
-            error?.let {
-                if (it.contains("Authentication error", ignoreCase = true)) {
-                    // Show authentication error dialog
-                    showAuthenticationErrorDialog(it)
-                } else {
-                    showError(it)
-                }
+        viewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
+            errorMessage?.let {
+                Snackbar.make(binding.root, it, Snackbar.LENGTH_LONG).show()
             }
         }
     }
@@ -238,6 +350,9 @@ class RequestDetailsFragment : Fragment() {
             RequestStatus.REJECTED -> {
                 Pair(R.color.status_rejected, "Rejected")
             }
+            RequestStatus.CANCELLED -> {
+                Pair(R.color.status_rejected, "Cancelled")
+            }
         }
 
         binding.apply {
@@ -251,23 +366,148 @@ class RequestDetailsFragment : Fragment() {
     
     private fun updateStatusTimeline(status: RequestStatus) {
         binding.apply {
-            // Update timeline indicators
-            pendingIndicator.isSelected = true
-            pendingLine.isSelected = status != RequestStatus.PENDING
-            inProgressIndicator.isSelected = status != RequestStatus.PENDING
-            inProgressLine.isSelected = status == RequestStatus.COMPLETED || status == RequestStatus.REJECTED
-            completedIndicator.isSelected = status == RequestStatus.COMPLETED || status == RequestStatus.REJECTED
+            // Reset all indicators to inactive state
+            pendingIndicator.isSelected = false
+            inProgressIndicator.isSelected = false
+            approvedIndicator.isSelected = false
+            completedIndicator.isSelected = false
+            cancelledIndicator.isSelected = false
             
-            // Set colors based on status
-            val completedColor = when (status) {
-                RequestStatus.COMPLETED -> R.color.status_approved
-                RequestStatus.REJECTED -> R.color.status_rejected
-                else -> R.color.status_pending
-            }
+            pendingLine.isSelected = false
+            inProgressLine.isSelected = false
+            approvedLine.isSelected = false
+            completedLine.isSelected = false
+            
+            // Always hide the 5th indicator (cancelled) since we don't need it
+            cancelledIndicator.visibility = View.GONE
+            cancelledStatusLabel.visibility = View.GONE
+            
+            // Always hide the line after the last indicator (completedLine) since it's the end of the timeline
+            completedLine.visibility = View.GONE
+            
+            // Reset indicator texts
+            (pendingIndicator.getChildAt(0) as? TextView)?.text = "1"
+            (inProgressIndicator.getChildAt(0) as? TextView)?.text = "2"
+            (approvedIndicator.getChildAt(0) as? TextView)?.text = "3"
+            (completedIndicator.getChildAt(0) as? TextView)?.text = "4"
+            
+            // Reset status labels
+            pendingStatusLabel.text = "Pending"
+            inProgressStatusLabel.text = "In Progress"
+            approvedStatusLabel.text = "Approved"
+            completedStatusLabel.text = "Completed"
+            
+            // Make sure all step indicators are visible for consistent spacing
+            pendingIndicator.visibility = View.VISIBLE
+            inProgressIndicator.visibility = View.VISIBLE
+            approvedIndicator.visibility = View.VISIBLE
+            completedIndicator.visibility = View.VISIBLE
+            
+            // Make sure all connecting lines are visible for consistent spacing (except completedLine)
+            pendingLine.visibility = View.VISIBLE
+            inProgressLine.visibility = View.VISIBLE
+            approvedLine.visibility = View.VISIBLE
+            
+            // Reset label opacity
+            pendingStatusLabel.alpha = 1f
+            inProgressStatusLabel.alpha = 1f
+            approvedStatusLabel.alpha = 1f
+            completedStatusLabel.alpha = 1f
             
             context?.let { ctx ->
-                if (status == RequestStatus.COMPLETED || status == RequestStatus.REJECTED) {
-                    completedIndicator.setCardBackgroundColor(ContextCompat.getColor(ctx, completedColor))
+                // Define colors
+                val grayColor = ContextCompat.getColor(ctx, R.color.gray_light)
+                val pendingColor = ContextCompat.getColor(ctx, R.color.status_pending)
+                val approvedColor = ContextCompat.getColor(ctx, R.color.status_approved)
+                val rejectedColor = ContextCompat.getColor(ctx, R.color.status_rejected)
+                
+                // Based on the requested new flow: pending/cancelled → in progress → approved/rejected → completed
+                when (status) {
+                    RequestStatus.PENDING -> {
+                        // Pending state - first step active, others inactive
+                        pendingIndicator.setCardBackgroundColor(pendingColor)
+                        inProgressIndicator.setCardBackgroundColor(grayColor)
+                        approvedIndicator.setCardBackgroundColor(grayColor)
+                        completedIndicator.setCardBackgroundColor(grayColor)
+                        
+                        pendingLine.setBackgroundColor(grayColor)
+                        inProgressLine.setBackgroundColor(grayColor)
+                        approvedLine.setBackgroundColor(grayColor)
+                    }
+                    RequestStatus.CANCELLED -> {
+                        // For cancelled status, only show the first step labeled as "Cancelled"
+                        pendingIndicator.setCardBackgroundColor(rejectedColor)
+                        pendingStatusLabel.text = "Cancelled"
+                        
+                        // Hide the other steps completely
+                        inProgressIndicator.visibility = View.GONE
+                        inProgressStatusLabel.visibility = View.GONE
+                        approvedIndicator.visibility = View.GONE
+                        approvedStatusLabel.visibility = View.GONE
+                        completedIndicator.visibility = View.GONE
+                        completedStatusLabel.visibility = View.GONE
+                        
+                        // Hide all connecting lines
+                        pendingLine.visibility = View.GONE
+                        inProgressLine.visibility = View.GONE
+                        approvedLine.visibility = View.GONE
+                    }
+                    RequestStatus.IN_PROGRESS -> {
+                        // In Progress - first and second steps active
+                        pendingIndicator.setCardBackgroundColor(pendingColor)
+                        inProgressIndicator.setCardBackgroundColor(pendingColor)
+                        approvedIndicator.setCardBackgroundColor(grayColor)
+                        completedIndicator.setCardBackgroundColor(grayColor)
+                        
+                        pendingLine.setBackgroundColor(pendingColor)
+                        inProgressLine.setBackgroundColor(grayColor)
+                        approvedLine.setBackgroundColor(grayColor)
+                    }
+                    RequestStatus.APPROVED -> {
+                        // Approved - first three steps active, last inactive
+                        pendingIndicator.setCardBackgroundColor(pendingColor)
+                        inProgressIndicator.setCardBackgroundColor(pendingColor)
+                        approvedIndicator.setCardBackgroundColor(approvedColor)
+                        completedIndicator.setCardBackgroundColor(grayColor)
+                        
+                        pendingLine.setBackgroundColor(pendingColor)
+                        inProgressLine.setBackgroundColor(pendingColor)
+                        approvedLine.setBackgroundColor(grayColor)
+                    }
+                    RequestStatus.COMPLETED -> {
+                        // Completed - all steps active (but only if it was approved first)
+                        pendingIndicator.setCardBackgroundColor(pendingColor)
+                        inProgressIndicator.setCardBackgroundColor(pendingColor)
+                        approvedIndicator.setCardBackgroundColor(approvedColor)
+                        completedIndicator.setCardBackgroundColor(approvedColor)
+                        
+                        pendingLine.setBackgroundColor(pendingColor)
+                        inProgressLine.setBackgroundColor(pendingColor)
+                        approvedLine.setBackgroundColor(approvedColor)
+                    }
+                    RequestStatus.REJECTED -> {
+                        // For rejected status, only show the first 3 steps (Pending, In Progress, Rejected)
+                        pendingIndicator.setCardBackgroundColor(pendingColor)
+                        inProgressIndicator.setCardBackgroundColor(pendingColor)
+                        approvedIndicator.setCardBackgroundColor(rejectedColor)
+                        
+                        // Hide the fourth indicator completely for rejected requests
+                        completedIndicator.visibility = View.GONE
+                        completedStatusLabel.visibility = View.GONE
+                        
+                        // Show the rejected label in the third position
+                        approvedStatusLabel.text = "Rejected"
+                        
+                        // Replace "3" with "X" in the rejected indicator
+                        (approvedIndicator.getChildAt(0) as? TextView)?.apply {
+                            text = "X"
+                        }
+                        
+                        // Set appropriate line colors
+                        pendingLine.setBackgroundColor(pendingColor)
+                        inProgressLine.setBackgroundColor(pendingColor)
+                        approvedLine.visibility = View.GONE
+                    }
                 }
             }
         }

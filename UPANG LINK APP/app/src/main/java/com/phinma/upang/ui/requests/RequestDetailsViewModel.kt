@@ -7,6 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phinma.upang.data.model.Request
+import com.phinma.upang.data.model.RequirementNote
 import com.phinma.upang.data.repository.RequestRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -29,9 +30,19 @@ class RequestDetailsViewModel @Inject constructor(
 
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> = _errorMessage
+    
+    // Add LiveData for requirement notes
+    private val _requirementNotes = MutableLiveData<List<RequirementNote>>()
+    val requirementNotes: LiveData<List<RequirementNote>> = _requirementNotes
+
+    // Add LiveData for request_requirement_notes table contents
+    private val _requestRequirementNotes = MutableLiveData<List<RequirementNote>>()
+    val requestRequirementNotes: LiveData<List<RequirementNote>> = _requestRequirementNotes
 
     init {
         getRequest(requestId)
+        getRequirementNotes(requestId)
+        getRequestRequirementNotes(requestId)
     }
 
     fun getRequest(requestId: String) {
@@ -64,6 +75,54 @@ class RequestDetailsViewModel @Inject constructor(
                 _errorMessage.value = e.message ?: "Failed to load request"
             } finally {
                 _loading.value = false
+            }
+        }
+    }
+    
+    // Add function to get requirement notes
+    fun getRequirementNotes(requestId: String) {
+        viewModelScope.launch {
+            try {
+                Log.d("RequestDetailsVM", "Getting notes for request ID: $requestId")
+                
+                repository.getRequestNotes(requestId)
+                    .onSuccess { notes ->
+                        _requirementNotes.value = notes
+                        Log.d("RequestDetailsVM", "Successfully loaded ${notes.size} notes")
+                    }
+                    .onFailure { error ->
+                        Log.e("RequestDetailsVM", "Failed to load notes: ${error.message}")
+                        // Don't set error message to avoid confusing the user
+                        // Just log the error and use an empty list
+                        _requirementNotes.value = emptyList()
+                    }
+            } catch (e: Exception) {
+                Log.e("RequestDetailsVM", "Exception loading notes", e)
+                _requirementNotes.value = emptyList()
+            }
+        }
+    }
+
+    // Add function to get notes from request_requirement_notes table
+    fun getRequestRequirementNotes(requestId: String) {
+        viewModelScope.launch {
+            try {
+                Log.d("RequestDetailsVM", "Getting requirement notes for request ID: $requestId")
+                
+                repository.getRequestRequirementNotes(requestId)
+                    .onSuccess { notes ->
+                        _requestRequirementNotes.value = notes
+                        Log.d("RequestDetailsVM", "Successfully loaded ${notes.size} requirement notes")
+                    }
+                    .onFailure { error ->
+                        Log.e("RequestDetailsVM", "Failed to load requirement notes: ${error.message}")
+                        // Don't set error message to avoid confusing the user
+                        // Just log the error and use an empty list
+                        _requestRequirementNotes.value = emptyList()
+                    }
+            } catch (e: Exception) {
+                Log.e("RequestDetailsVM", "Exception loading requirement notes", e)
+                _requestRequirementNotes.value = emptyList()
             }
         }
     }
@@ -121,13 +180,7 @@ class RequestDetailsViewModel @Inject constructor(
                         getRequest(requestId) // Refresh request details
                     }
                     .onFailure { error ->
-                        if (error.message?.contains("401", ignoreCase = true) == true || 
-                            error.message?.contains("Unauthorized", ignoreCase = true) == true) {
-                            _errorMessage.value = "Authentication error. Please log in again."
-                            // You might want to navigate to login screen or refresh token here
-                        } else {
-                            _errorMessage.value = error.message ?: "Failed to cancel request"
-                        }
+                        _errorMessage.value = error.message ?: "Failed to cancel request"
                     }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to cancel request"

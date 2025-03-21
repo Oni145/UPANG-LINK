@@ -17,7 +17,8 @@ enum class RequestStatus {
     APPROVED,
     IN_PROGRESS,
     COMPLETED,
-    REJECTED;
+    REJECTED,
+    CANCELLED;
 
     companion object {
         fun fromString(value: String): RequestStatus {
@@ -27,6 +28,7 @@ enum class RequestStatus {
                 "in_progress" -> IN_PROGRESS
                 "completed" -> COMPLETED
                 "rejected" -> REJECTED
+                "cancelled" -> CANCELLED
                 else -> PENDING // Default to PENDING if unknown status
             }
         }
@@ -98,7 +100,8 @@ data class Request(
     val first_name: String,
     val last_name: String,
     val category_name: String,
-    val tracking_number: String? = null
+    val tracking_number: String? = null,
+    val notes: List<@RawValue RequestNote>? = null
 ) : Parcelable {
     fun parseRequirements(): RequirementsData {
         return try {
@@ -267,6 +270,7 @@ data class RequirementsData(
 // Adding missing model classes
 data class RequestDetails(
     val id: String,
+    val request_id: Int? = null,
     val document_type: String,
     val purpose: String,
     val status: String,
@@ -301,17 +305,40 @@ data class RequirementUpdateItem(
 )
 
 data class RequirementNote(
-    val note_id: Int,
-    val request_id: Int,
-    val admin_id: Int,
+    val note_id: String,
+    val request_id: String,
+    val admin_id: String,
     val requirement_name: String?,
-    val note: String,
+    val note: String?,
     val created_at: String,
-    val first_name: String?,
-    val last_name: String?
+    val admin_name: String? = null,
+    val first_name: String? = null,
+    val last_name: String? = null
 ) {
+    constructor(
+        note_id: Int,
+        request_id: Int,
+        admin_id: Int,
+        requirement_name: String?,
+        note: String,
+        created_at: String,
+        first_name: String?,
+        last_name: String?
+    ) : this(
+        note_id = note_id.toString(),
+        request_id = request_id.toString(),
+        admin_id = admin_id.toString(),
+        requirement_name = requirement_name,
+        note = note,
+        created_at = created_at,
+        first_name = first_name,
+        last_name = last_name
+    )
+    
     fun getAdminName(): String {
-        return if (first_name != null && last_name != null) {
+        return if (admin_name != null) {
+            admin_name
+        } else if (first_name != null && last_name != null) {
             "$first_name $last_name"
         } else {
             "Admin"
@@ -326,6 +353,41 @@ data class RequirementNote(
             outputFormat.format(date ?: Date())
         } catch (e: Exception) {
             created_at
+        }
+    }
+}
+
+// Add new RequestNote class to match the API format
+data class RequestNote(
+    val note_id: Int,
+    val request_id: Int, 
+    val admin_id: Int,
+    val note: String? = null,
+    val created_at: String,
+    val content: @RawValue Map<String, Any>? = null
+) {
+    fun getFormattedContent(): String {
+        return when {
+            // If note has text content directly
+            note?.isNotBlank() == true -> 
+                note
+            // If note has content as a map, format it nicely
+            content?.isNotEmpty() == true -> {
+                val contentBuilder = StringBuilder()
+                content.forEach { (key, value) ->
+                    // Skip internal fields that start with underscore
+                    if (!key.startsWith("_")) {
+                        // Capitalize the key and format value
+                        val formattedKey = key.split("_")
+                            .joinToString(" ") { it.replaceFirstChar { char -> 
+                                if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString() 
+                            } }
+                        contentBuilder.append("$formattedKey: $value\n")
+                    }
+                }
+                contentBuilder.toString().trim()
+            }
+            else -> "No detailed message available"
         }
     }
 } 

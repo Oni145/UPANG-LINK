@@ -23,4 +23,7 @@ interface RequestRepository {
     
     // New method to get admin notes for a request
     suspend fun getRequestNotes(requestId: String): Result<List<RequirementNote>>
+    
+    // New method to get requirement notes for a request
+    suspend fun getRequestRequirementNotes(requestId: String): Result<List<RequirementNote>>
 } 

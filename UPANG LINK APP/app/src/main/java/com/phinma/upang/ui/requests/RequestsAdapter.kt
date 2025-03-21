@@ -142,6 +142,9 @@ class RequestsAdapter(
                 RequestStatus.REJECTED -> {
                     Pair(R.color.status_rejected, "Rejected")
                 }
+                RequestStatus.CANCELLED -> {
+                    Pair(R.color.status_rejected, "Cancelled")
+                }
             }
 
             binding.apply {
