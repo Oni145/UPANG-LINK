@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <link rel="stylesheet" href="../WEB/css/requests.css" />
   <link rel="stylesheet" href="../WEB/css/notifications.css" />
+  <link rel="stylesheet" href="../WEB/css/userdetails.css" />
   <style>
     /* Additional inline styles if needed */
     /* Style for the toggle header with arrow icon */
@@ -77,7 +78,23 @@
               </button>
           </div>
       </div>
-
+        <!-- User Details Modal -->
+<div id="user_modal" class="user-modal">
+  <div class="user-modal-content">
+      <button onclick="closeUserModal()" class="user-close">&times;</button>
+      <h2>User Details</h2>
+      <div class="user-modal-body">
+          <p><strong>USER ID:</strong> <span id="modalUserId"></span></p>
+          <p><strong>Name:</strong> <span id="modalUserName"></span></p>
+          <p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
+          <p><strong>Student Number:</strong> <span id="modalUserStudentNumber"></span></p>
+          <p><strong>Birthdate:</strong> <span id="modalUserBirthdate"></span></p>
+          <p><strong>Emergency Contact:</strong> <span id="modalUserEmergencyContact"></span></p>
+          <p><strong>Course:</strong> <span id="modalUserCourse"></span></p>
+          <p><strong>Current Year:</strong> <span id="modalUserCurrentYear"></span></p>
+      </div>
+  </div>
+</div>
   <!-- Notification Bell -->
 <button id="notificationButton" class="bell-icon">
   <i class="fa-regular fa-bell"></i>
@@ -94,24 +111,6 @@
   <!-- Notifications List -->
   <ul id="notificationsList"></ul>
 </header>
-
-<script>
-  document.getElementById('profileBtn').addEventListener('click', function () {
-      var dropdown = document.getElementById('dropdownMenu');
-      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-  });
-
-  document.addEventListener('click', function (event) {
-      var dropdown = document.getElementById('dropdownMenu');
-      var profileBtn = document.getElementById('profileBtn');
-
-      if (!profileBtn.contains(event.target) && !dropdown.contains(event.target)) {
-          dropdown.style.display = 'none';
-      }
-  });
-</script>
-
-
       <!-- Main Content -->
       <main>
         <div class="card">
@@ -125,12 +124,12 @@
               <table>
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Request Number</th>
-                    <th>Request Type</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Action</th>
+                    <th>NAME</th>
+                    <th>TRACKING NUMBER</th>
+                    <th>REQUEST TYPE</th>
+                    <th>STATUS</th>
+                    <th>DATE</th>
+                    <th>ACTION</th>
                   </tr>
                 </thead>
                 <tbody id="requestsTableBody"></tbody>
@@ -195,10 +194,50 @@
         }
       });
     });
+    // Get the modal reference
+let modal = document.getElementById("ticketModal");
+
+// Open the modal
+function viewRequest(requestId) {
+    if (modal) {
+        modal.style.display = "block";
+    } else {
+        console.error("Modal element not found!");
+    }
+}
+
+// Close the modal
+function closeModal() {
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+// Event listener for clicking outside the modal
+window.addEventListener("click", function(event) {
+    if (modal && event.target === modal) {
+        closeModal();
+    }
+});
+
+document.getElementById('profileBtn').addEventListener('click', function () {
+      var dropdown = document.getElementById('dropdownMenu');
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+  });
+
+  document.addEventListener('click', function (event) {
+      var dropdown = document.getElementById('dropdownMenu');
+      var profileBtn = document.getElementById('profileBtn');
+
+      if (!profileBtn.contains(event.target) && !dropdown.contains(event.target)) {
+          dropdown.style.display = 'none';
+      }
+  });
   </script>
   <!-- Include the external JavaScript file -->
   <script src="./js/Requests tab/Complete.js"></script>
   <script src="./js/config.js"></script>
   <script src="./js/notifications.js"></script>
+  <script src="./js/usersdetails.js"></script>
 </body>
 </html>

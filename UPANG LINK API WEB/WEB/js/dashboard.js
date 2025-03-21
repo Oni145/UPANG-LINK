@@ -1,3 +1,4 @@
+
 // Mapping for request type IDs to names
 const requestTypeNames = {
   1: 'TOR',
@@ -37,71 +38,47 @@ const headers = getAuthHeaders();
 /**
  * Displays the loading indicator.
  */
-  function showLoading() {
-    const loadingEl = document.getElementById('loadingIndicator');
-    if (loadingEl) {
-      loadingEl.style.display = 'flex';
-    }
+function showLoading() {
+  const loadingEl = document.getElementById('loadingIndicator');
+  if (loadingEl) {
+    loadingEl.style.display = 'flex';
   }
+}
 
-  /**
-   * Hides the loading indicator.
-   */
-  function hideLoading() {
-    const loadingEl = document.getElementById('loadingIndicator');
-    if (loadingEl) {
-      loadingEl.style.display = 'none';
-    }
+/**
+ * Hides the loading indicator.
+ */
+function hideLoading() {
+  const loadingEl = document.getElementById('loadingIndicator');
+  if (loadingEl) {
+    loadingEl.style.display = 'none';
   }
+}
 
-  /**
-   * Displays the loading indicator.
-   */
-  function showLoading() {
-    const loadingEl = document.getElementById('loadingIndicator');
-    if (loadingEl) {
-      loadingEl.style.display = 'flex';
-    }
+/**
+ * Displays the loading indicator.
+ */
+function showLoading() {
+  const loadingEl = document.getElementById('loadingIndicator');
+  if (loadingEl) {
+    loadingEl.style.display = 'flex';
   }
+}
 
-  /**
-   * Hides the loading indicator.
-   */
-  function hideLoading() {
-    const loadingEl = document.getElementById('loadingIndicator');
-    if (loadingEl) {
-      loadingEl.style.display = 'none';
-    }
+/**
+ * Hides the loading indicator.
+ */
+function hideLoading() {
+  const loadingEl = document.getElementById('loadingIndicator');
+  if (loadingEl) {
+    loadingEl.style.display = 'none';
+  }
 }
 
 /**
  * Fetches and displays the logged-in user's name.
  */
-async function displayUserName() {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error("No token found in localStorage.");
-    return;
-  }
-  try {
-    let endpoint = `${API_BASE_URL}/admin/users`;
-    let response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
-    let result = await response.json();
-    if (response.ok && result.status === 'success') {
-      window.currentUserRole = 'admin';
-    } else {
-      throw new Error("Unable to fetch admin user details.");
-    }
-    const currentUser = result.data[0];
-    const userFullNameEl = document.getElementById('userFullName');
-    if (userFullNameEl) {
-      const displayName = currentUser.username || `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
-      userFullNameEl.textContent = displayName;
-    }
-  } catch (error) {
-    console.error("Error fetching user details:", error);
-  }
-}
+
 
 let allRequests = [];
 let allUsersData = [];
@@ -187,9 +164,43 @@ function getStatusClass(status) {
   return classes[status] || 'status-secondary';
 }
 
-
-
-
+/**
+ * Renders the list of requests into the table.
+ */
+function displayRequests(requests, usersData) {
+  const userMap = {};
+  usersData.forEach(user => {
+    userMap[user.user_id] = user;
+  });
+  const tbody = document.getElementById('requestsTableBody');
+  if (!tbody) {
+    console.error("requestsTableBody element not found.");
+    return;
+  }
+  if (!requests || requests.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No requests to display</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = requests.map(request => {
+    const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+    return `
+      <tr>
+        <td>${user.first_name} ${user.last_name}</td>
+        <td>${requestTypeNames[request.type_id] || 'Unknown'}</td>
+        <td>
+<span id="status-badge" class="badge"> ${request.status}
+</span>
+        </td>
+        <td>${new Date(request.submitted_at).toLocaleDateString()}</td>
+        <td>
+          <button class="btn btn-primary" onclick="viewRequest(${request.request_id})">
+            View
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
 
 /**
  * Updates pagination controls.
@@ -441,331 +452,339 @@ class Dashboard {
   }
 
   async displayUserName() {
-    console.log("Fetching logged-in admin profile...");
+    console.log("Fetching logged-in user name...");
 
     try {
-        let endpoint = `${API_BASE_URL}/admin/profile`; // No hardcoding, uses the logged-in admin
-        let response = await fetch(endpoint, { 
-            method: 'GET',
-            headers: getAuthHeaders(this.token) 
-        });
+        let endpoint = `${API_BASE_URL}/admin/users/me`;
+        console.log("Fetching from:", endpoint);
 
-        let text = await response.text();
-        console.log("Raw response from server:", text); // Debugging: log raw response
+        let response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(this.token) });
+        let result = await response.json();
 
-        let result;
-        try {
-            result = JSON.parse(text);
-        } catch (jsonError) {
-            console.error("JSON Parse Error:", jsonError);
-            return;
+        console.log("Me endpoint response:", result); // Log API response for debugging
+
+        if (response.ok && result.status === 'success' && result.data) {
+            console.log("Me endpoint successful.");
+            window.currentUserRole = result.data.role || 'admin'; // Default to 'admin'
+
+            this.updateUserDisplay(result.data);
+        } else {
+            throw new Error(result.message || "Me endpoint returned an unexpected response.");
         }
-
-        console.log("Parsed API response:", result); // Debugging: log parsed response
-
-        if (!response.ok || result.status !== 'success' || !result.data) {
-            console.error("Error: Invalid admin profile data.");
-            return;
-        }
-
-        console.log("Logged-in admin data:", result.data); // Final log for debugging
 
     } catch (error) {
-        console.error("Error fetching admin details:", error);
+        console.error("Error fetching user details:", error);
+        this.showErrorAlert(error.message);
     }
+}
+
+// Helper function to update the UI
+updateUserDisplay(user) {
+    const nameEl = document.getElementById('userFullName');
+    if (nameEl) {
+        const displayName = user.username || 
+            [user.first_name, user.last_name].filter(Boolean).join(' ');
+        nameEl.textContent = displayName || "Unknown User";
+    }
+    console.log("Logged in user:", user);
+}
+
+
+// Helper function to update the UI
+updateUserDisplay(user) {
+    const nameEl = document.getElementById('userFullName');
+    if (nameEl) {
+        const displayName = user.username || 
+            [user.first_name, user.last_name].filter(Boolean).join(' ');
+        nameEl.textContent = displayName || "Unknown User";
+    }
+    console.log("Logged in user:", user);
+}
+
+
+// Helper function to update the UI
+updateUserDisplay(user) {
+    const nameEl = document.getElementById('userFullName');
+    if (nameEl) {
+        const displayName = user.username || 
+            [user.first_name, user.last_name].filter(Boolean).join(' ');
+        nameEl.textContent = displayName || "Unknown User";
+    }
+    console.log("Logged in user:", user);
 }
 
 
 
-
-async initializeData() {
-  console.log("Fetching requests and users data...");
-
-  try {
+  async initializeData() {
+    console.log("Fetching requests and users data...");
+    try {
       const [requestsResponse, usersResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/requests/`, { headers: getAuthHeaders(this.token) }),
-          fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(this.token) })
+        fetch(`${API_BASE_URL}/requests/`, { headers: getAuthHeaders(this.token) }),
+        fetch(`${API_BASE_URL}/auth/users`, { headers: getAuthHeaders(this.token) })
       ]);
 
-      // Handle response errors
-      if (!requestsResponse.ok || !usersResponse.ok) {
-          if (requestsResponse.status === 401 || usersResponse.status === 401) {
-              console.warn("Unauthorized access, redirecting to login...");
-              localStorage.removeItem('token');
-              window.location.href = 'login.html';
-              return;
-          }
-          console.error("Error fetching data. Requests:", requestsResponse.status, "Users:", usersResponse.status);
-          return;
+      if (!requestsResponse.ok) {
+        console.error("HTTP error fetching requests:", requestsResponse.status);
+        return;
+      }
+      if (!usersResponse.ok) {
+        console.error("HTTP error fetching users:", usersResponse.status);
+        return;
       }
 
-      // Check content type to ensure JSON response
-      const requestsContentType = requestsResponse.headers.get('content-type');
-      const usersContentType = usersResponse.headers.get('content-type');
-
-      if (!requestsContentType?.includes('application/json')) {
-          console.error("Invalid content type for requests response:", requestsContentType);
-          return;
+      const requestsData = await requestsResponse.json();
+      const usersData = await usersResponse.json();
+      if (requestsData.status !== 'success') {
+        console.error("Error in requests data:", requestsData.message);
+        return;
       }
-      if (!usersContentType?.includes('application/json')) {
-          console.error("Invalid content type for users response:", usersContentType);
-          return;
+      if (usersData.status !== 'success') {
+        console.error("Error in users data:", usersData.message);
+        return;
       }
-
-      // Read response text for debugging
-      const requestsText = await requestsResponse.text();
-      const usersText = await usersResponse.text();
-
-      try {
-          var requestsData = JSON.parse(requestsText);
-          var usersData = JSON.parse(usersText);
-      } catch (parseError) {
-          console.error("JSON parsing error. The API might be returning HTML instead of JSON.");
-          console.log("Raw requests response:", requestsText);
-          console.log("Raw users response:", usersText);
-          return;  // No need to check authentication, it's already handled above
-      }
-
-      if (requestsData.status !== 'success' || usersData.status !== 'success') {
-          console.error("Error in response data:", requestsData.message || usersData.message);
-          return;
-      }
-
-      this.requestsData = requestsData.data || [];
-      this.usersData = usersData.data || [];
-
+      this.requestsData = requestsData.data;
+      this.usersData = usersData.data;
       console.log("Requests data fetched:", this.requestsData);
       console.log("Users data fetched:", this.usersData);
 
       // Compute monthly counts for charts
-      this.monthCounts = Array(12).fill(0);
-      this.requestsData.forEach(request => {
-          if (request.submitted_at) {
-              const date = new Date(request.submitted_at);
-              if (!isNaN(date)) {
-                  this.monthCounts[date.getMonth()]++;
-              } else {
-                  console.warn("Invalid date in request:", request.submitted_at);
-              }
-          }
-      });
+      this.monthCounts = this.requestsData.reduce((acc, request) => {
+        const date = new Date(request.submitted_at);
+        if (!isNaN(date)) {
+          acc[date.getMonth()]++;
+        } else {
+          console.warn("Invalid date in request:", request);
+        }
+        return acc;
+      }, Array(12).fill(0));
 
-      // Load UI components
       this.loadStatsUsingData();
       this.loadMonthlyChartUsingData();
       this.loadRequestsChartUsingData();
       this.loadRequestTypesChartUsingData();
       this.loadRecentRequestsUsingData();
-
-  } catch (error) {
+    } catch (error) {
       console.error("Error fetching data:", error);
-  } finally {
+    } finally {
       this.hideLoading();
+    }
   }
-}
-
-
 
   loadStatsUsingData() {
     console.log("Updating stats using pre-fetched data...");
     if (!this.requestsData || !this.usersData) {
-      console.error("Missing requests or users data for stats.");
-      return;
+        console.error("Missing requests or users data for stats.");
+        return;
     }
+
+    // Count pending and completed requests
     const stats = this.requestsData.reduce((acc, request) => {
-      if (request.status === 'pending') acc.pending++;
-      if (request.status === 'completed') acc.completed++;
-      return acc;
+        const status = request.status.toLowerCase();
+        if (status === 'pending') acc.pending++;
+        if (status === 'completed') acc.completed++;
+        return acc;
     }, { pending: 0, completed: 0 });
+
     const totalRequests = this.requestsData.length;
-    const totalUsers = Array.isArray(this.usersData) ? this.usersData.length : 0;
-    console.log("Stats calculated:", { totalRequests, totalUsers, pendingRequests: stats.pending, completedRequests: stats.completed });
+    
+    // Filter out users with role "admin"
+    const totalUsers = Array.isArray(this.usersData)
+        ? this.usersData.filter(user => user.role.toLowerCase() !== 'admin').length
+        : 0;
+
+    console.log("Stats calculated:", {
+        totalRequests,
+        totalUsers,
+        pendingRequests: stats.pending,
+        completedRequests: stats.completed
+    });
+
+    // Update DOM with calculated stats
     document.getElementById('totalUsers').textContent = totalUsers;
     document.getElementById('totalRequests').textContent = totalRequests;
     document.getElementById('pendingRequests').textContent = stats.pending;
     document.getElementById('completedRequests').textContent = stats.completed;
-  }
-
-  loadMonthlyChartUsingData() {
-    console.log("Rendering monthly chart using pre-fetched data...");
-    if (!this.monthCounts) {
-      console.error("No month counts available for monthly chart.");
-      return;
-    }
-    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthlyChartEl = document.getElementById('monthlyChart');
-    if (!monthlyChartEl) {
-      console.error("monthlyChart element not found in the DOM.");
-      return;
-    }
-    const monthlyCtx = monthlyChartEl.getContext('2d');
-    new Chart(monthlyCtx, {
-      type: 'line',
-      data: {
-        labels: monthLabels,
-        datasets: [{
-          label: 'Monthly Requests',
-          data: this.monthCounts,
-          borderColor: '#ff6384',
-          backgroundColor: 'rgba(255,99,132,0.2)',
-          tension: 0.4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
-    console.log("Monthly chart rendered.");
-  }
-
-  loadRequestsChartUsingData() {
-    console.log("Rendering dynamic requests chart using pre-fetched data...");
-    if (!this.monthCounts) {
-      console.error("No month counts available for dynamic requests chart.");
-      return;
-    }
-    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const requestsChartEl = document.getElementById('requestsChart');
-    if (!requestsChartEl) {
-      console.error("requestsChart element not found in the DOM.");
-      return;
-    }
-    const requestsCtx = requestsChartEl.getContext('2d');
-    new Chart(requestsCtx, {
-      type: 'line',
-      data: {
-        labels: monthLabels,
-        datasets: [{
-          label: 'Requests',
-          data: this.monthCounts,
-          borderColor: '#3699ff',
-          tension: 0.4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
-    console.log("Dynamic requests chart rendered.");
-  }
-
-  loadRequestTypesChartUsingData() {
-    console.log("Rendering donut chart using pre-fetched data...");
-    if (!this.requestsData) {
-      console.error("No requests data for donut chart.");
-      return;
-    }
-    const typeCounts = {};
-    Object.keys(requestTypeNames).forEach(key => {
-      typeCounts[key] = 0;
-    });
-    this.requestsData.forEach(request => {
-      const type = request.type_id;
-      if (typeCounts.hasOwnProperty(type)) {
-        typeCounts[type]++;
-      } else {
-        typeCounts[4] = (typeCounts[4] || 0) + 1;
-      }
-    });
-    console.log("Request type counts:", typeCounts);
-    const labels = [];
-    const data = [];
-    const backgroundColors = [];
-    const colorsMapping = {
-  1: '#3699ff',  // Blue
-  2: '#1bc5bd',  // Teal
-  3: '#8950fc',  // Purple
-  4: '#ffa800',  // Orange
-  5: '#28a745',  // Green
-  6: '#dc3545',  // Red
-  7: '#ffc107',  // Yellow
-  12: '#e83e8c', // Pin
-    };
-    for (const [key, count] of Object.entries(typeCounts)) {
-      labels.push(requestTypeNames[key] || 'Unknown');
-      data.push(count);
-      backgroundColors.push(colorsMapping[key] || '#cccccc');
-    }
-    const donutChartEl = document.getElementById('requestTypesChart');
-    if (!donutChartEl) {
-      console.error("requestTypesChart element not found in the DOM.");
-      return;
-    }
-    const ctx = donutChartEl.getContext('2d');
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          backgroundColor: backgroundColors
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
-    console.log("Donut chart rendered successfully.");
-  }
-
-  loadRecentRequestsUsingData() {
-    console.log("Rendering recent requests table using pre-fetched data...");
-    if (!this.requestsData) {
-      console.error("No requests data for recent requests.");
-      return;
-    }
-    // Sort requests by submission date and take the most recent 5
-    const sortedRequests = [...this.requestsData].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
-    const limitedRequests = sortedRequests.slice(0, 5);
-    console.log("Recent requests:", limitedRequests);
-    this.displayRequests(limitedRequests);
-  }
-
-  displayRequests(requests) {
-    console.log("Displaying requests in table...");
-    if (!this.usersData) {
-        console.error("No users data available.");
-        return;
-    }
-
-    const userMap = {};
-    this.usersData.forEach(user => {
-        userMap[user.user_id] = user;
-    });
-
-    const tbody = document.getElementById('requestsTableBody');
-    if (!tbody) return console.error("requestsTableBody element not found.");
-  
-    if (!requests || requests.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No pending requests to display</td></tr>`;
-      return;
-    }
-  
-    tbody.innerHTML = requests.map(request => {
-      const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
-      return `<tr>
-                <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
-                <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
-                <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
-                <td style="text-align: center;">
-                  <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
-                </td> <!-- Status -->
-                <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
-                <td style="text-align: center;">
-                  <!-- Action Column -->
-                </td> <!-- Action -->
-              </tr>`;
-    }).join('');
-    
-  }
-  
-
-
-
 }
+
+  
+  
+    loadMonthlyChartUsingData() {
+      console.log("Rendering monthly chart using pre-fetched data...");
+      if (!this.monthCounts) {
+        console.error("No month counts available for monthly chart.");
+        return;
+      }
+      const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthlyChartEl = document.getElementById('monthlyChart');
+      if (!monthlyChartEl) {
+        console.error("monthlyChart element not found in the DOM.");
+        return;
+      }
+      const monthlyCtx = monthlyChartEl.getContext('2d');
+      new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+          labels: monthLabels,
+          datasets: [{
+            label: 'Monthly Requests',
+            data: this.monthCounts,
+            borderColor: '#ff6384',
+            backgroundColor: 'rgba(255,99,132,0.2)',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+      console.log("Monthly chart rendered.");
+    }
+  
+    loadRequestsChartUsingData() {
+      console.log("Rendering dynamic requests chart using pre-fetched data...");
+      if (!this.monthCounts) {
+        console.error("No month counts available for dynamic requests chart.");
+        return;
+      }
+      const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const requestsChartEl = document.getElementById('requestsChart');
+      if (!requestsChartEl) {
+        console.error("requestsChart element not found in the DOM.");
+        return;
+      }
+      const requestsCtx = requestsChartEl.getContext('2d');
+      new Chart(requestsCtx, {
+        type: 'line',
+        data: {
+          labels: monthLabels,
+          datasets: [{
+            label: 'Requests',
+            data: this.monthCounts,
+            borderColor: '#3699ff',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+      console.log("Dynamic requests chart rendered.");
+    }
+  
+    loadRequestTypesChartUsingData() {
+      console.log("Rendering donut chart using pre-fetched data...");
+      if (!this.requestsData) {
+        console.error("No requests data for donut chart.");
+        return;
+      }
+      const typeCounts = {};
+      Object.keys(requestTypeNames).forEach(key => {
+        typeCounts[key] = 0;
+      });
+      this.requestsData.forEach(request => {
+        const type = request.type_id;
+        if (typeCounts.hasOwnProperty(type)) {
+          typeCounts[type]++;
+        } else {
+          typeCounts[4] = (typeCounts[4] || 0) + 1;
+        }
+      });
+      console.log("Request type counts:", typeCounts);
+      const labels = [];
+      const data = [];
+      const backgroundColors = [];
+      const colorsMapping = {
+    1: '#3699ff',  // Blue
+    2: '#1bc5bd',  // Teal
+    3: '#8950fc',  // Purple
+    4: '#ffa800',  // Orange
+    5: '#28a745',  // Green
+    6: '#dc3545',  // Red
+    7: '#ffc107',  // Yellow
+    12: '#e83e8c', // Pin
+      };
+      for (const [key, count] of Object.entries(typeCounts)) {
+        labels.push(requestTypeNames[key] || 'Unknown');
+        data.push(count);
+        backgroundColors.push(colorsMapping[key] || '#cccccc');
+      }
+      const donutChartEl = document.getElementById('requestTypesChart');
+      if (!donutChartEl) {
+        console.error("requestTypesChart element not found in the DOM.");
+        return;
+      }
+      const ctx = donutChartEl.getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: backgroundColors
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+      console.log("Donut chart rendered successfully.");
+    }
+  
+    loadRecentRequestsUsingData() {
+      console.log("Rendering recent requests table using pre-fetched data...");
+      if (!this.requestsData) {
+        console.error("No requests data for recent requests.");
+        return;
+      }
+      // Sort requests by submission date and take the most recent 5
+      const sortedRequests = [...this.requestsData].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+      const limitedRequests = sortedRequests.slice(0, 5);
+      console.log("Recent requests:", limitedRequests);
+      this.displayRequests(limitedRequests);
+    }
+  
+    displayRequests(requests) {
+      console.log("Displaying requests in table...");
+      if (!this.usersData) {
+          console.error("No users data available.");
+          return;
+      }
+  
+      const userMap = {};
+      this.usersData.forEach(user => {
+          userMap[user.user_id] = user;
+      });
+  
+      const tbody = document.getElementById('requestsTableBody');
+      if (!tbody) return console.error("requestsTableBody element not found.");
+    
+      if (!requests || requests.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No pending requests to display</td></tr>`;
+        return;
+      }
+    
+      tbody.innerHTML = requests.map(request => {
+        const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+        return `<tr>
+                  <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
+                  <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
+                  <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
+                  <td style="text-align: center;">
+                    <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
+                  </td> <!-- Status -->
+                  <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
+                </tr>`;
+      }).join('');
+      
+    }
+    
+  
+  
+  
+  }
 
 // Initialize Dashboard after DOM loads
 document.addEventListener('DOMContentLoaded', () => {

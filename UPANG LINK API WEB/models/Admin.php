@@ -20,22 +20,21 @@ class Admin {
 
     // Create a new admin record
     public function create() {
-        // Check if email or username already exists
-        if ($this->emailExists($this->email) || $this->usernameExists($this->username)) {
-            return ["status" => "error", "message" => "Email or Username already exists."];
+        // Check if email already exists
+        if ($this->emailExists($this->email)) {
+            return ["status" => "error", "message" => "Email already exists."];
         }
     
         // Insert new admin record
-        $query = "INSERT INTO " . $this->table_name . " (username, email, first_name, last_name, password, role)
-                  VALUES (:username, :email, :first_name, :last_name, :password, :role)";
-        
+        $query = "INSERT INTO " . $this->table_name . " (email, first_name, last_name, password, role)
+                  VALUES (:email, :first_name, :last_name, :password, :role)";
+    
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":username", $this->username);
         $stmt->bindParam(":email", $this->email);
         $stmt->bindParam(":first_name", $this->first_name);
         $stmt->bindParam(":last_name", $this->last_name);
         $stmt->bindParam(":password", $this->password);
-        
+    
         $role = 'admin';
         $stmt->bindParam(":role", $role);
     
@@ -45,6 +44,7 @@ class Admin {
             return ["status" => "error", "message" => "Registration failed."];
         }
     }
+    
     
 
 

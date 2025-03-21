@@ -63,22 +63,42 @@ function hideLoading() {
  * Fetches and displays the logged-in admin's name.
  */
 async function displayUserName() {
-  const token = localStorage.getItem('token');
-  if (!token) return console.error("No token found in localStorage.");
+  const token = localStorage.getItem('token'); // Get the token from local storage
+
+  if (!token) {
+    console.error("No token found in localStorage.");
+    return;
+  }
+
   try {
-    const endpoint = `${API_BASE_URL}/admin/users`;
-    const response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
+    // Use the "me" endpoint to get the logged-in user details
+    const endpoint = `${API_BASE_URL}/admin/users/me`; 
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`, // Include the token in the headers
+      },
+    });
+
     const result = await response.json();
+    console.log("API Response:", result); // Debugging
+
     if (response.ok && result.status === 'success') {
-      window.currentUserRole = 'admin';
+      const currentUser = result.data;
+
+      console.log("Fetched user:", currentUser); // Debugging
+
+      // Construct display name
+      const displayName = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
+
+      // Display user name in the element with id "userFullName"
+      const userFullNameEl = document.getElementById('userFullName');
+      if (userFullNameEl) {
+        userFullNameEl.textContent = displayName || 'Unknown User';
+      }
     } else {
-      throw new Error("Unable to fetch admin user details.");
-    }
-    const currentUser = result.data[0];
-    const userFullNameEl = document.getElementById('userFullName');
-    if (userFullNameEl) {
-      const displayName = currentUser.username || `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
-      userFullNameEl.textContent = displayName;
+      throw new Error("Unable to fetch user details.");
     }
   } catch (error) {
     console.error("Error fetching user details:", error);
@@ -192,9 +212,12 @@ function getStatusClass(status) {
 
   tbody.innerHTML = requests.map(request => {
     const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+    const formattedRequestId = String(request.request_id).padStart(2, '0'); // Request ID formatted
+    const formattedTrackingNumber = String(request.tracking_number).padStart(2, '0'); // Tracking Number formatted
+
     return `<tr>
           <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
-          <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
+          <td style="text-align: center;">${formattedTrackingNumber}</td> <!-- Tracking Number ✅ -->
           <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
           <td style="text-align: center;">
             <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span>
@@ -207,8 +230,7 @@ function getStatusClass(status) {
           </td> <!-- Action -->
         </tr>`;
 }).join('');
-}
-
+ }
 
 
 
@@ -275,6 +297,12 @@ function viewRequest(requestId) {
   const user = allUsersData.find(u => u.user_id == request.user_id);
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
 
+  // ✅ Debugging: Check if purpose exists
+  console.log("Request Purpose:", request.purpose);
+
+  // Ensure Purpose Exists
+  const purposeText = request.purpose && request.purpose.trim() !== "" ? request.purpose : "No purpose provided";
+
   let ticketDetailsHTML = `
       <div class="ticket-details">
           <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
@@ -283,16 +311,31 @@ function viewRequest(requestId) {
           <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
       </div>`;
 
+  // Ensure the ticketDetails element exists before updating
+  const detailsContainer = document.getElementById('ticketDetails');
+  if (!detailsContainer) {
+    console.error("ticketDetails element not found!");
+    hideLoading();
+    return;
+  }
+
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
-  document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+  detailsContainer.innerHTML = ticketDetailsHTML;
 
   // Build file links if a file is attached
-  let fileLinks = request.file_path ? buildFileLink(request, "Attached File") : "<p>No attached files.</p>";
+  let fileLinks = request.file_path ? buildFileLink(request, "Attached File") : "";
   
-  document.getElementById('ticketFiles').innerHTML = fileLinks;
+  const fileContainer = document.getElementById('ticketFiles');
+  if (fileContainer) {
+    fileContainer.innerHTML = fileLinks;
+  } else {
+    console.error("ticketFiles element not found!");
+  }
 
   hideLoading();
 }
+
+
 
 /**
  * Opens the ticket modal with inline comment editing.
@@ -311,12 +354,23 @@ function viewRequest(requestId) {
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
   // Ticket Details Section
-let ticketDetailsHTML = `<div class="ticket-details">
-      <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-      <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-      <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span></p>
-      <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-    </div>`;
+  let ticketDetailsHTML = `
+  <div class="ticket-details">
+    <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}
+      <button type="button" class="view-btn" data-user-id="${request.user_id}">
+        <i class="fas fa-user"></i> VIEW STUDENT DETAILS
+      </button>
+    </p>
+    <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+<p><strong>STATUS:</strong> 
+    <span class="badge ${getStatusClass(request.status.toLowerCase())}">
+        ${request.status.replace(/_/g, ' ')}
+    </span>
+</p>
+    <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+  </div>`;
+  
+  
 
 
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
@@ -633,26 +687,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bind the search input event
   const searchInput = document.getElementById("searchInput");
   if (searchInput) {
-    searchInput.addEventListener("input", function() {
+    searchInput.addEventListener("input", function () {
       const query = this.value.trim().toLowerCase();
+      
       if (query === "") {
         displayData = allRequests;
       } else {
         displayData = allRequests.filter(request => {
-          const requestNumber = String(request.request_id || "").padStart(2, "0").toLowerCase(); // Ensure request_id is treated as a string
-          const status = (request.status || "").toLowerCase();
-          const date = new Date(request.submitted_at).toLocaleDateString().toLowerCase();
-          const type = (requestTypeNames[request.type_id] || "").toLowerCase();
-          const user = allUsersData.find(u => u.user_id === request.user_id);
-          const name = user ? ((user.first_name || "") + " " + (user.last_name || "")).toLowerCase() : "";
+          const trackingNumber = request.tracking_number.toLowerCase(); // Use tracking number
+          const status = request.status.replace(/_/g, " ").toLowerCase(); // Replace all underscores
+          const date = new Date(request.submitted_at).toLocaleDateString(); // Format date properly
+          const type = (requestTypeNames[request.type_id] || "Unknown").toLowerCase();
   
-          return requestNumber.includes(query) || // Search by request number
-                 status.includes(query) ||
-                 date.includes(query) ||
-                 type.includes(query) ||
-                 name.includes(query);
+          // Ensure user data is properly retrieved and formatted
+          const user = allUsersData.find(u => u.user_id === request.user_id);
+          const name = user ? `${user.first_name} ${user.last_name}`.trim().toLowerCase() : "unknown";
+  
+          // Only search within displayed columns
+          return trackingNumber.includes(query) || // Search by Tracking Number
+                 status.includes(query) ||        // Search by Status
+                 date.includes(query) ||          // Search by Date
+                 type.includes(query) ||          // Search by Request Type
+                 name.includes(query);            // Search by User Name
         });
       }
+  
       currentPage = 1;
       totalPages = Math.ceil(displayData.length / itemsPerPage);
       displayRequestsPage(currentPage);
@@ -660,6 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
+
   
   // Bind the update status button
   const updateStatusBtn = document.getElementById("updateStatusBtn");
