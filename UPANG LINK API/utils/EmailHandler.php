@@ -29,7 +29,7 @@ class EmailHandler {
         // Always try to use PHPMailer
         try {
             // Explicitly require the PHPMailer classes needed
-            require_once __DIR__ . '/../../vendor/autoload.php';
+            require_once __DIR__ . '/../vendor/autoload.php';
             
             // Create a test instance to make sure it's available
             $test = new PHPMailer(true);

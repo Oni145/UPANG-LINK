@@ -20,7 +20,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.18.138/UPANG-LINK/UPANG%20LINK%20API/api/\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.15/UPANG-LINK/UPANG%20LINK%20API/api/\"")
         
         // Add multiDexEnabled
         multiDexEnabled = true
