@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <link rel="stylesheet" href="../WEB/css/requests.css" />
   <link rel="stylesheet" href="../WEB/css/notifications.css" />
+  <link rel="stylesheet" href="../WEB/css/userdetails.css" />
   <style>
     /* Additional inline styles if needed */
     /* Style for the toggle header with arrow icon */
@@ -112,6 +113,19 @@
           dropdown.style.display = 'none';
       }
   });
+
+
+  window.onclick = function(event) {
+    var modal = document.getElementById("ticketModal");
+    if (event.target === modal) {
+        closeModal();
+    }
+};
+
+// Function to close the modal
+function closeModal() {
+    document.getElementById("ticketModal").style.display = "none";
+}
 </script>
 
 
@@ -129,7 +143,7 @@
                 <thead>
                   <tr>
                     <th>NAME</th>
-                    <th>REQUEST NUMBER</th>
+                    <th>TRACKING NUMBER</th>
                     <th>REQUEST TYPE</th>
                     <th>STATUS</th>
                     <th>DATE</th>
@@ -181,7 +195,6 @@
       <div class="modal-footer">
         <select id="statusSelect">
           <option value="in_progress">IN PROGRESS</option>
-          <option value="completed">COMPLETED</option>
           <option value="rejected">REJECT</option>
         </select>
         <button id="updateStatusBtn" class="btn btn-primary">UPDATE</button>
@@ -189,7 +202,23 @@
       </div>
     </div>
   </div>
-
+  <!-- User Details Modal -->
+<div id="user_modal" class="user-modal">
+  <div class="user-modal-content">
+      <button onclick="closeUserModal()" class="user-close">&times;</button>
+      <h2>User Details</h2>
+      <div class="user-modal-body">
+          <p><strong>USER ID:</strong> <span id="modalUserId"></span></p>
+          <p><strong>Name:</strong> <span id="modalUserName"></span></p>
+          <p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
+          <p><strong>Student Number:</strong> <span id="modalUserStudentNumber"></span></p>
+          <p><strong>Birthdate:</strong> <span id="modalUserBirthdate"></span></p>
+          <p><strong>Emergency Contact:</strong> <span id="modalUserEmergencyContact"></span></p>
+          <p><strong>Course:</strong> <span id="modalUserCourse"></span></p>
+          <p><strong>Current Year:</strong> <span id="modalUserCurrentYear"></span></p>
+      </div>
+  </div>
+</div>
   <script>
     // Sidebar active highlighting
     document.addEventListener('DOMContentLoaded', () => {
@@ -205,11 +234,37 @@
         }
       });
     });
+// Get the modal reference
+let modal = document.getElementById("ticketModal");
+
+// Open the modal
+function viewRequest(requestId) {
+    if (modal) {
+        modal.style.display = "block";
+    } else {
+        console.error("Modal element not found!");
+    }
+}
+
+// Close the modal
+function closeModal() {
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+// Event listener for clicking outside the modal
+window.addEventListener("click", function(event) {
+    if (modal && event.target === modal) {
+        closeModal();
+    }
+});
+
   </script>
   <!-- Include the external JavaScript file -->
   <script src="./js/Requests tab/Approved.js"></script>
   <script src="./js/config.js"></script>
   <script src="./js/notifications.js"></script>
-
+  <script src="./js/usersdetails.js"></script>
 </body>
 </html>
