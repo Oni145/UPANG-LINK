@@ -62,22 +62,42 @@ function hideLoading() {
  * Fetches and displays the logged-in admin's name.
  */
 async function displayUserName() {
-  const token = localStorage.getItem('token');
-  if (!token) return console.error("No token found in localStorage.");
+  const token = localStorage.getItem('token'); // Get the token from local storage
+
+  if (!token) {
+    console.error("No token found in localStorage.");
+    return;
+  }
+
   try {
-    const endpoint = `${API_BASE_URL}/admin/users`;
-    const response = await fetch(endpoint, { method: 'GET', headers: getAuthHeaders(token) });
+    // Use the "me" endpoint to get the logged-in user details
+    const endpoint = `${API_BASE_URL}/admin/users/me`; 
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`, // Include the token in the headers
+      },
+    });
+
     const result = await response.json();
+    console.log("API Response:", result); // Debugging
+
     if (response.ok && result.status === 'success') {
-      window.currentUserRole = 'admin';
+      const currentUser = result.data;
+
+      console.log("Fetched user:", currentUser); // Debugging
+
+      // Construct display name
+      const displayName = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
+
+      // Display user name in the element with id "userFullName"
+      const userFullNameEl = document.getElementById('userFullName');
+      if (userFullNameEl) {
+        userFullNameEl.textContent = displayName || 'Unknown User';
+      }
     } else {
-      throw new Error("Unable to fetch admin user details.");
-    }
-    const currentUser = result.data[0];
-    const userFullNameEl = document.getElementById('userFullName');
-    if (userFullNameEl) {
-      const displayName = currentUser.username || `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
-      userFullNameEl.textContent = displayName;
+      throw new Error("Unable to fetch user details.");
     }
   } catch (error) {
     console.error("Error fetching user details:", error);
@@ -185,19 +205,19 @@ function displayRequests(requests, usersData) {
 
   const tbody = document.getElementById('requestsTableBody');
   if (!tbody) return console.error("requestsTableBody element not found.");
-
+  
   if (!requests || requests.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No rejected requests to display</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No approved requests to display</td></tr>`;
     return;
   }
-
+  
   tbody.innerHTML = requests.map(request => {
     const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
-    const formattedRequestId = String(request.request_id).padStart(2, '0'); // Ensures "01", "02", etc.
-
+    const formattedTrackingNumber = String(request.tracking_number).padStart(2, '0'); // Updated fetching to use tracking_number
+  
     return `<tr>
           <td>${user.first_name} ${user.last_name}</td> <!-- Name -->
-          <td>${formattedRequestId}</td> <!-- Request Number with leading zero -->
+          <td>${formattedTrackingNumber}</td> <!-- Tracking Number with leading zero -->
           <td>${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
           <td>
             <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
@@ -205,13 +225,15 @@ function displayRequests(requests, usersData) {
           <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Centered Date -->
           <td>
             <div style="display: flex; justify-content: center; gap: 5px;">
-              <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button>
+              <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button> <!-- Kept modal content unchanged -->
             </div>
           </td> <!-- Action -->
         </tr>`;
-}).join('');
-
+  }).join('');
 }
+
+
+
 
 /**
  * Updates pagination controls.
@@ -293,14 +315,22 @@ function viewRequest(requestId) {
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
   // Ticket Details Section
-  let ticketDetailsHTML = `<div class="ticket-details">
-        <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-        <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-        <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
-        <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-      </div>`;
-  document.getElementById('ticketModalLabel').innerHTML = modalTitle;
-  document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
+  let ticketDetailsHTML = `
+  <div class="ticket-details">
+    <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}
+      <button type="button" class="view-btn" data-user-id="${request.user_id}">
+        <i class="fas fa-user"></i> VIEW STUDENT DETAILS
+      </button>
+    </p>
+    <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+    <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
+    <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+  </div>`;
+  
+
+document.getElementById('ticketModalLabel').innerHTML = modalTitle;
+document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML
+
 
   // Base URL for file uploads
   const baseUrl = "http://localhost/UPANG-LINK/uploads/";
@@ -325,7 +355,7 @@ function viewRequest(requestId) {
   const ticketFilesEl = document.getElementById('ticketFiles');
   ticketFilesEl.innerHTML = fileLinks
     ? `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`
-    : '';
+    : '<p>No attached files.</p>';
 
   
   // Inline Comment Editing Section
@@ -581,21 +611,21 @@ document.addEventListener('DOMContentLoaded', () => {
         displayData = allRequests;
       } else {
         displayData = allRequests.filter(request => {
-          const requestNumber = String(request.request_id).padStart(2, "0"); // Ensure proper request_id format
-          const status = request.status.replace("_", " ").toLowerCase(); // Ensure underscores are replaced
-          const date = new Date(request.submitted_at).toLocaleDateString(); // Match displayed date format
+          const trackingNumber = request.tracking_number.toLowerCase(); // Use tracking number
+          const status = request.status.replace(/_/g, " ").toLowerCase(); // Replace all underscores
+          const date = new Date(request.submitted_at).toLocaleDateString(); // Format date properly
           const type = (requestTypeNames[request.type_id] || "Unknown").toLowerCase();
   
           // Ensure user data is properly retrieved and formatted
           const user = allUsersData.find(u => u.user_id === request.user_id);
           const name = user ? `${user.first_name} ${user.last_name}`.trim().toLowerCase() : "unknown";
   
-          // Only search within displayed columns (excluding hidden data)
-          return requestNumber.includes(query) || // Request Number
-                 status.includes(query) ||        // Status
-                 date.includes(query) ||          // Date
-                 type.includes(query) ||          // Request Type
-                 name.includes(query);            // User Name
+          // Only search within displayed columns
+          return trackingNumber.includes(query) || // Search by Tracking Number
+                 status.includes(query) ||        // Search by Status
+                 date.includes(query) ||          // Search by Date
+                 type.includes(query) ||          // Search by Request Type
+                 name.includes(query);            // Search by User Name
         });
       }
   
@@ -605,6 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
       updatePaginationControls(currentPage);
     });
   }
+  
+
   
   
 
