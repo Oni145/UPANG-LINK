@@ -763,25 +763,29 @@ updateUserDisplay(user) {
   
       const tbody = document.getElementById('requestsTableBody');
       if (!tbody) return console.error("requestsTableBody element not found.");
-    
-      if (!requests || requests.length === 0) {
+      
+      const filteredRequests = requests.filter(request => request.status.toLowerCase() !== "cancelled");
+      
+      if (!filteredRequests.length) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No pending requests to display</td></tr>`;
         return;
       }
-    
-      tbody.innerHTML = requests.map(request => {
+      
+      tbody.innerHTML = filteredRequests.map(request => {
         const user = userMap[request.user_id] || { first_name: "Unknown", last_name: "" };
+        const formattedStatus = request.status.replace(/_/g, ' '); // Replace underscores with spaces
+      
         return `<tr>
                   <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
                   <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
                   <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
                   <td style="text-align: center;">
-                    <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span>
+                    <span class="badge ${getStatusClass(request.status.toLowerCase())}">${formattedStatus}</span>
                   </td> <!-- Status -->
                   <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
                 </tr>`;
       }).join('');
-      
+          
     }
     
   

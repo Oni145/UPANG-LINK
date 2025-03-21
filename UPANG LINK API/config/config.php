@@ -1,6 +1,6 @@
 <?php
 // Define base URL
-$base_url = 'http://192.168.18.138';
+$base_url = 'http://192.168.34.223';
 
 $config = [
     'app' => [
@@ -18,10 +18,10 @@ $config = [
     'email' => [
         'host' => 'smtp.gmail.com',
         'port' => 587,
-        'username' => 'jerickogarcia0@gmail.com',
-        'password' => 'laht squw emyi ggix', // Must be an App Password from Google Account
+        'username' => 'librariansystem1@gmail.com',
+        'password' => 'tyjq vblg ekex nivi', // Must be an App Password from Google Account
         'from_name' => 'UPANG LINK',
-        'from_email' => 'jerickogarcia0@gmail.com',
+        'from_email' => 'librariansystem1@gmail.com',
         'smtp_auth' => true,
         'smtp_secure' => 'tls',
         'smtp_debug' => 2, // 0 = off, 1 = client, 2 = client/server, 3 = client/server + connection, 4 = low-level data output
