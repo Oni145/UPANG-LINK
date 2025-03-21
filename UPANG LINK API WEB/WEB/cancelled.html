@@ -80,7 +80,8 @@
               </button>
           </div>
       </div>
- <!-- Notification Bell -->
+      
+<!-- Notification Bell -->
 <button id="notificationButton" class="bell-icon">
   <i class="fa-regular fa-bell"></i>
   <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
@@ -94,31 +95,46 @@
   <!-- Mark All as Read Button -->
   <button id="markAllRead" class="mark-all-read">MARK ALL AS READ</button>
   <!-- Notifications List -->
-  <ul id="notificationsList"></ul>             
+  <ul id="notificationsList"></ul>
+
   </div>
 </header>
-  <!-- User Details Modal -->
-  <div id="user_modal" class="user-modal">
-    <div class="user-modal-content">
-        <button onclick="closeUserModal()" class="user-close">&times;</button>
-        <h2>User Details</h2>
-        <div class="user-modal-body">
-            <p><strong>USER ID:</strong> <span id="modalUserId"></span></p>
-            <p><strong>Name:</strong> <span id="modalUserName"></span></p>
-            <p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
-            <p><strong>Student Number:</strong> <span id="modalUserStudentNumber"></span></p>
-            <p><strong>Birthdate:</strong> <span id="modalUserBirthdate"></span></p>
-            <p><strong>Emergency Contact:</strong> <span id="modalUserEmergencyContact"></span></p>
-            <p><strong>Course:</strong> <span id="modalUserCourse"></span></p>
-            <p><strong>Current Year:</strong> <span id="modalUserCurrentYear"></span></p>
-        </div>
-    </div>
-  </div>
+
+<script>
+  document.getElementById('profileBtn').addEventListener('click', function () {
+      var dropdown = document.getElementById('dropdownMenu');
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+  });
+
+  document.addEventListener('click', function (event) {
+      var dropdown = document.getElementById('dropdownMenu');
+      var profileBtn = document.getElementById('profileBtn');
+
+      if (!profileBtn.contains(event.target) && !dropdown.contains(event.target)) {
+          dropdown.style.display = 'none';
+      }
+  });
+
+
+  window.onclick = function(event) {
+    var modal = document.getElementById("ticketModal");
+    if (event.target === modal) {
+        closeModal();
+    }
+};
+
+// Function to close the modal
+function closeModal() {
+    document.getElementById("ticketModal").style.display = "none";
+}
+</script>
+
+
       <!-- Main Content -->
       <main>
         <div class="card">
           <div class="card-header">
-            <span>Requests</span>
+            <span>REQUESTS</span>
             <div id="paginationContainer"></div>
           </div>
           <div class="card-body">
@@ -144,6 +160,8 @@
     </div>
   </div>
 
+<!-- Overlay for closing the dialog when clicked outside -->
+<div id="overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 999;"></div>
 
 
 
@@ -172,23 +190,32 @@
             <button id="cancelEditCommentBtn" class="btn btn-secondary" style="display: none;">CANCEL</button>
           </div>
         </div>
-
         <!-- Attached Files Section -->
-        <div id="ticketFiles">
-        </div>
+        <div id="ticketFiles"></div>
       </div>
       <div class="modal-footer">
-        <select id="statusSelect">
-          <option value="approved">Approved</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
         </select>
-        <button id="updateStatusBtn" class="btn btn-primary">Update</button>
-        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        <button class="btn btn-secondary" onclick="closeModal()">CLOSE</button>
       </div>
     </div>
   </div>
-
+  <!-- User Details Modal -->
+<div id="user_modal" class="user-modal">
+  <div class="user-modal-content">
+      <button onclick="closeUserModal()" class="user-close">&times;</button>
+      <h2>User Details</h2>
+      <div class="user-modal-body">
+          <p><strong>USER ID:</strong> <span id="modalUserId"></span></p>
+          <p><strong>Name:</strong> <span id="modalUserName"></span></p>
+          <p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
+          <p><strong>Student Number:</strong> <span id="modalUserStudentNumber"></span></p>
+          <p><strong>Birthdate:</strong> <span id="modalUserBirthdate"></span></p>
+          <p><strong>Emergency Contact:</strong> <span id="modalUserEmergencyContact"></span></p>
+          <p><strong>Course:</strong> <span id="modalUserCourse"></span></p>
+          <p><strong>Current Year:</strong> <span id="modalUserCurrentYear"></span></p>
+      </div>
+  </div>
+</div>
   <script>
     // Sidebar active highlighting
     document.addEventListener('DOMContentLoaded', () => {
@@ -204,7 +231,7 @@
         }
       });
     });
-    // Get the modal reference
+// Get the modal reference
 let modal = document.getElementById("ticketModal");
 
 // Open the modal
@@ -230,26 +257,11 @@ window.addEventListener("click", function(event) {
     }
 });
 
-
-document.getElementById('profileBtn').addEventListener('click', function () {
-      var dropdown = document.getElementById('dropdownMenu');
-      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-  });
-
-  document.addEventListener('click', function (event) {
-      var dropdown = document.getElementById('dropdownMenu');
-      var profileBtn = document.getElementById('profileBtn');
-
-      if (!profileBtn.contains(event.target) && !dropdown.contains(event.target)) {
-          dropdown.style.display = 'none';
-      }
-  });
-
   </script>
   <!-- Include the external JavaScript file -->
-  <script src="../WEB/js/Requests tab/Rejected.js"></script>
+  <script src="./js/Requests tab/cancelled.js"></script>
   <script src="./js/config.js"></script>
-  <script src="../WEB/js/notifications.js"></script>
+  <script src="./js/notifications.js"></script>
   <script src="./js/usersdetails.js"></script>
 </body>
 </html>

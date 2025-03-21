@@ -159,10 +159,13 @@ function getStatusClass(status) {
     'approved': 'status-approved',
     'rejected': 'status-rejected',
     'in_progress': 'status-in_progress',
-    'completed': 'status-completed'
+    'completed': 'status-completed',
+    'canceled': 'status-canceled',
+    'cancelled': 'status-canceled' // Supporting both spellings
   };
   return classes[status] || 'status-secondary';
 }
+
 
 /**
  * Renders the list of requests into the table.

@@ -325,12 +325,14 @@ table td:nth-child(5) div {
   color: #fff;
   text-transform: uppercase;
 }
+
 .status-pending { background: #ffc107; }
 .status-approved { background: #28a745; }
 .status-rejected { background: #dc3545; }
 .status-in_progress { background: #17a2b8; }
 .status-completed { background: #007bff; }
 .status-secondary { background: #6c757d; }
+.status-canceled, .status-cancelled { background: #d60808; } 
 
 /* Attached Files Styling */
 .attached-files {

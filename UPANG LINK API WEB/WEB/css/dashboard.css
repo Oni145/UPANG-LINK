@@ -372,6 +372,7 @@ body {
 .status-in_progress { background: #17a2b8; }
 .status-secondary { background: #6c757d; }
 .status-completed { background: #007bff; }
+.status-canceled, .status-cancelled { background: #d60808; } 
 
 /* Custom Alert (for errors) */
 .custom-alert {
