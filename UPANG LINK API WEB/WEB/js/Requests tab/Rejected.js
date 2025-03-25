@@ -224,8 +224,10 @@ function displayRequests(requests, usersData) {
           </td> <!-- Status -->
           <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Centered Date -->
           <td>
-            <div style="display: flex; justify-content: center; gap: 5px;">
-              <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button> <!-- Kept modal content unchanged -->
+           <div style="display: flex; justify-content: center; gap: 5px;">
+            <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">
+            <i class="fas fa-edit" style="margin-right: 5px;"></i> EDIT
+            </button>
             </div>
           </td> <!-- Action -->
         </tr>`;

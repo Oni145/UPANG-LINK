@@ -266,14 +266,23 @@ table td:nth-child(5) div {
   font-size: 1.2rem;
   
 }
+/* Button Styles */
 .btn-primary {
   background: green;
   color: #fff;
   padding: 10px 30px;
   font-size: 1rem;
-  display: flex;  /* Make it a flex container */
-  justify-content: center; /* Center content inside */
-  align-items: center; /* Align text vertically */
+  display: inline-flex; /* Changed from flex to inline-flex */
+  justify-content: center;
+  align-items: center;
+  gap: 8px; /* Space between icon and text */
+  margin: 0 auto; /* Center button horizontally */
+}
+
+/* Icon Styles */
+.btn-icon {
+  font-size: 0.9em; /* Slightly smaller than text */
+  margin-right: 5px; /* Extra spacing */
 }
 
 

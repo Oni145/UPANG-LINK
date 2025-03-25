@@ -224,8 +224,11 @@ function getStatusClass(status) {
           </td> <!-- Status -->
           <td style="text-align: center;">${new Date(request.submitted_at).toLocaleDateString()}</td> <!-- Date -->
           <td style="text-align: center;">
-            <div style="display: flex; justify-content: center; gap: 5px;">
-              <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">EDIT</button>
+          <div style="display: flex; justify-content: center; gap: 5px;">
+            <button type="button" class="btn btn-primary" onclick="viewRequest(${request.request_id})">
+            <i class="fas fa-edit" style="margin-right: 5px;"></i> EDIT
+            </button>
+            </div>
             </div>
           </td> <!-- Action -->
         </tr>`;
