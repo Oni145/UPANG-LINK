@@ -1423,20 +1423,42 @@ class Request {
                 throw new Exception("Only pending requests can be cancelled", 400);
             }
             
-            // Update the request status to cancelled
-            $query = "UPDATE " . $this->table . " 
-                     SET status = 'CANCELLED', updated_at = NOW() 
-                     WHERE request_id = :request_id AND user_id = :user_id";
+            // Start transaction to ensure both operations succeed or fail together
+            $this->conn->beginTransaction();
             
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':request_id', $request_id);
-            $stmt->bindParam(':user_id', $user_id);
-            
-            if ($stmt->execute()) {
+            try {
+                // Update the request status to cancelled
+                $query = "UPDATE " . $this->table . " 
+                         SET status = 'CANCELLED', updated_at = NOW() 
+                         WHERE request_id = :request_id AND user_id = :user_id";
+                
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':request_id', $request_id);
+                $stmt->bindParam(':user_id', $user_id);
+                $stmt->execute();
+                
+                // NEW: Delete related notifications (added this part)
+                $notificationQuery = "DELETE FROM notifications 
+                                    WHERE request_id = :request_id 
+                                    AND user_id = :user_id";
+                
+                $notificationStmt = $this->conn->prepare($notificationQuery);
+                $notificationStmt->bindParam(':request_id', $request_id);
+                $notificationStmt->bindParam(':user_id', $user_id);
+                $notificationStmt->execute();
+                
+                // Commit transaction if both operations succeeded
+                $this->conn->commit();
+                
                 return $this->getById($request_id);
+                
+            } catch (PDOException $e) {
+                // Roll back if any operation fails
+                $this->conn->rollBack();
+                error_log("Database error: " . $e->getMessage());
+                throw new Exception("Failed to cancel request", 500);
             }
             
-            return false;
         } catch (PDOException $e) {
             error_log("Database error: " . $e->getMessage());
             throw new Exception("Failed to cancel request", 500);
