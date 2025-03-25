@@ -1,4 +1,3 @@
-// forgotpassword.js
 document.getElementById('forgotPasswordForm').addEventListener('submit', async function(event) {
     event.preventDefault();
 
@@ -27,9 +26,16 @@ document.getElementById('forgotPasswordForm').addEventListener('submit', async f
                 body: JSON.stringify({ email })
             });
             const data = await response.json();
+
             if (!response.ok) {
                 throw new Error(data.message || 'Error requesting reset token');
             }
+
+            // Role check: Block students from requesting an admin password reset
+            if (data.role && data.role === 'student') {
+                throw new Error('Only admins are allowed to reset passwords.');
+            }
+
             alert('A reset token has been sent to your email. Please check your inbox.');
             // Reveal the OTP and New Password fields
             document.getElementById('resetFields').classList.remove('hidden');
@@ -58,9 +64,11 @@ document.getElementById('forgotPasswordForm').addEventListener('submit', async f
                 body: JSON.stringify({ token, new_password: newPassword })
             });
             const data = await response.json();
+
             if (!response.ok) {
                 throw new Error(data.message || 'Error resetting password');
             }
+
             alert('Your password has been reset successfully. You can now log in.');
             window.location.href = 'login.html';
         } catch (error) {

@@ -411,75 +411,103 @@ class AdminController {
      * and sends a plain text email containing only the token using PHPMailer.
      */
     private function forgotPassword() {
-        $data = json_decode(file_get_contents("php://input"));
-        if (!$data) {
-            $this->sendError("Invalid JSON data", 400);
-            return;
-        }
+        // Set JSON header first
+        header('Content-Type: application/json');
         
-        // Validate that the email field is provided
-        $missing = $this->checkMissingFields($data, ['email']);
-        if (!empty($missing)) {
-            $this->sendError("Missing field(s): " . implode(", ", $missing), 400);
-            return;
-        }
-        
-        // Retrieve user by email using getByEmail method
-        $user = $this->adminModel->getByEmail($data->email);
-        if (!$user) {
-            $this->sendError("User not found", 404);
-            return;
-        }
-        
-        // Generate a reset token and set expiry (1 hour from now)
-        $resetToken = bin2hex(random_bytes(16));
-        $expiresAt = date('Y-m-d H:i:s', time() + 3600);
-        
-        // Update the users table with the reset token and expiry
-        $stmt = $this->db->prepare("UPDATE users SET reset_password_token = ?, reset_token_expiry = ? WHERE user_id = ?");
-        if (!$stmt->execute([$resetToken, $expiresAt, $user['user_id']])) {
-            $this->sendError("Could not set reset token", 500);
-            return;
-        }
-        
-        // Construct the plain text email content with the token only
-        $subject = "Password Reset Request";
-        $body = "Password Reset Request\n\n" .
-                "Please use the token below to reset your password. This token is valid for one hour.\n\n" .
-                "\"" . $resetToken . "\"\n\n" .
-                "If you did not request a password reset, please ignore this email.";
-        
-        // Send the reset email using PHPMailer
-        $mail = new PHPMailer(true);
         try {
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'librariansystem1@gmail.com';
-            $mail->Password   = 'tyjq vblg ekex nivi';
-            $mail->SMTPSecure = 'tls';
-            $mail->Port       = 587;
+            // Get and validate input
+            $json = file_get_contents('php://input');
+            if (empty($json)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'No input data received']);
+                return;
+            }
     
-            $mail->isHTML(false); // Send as plain text
-            $mail->setFrom('your-email@example.com', 'Admin Support');
-            $mail->addAddress($user['email'], $user['first_name']); // Use first_name instead of username
+            $data = json_decode($json);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid JSON data']);
+                return;
+            }
     
-            $mail->Subject = $subject;
-            $mail->Body    = $body;
+            // Validate email
+            if (!isset($data->email) || empty(trim($data->email))) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Email is required']);
+                return;
+            }
     
-            $mail->send();
+            $email = trim($data->email);
+            
+            // Get user from database
+            $user = $this->adminModel->getByEmail($email);
+            
+            // Return generic response whether user exists or not
+            if (!$user) {
+                http_response_code(200);
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'If this email exists in our system, you will receive a reset link'
+                ]);
+                return;
+            }
+    
+            // Block student role
+            if (isset($user['role']) && strtolower($user['role']) === 'student') {
+                http_response_code(403);
+                echo json_encode(['error' => 'Password reset is not available for student accounts']);
+                return;
+            }
+    
+            // Generate 8-digit token
+            $resetToken = str_pad(random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+            $expiresAt = date('Y-m-d H:i:s', time() + 3600); // 1 hour expiration
+    
+            // Store token in database
+            $stmt = $this->db->prepare("UPDATE users SET reset_password_token = ?, reset_token_expiry = ? WHERE user_id = ?");
+            if (!$stmt->execute([$resetToken, $expiresAt, $user['user_id']])) {
+                throw new Exception('Failed to store reset token');
+            }
+    
+            // Send email
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'librariansystem1@gmail.com';
+                $mail->Password = 'tyjq vblg ekex nivi'; // Use app password
+                $mail->SMTPSecure = 'tls';
+                $mail->Port = 587;
+    
+                $mail->setFrom('noreply@librarysystem.com', 'Library System');
+                $mail->addAddress($user['email'], $user['first_name']);
+                $mail->isHTML(false);
+                $mail->Subject = 'Password Reset Request';
+                $mail->Body = "Your password reset code is: $resetToken\n\nThis code expires in 1 hour.";
+    
+                $mail->send();
+                
+                http_response_code(200);
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'If this email exists in our system, you will receive a reset link'
+                ]);
+                
+            } catch (Exception $e) {
+                // Rollback token on email failure
+                $this->db->prepare("UPDATE users SET reset_password_token = NULL, reset_token_expiry = NULL WHERE user_id = ?")
+                         ->execute([$user['user_id']]);
+                
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to send reset email']);
+            }
+    
         } catch (Exception $e) {
-            $this->sendError("Mailer Error: " . $mail->ErrorInfo, 500);
-            return;
+            http_response_code(500);
+            echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
         }
-        
-        http_response_code(200);
-        echo json_encode([
-            'status'  => 'success',
-            'message' => 'Password reset email sent successfully'
-        ]);
     }
-    
     /**
      * resetPassword: Validates the reset token, updates the password,
      * and clears the token fields in the users table.
