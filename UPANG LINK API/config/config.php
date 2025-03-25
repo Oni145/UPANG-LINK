@@ -1,6 +1,6 @@
 <?php
 // Define base URL
-$base_url = 'http://192.168.34.223';
+$base_url = 'http://192.168.18.47';
 
 $config = [
     'app' => [

@@ -188,52 +188,92 @@
   }
   
   /* Table */
-  .table-responsive {
-    overflow-x: auto;
-  }
-  
-  table {
-    width: 100%;
-    border-collapse: collapse;
+ /* Table Container */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #ddd; /* Outer border */
+  border-radius: 4px;
+  background: white;
+  margin-top: 15px;
+}
 
-  }
-  
-  table th, table td {
-    padding: 10px;
-    border: 1px solid #ddd;
-  }
-  
-  table th {
-    background: #f2f2f2;
-  }
-  
-  table td:nth-child(1) {
-    text-align: center;
-    font-size: 0.9rem;
-  }
-  
-  table td:nth-child(2) {
-    text-align: center;
-    font-size: 0.9rem;
-  }
-  
+/* Table Structure */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-  table td:nth-child(3) {
-    text-align: center;
-    font-size: 0.9rem;
-  }
-  
-  table td:nth-child(4) {
-    text-align: center;
-    font-size: 0.9rem;
+/* Header Cells */
+table th {
+  padding: 12px 15px;
+  background: #f8f9fa;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid #ddd; /* Header borders */
+}
+
+/* Body Cells */
+table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd; /* Cell borders */
+  text-align: center;
+  vertical-align: middle;
+  word-wrap: break-word;
+}
+
+/* Zebra Stripe Rows */
+table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Action Cell */
+table td:nth-child(5) {
+  width: 150px;
+  min-width: 150px;
+}
+
+/* Action Button Container */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* VIEW Button Styling */
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.view-btn:hover {
+  background-color: #2980b9;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  table th, 
+  table td {
+    padding: 10px 8px;
   }
   
   table td:nth-child(5) {
-    text-align: center;
-    font-size: 0.9rem;
+    width: 120px;
+    min-width: 120px;
   }
-
-  
+}
   
   /* Buttons */
   .btn {
@@ -351,7 +391,6 @@
     text-align: left;
     box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.3);
     position: relative;
-    animation: fadeIn 0.3s ease-out;
     overflow-y: auto; /* Allow scrolling if content exceeds modal height */
   }
   
@@ -405,3 +444,247 @@
     }
   }
   
+  /* Search container */
+.search-container {
+  margin-bottom: 10px;
+}
+
+/* Action container */
+.action-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+/* Add Admin button styling */
+.btn-add-admin {
+  background-color: green;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-add-admin:hover {
+  background-color: darkgreen;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-add-admin i {
+  margin-right: 8px;
+}
+
+/* Table styling */
+.table-responsive {
+  border: 1px solid #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+
+/* Main Layout */
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin: 20px;
+}
+
+.card-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* Search and Button Container */
+.search-container {
+  margin-bottom: 10px;
+}
+
+.action-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.btn-add-admin {
+  background-color: green;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-add-admin:hover {
+  background-color: darkgreen;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-add-admin i {
+  margin-right: 8px;
+}
+
+/* Table Styles */
+.table-responsive {
+  border: 1px solid #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Modal Styles */
+/* ===== Main Modal Styles ===== */
+/* ===== No-Animation Modal ===== */
+#admin-add-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+#admin-add-modal.show {
+  display: block;
+}
+
+#admin-add-modal .modal-content {
+  background-color: #fefefe;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 25px;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+/* ===== Modal Structure ===== */
+#admin-add-modal .modal-content h2 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+}
+
+#admin-add-modal .close-modal {
+  position: absolute;
+  right: 22px;
+  top: 18px;
+  color: #7f8c8d;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#admin-add-modal .close-modal:hover {
+  color: #34495e;
+}
+
+/* ===== Form Styles ===== */
+#admin-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+#admin-add-form .form-group {
+  margin-bottom: 5px;
+}
+
+#admin-add-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: black;
+}
+
+#admin-add-form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 15px;
+}
+
+#admin-add-form input:focus {
+  border-color: green;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+}
+
+#admin-add-form #adminRole {
+  background-color: #f8f9fa;
+  color: #7f8c8d;
+}
+
+/* ===== Submit Button ===== */
+#admin-add-form .submit-btn {
+  background-color: green;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: 15px;
+}
+
+#admin-add-form .submit-btn:hover {
+  background-color: darkgreen;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 600px) {
+  #admin-add-modal .modal-content {
+    width: 95%;
+    padding: 20px;
+  }
+  
+  #admin-add-form input {
+    padding: 10px;
+  }
+}

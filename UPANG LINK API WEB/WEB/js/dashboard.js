@@ -160,8 +160,6 @@ function getStatusClass(status) {
     'rejected': 'status-rejected',
     'in_progress': 'status-in_progress',
     'completed': 'status-completed',
-    'canceled': 'status-canceled',
-    'cancelled': 'status-canceled' // Supporting both spellings
   };
   return classes[status] || 'status-secondary';
 }
@@ -253,24 +251,7 @@ function updatePaginationControls(currentPage) {
   }
 }
 
-/**
- * Helper function to build a styled attached file element.
- */
-function buildFileLink(file, label) {
-  const displayText = label || file.file_name;
-  return `
-    <div class="attached-file">
-      <div class="file-info">
-        <i class="fas fa-file"></i>
-        <span>${displayText}</span>
-      </div>
-      <div class="file-actions">
-        <a href="${file.file_path}" target="_blank" class="btn-view" onclick="showLoading(); setTimeout(hideLoading, 2000)">View</a>
-        <a href="${file.file_path}" download class="btn-download" onclick="showLoading(); setTimeout(hideLoading, 2000)">Download</a>
-      </div>
-    </div>
-  `;
-}
+
 
 /**
  * Opens the ticket details modal and populates it with request data.
@@ -292,29 +273,7 @@ function viewRequest(requestId) {
     <p><strong>Date Submitted:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
     <p><strong>Additional Information:</strong> ${request.details || 'No additional details available.'}</p>`;
   
-  // Mapping of file keys to display labels
-  const fileLabels = {
-    "Clearance": "Clearance Form",
-    "RequestLetter": "Request Letter",
-    "StudentID": "Student ID",
-    "1x1_id_picture_(white_background,_formal_attire)": "1x1 ID Picture",
-    "RegistrationForm": "Registration Form",
-    "IDPicture": "ID Picture",
-    "ProfessorApproval": "Professor Approval"
-  };
 
-  let fileLinks = '';
-  for (const key in fileLabels) {
-    if (request[key] && Array.isArray(request[key]) && request[key].length > 0) {
-      request[key].forEach(file => {
-        fileLinks += buildFileLink(file, fileLabels[key]);
-      });
-    }
-  }
-  if (fileLinks) {
-    modalBodyContent += `<div class="attached-files"><h3>Attached Files</h3>${fileLinks}</div>`;
-  }
-  
   currentRequestId = request.request_id;
   
   const modalTitleEl = document.getElementById('ticketModalLabel');
@@ -777,7 +736,7 @@ updateUserDisplay(user) {
       
         return `<tr>
                   <td style="text-align: center;">${user.first_name} ${user.last_name}</td> <!-- Name -->
-                  <td style="text-align: center;">${String(request.request_id).padStart(2, '0')}</td> <!-- Request Number -->
+                  <td style="text-align: center;">${String(request.tracking_number).padStart(2, '0')}</td> <!-- Tracking Number -->
                   <td style="text-align: center;">${requestTypeNames[request.type_id] || 'Unknown'}</td> <!-- Request Type -->
                   <td style="text-align: center;">
                     <span class="badge ${getStatusClass(request.status.toLowerCase())}">${formattedStatus}</span>
@@ -787,10 +746,6 @@ updateUserDisplay(user) {
       }).join('');
           
     }
-    
-  
-  
-  
   }
 
 // Initialize Dashboard after DOM loads

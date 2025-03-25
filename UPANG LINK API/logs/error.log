@@ -45774,3 +45774,3450 @@ Stack trace: #0 {main}
 [25-Mar-2025 11:51:06 Europe/Berlin] Found 1 notes for this request
 [25-Mar-2025 11:51:06 Europe/Berlin] Course module request - skipping field validation
 [25-Mar-2025 11:51:06 Europe/Berlin] Fetching request type details for type_id: 7
+[25-Mar-2025 11:55:15 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:55:15 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:55:15 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 11:55:15 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:55:15 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:55:15 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 11:55:15 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 11:55:15 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 11:55:15 Europe/Berlin] Getting request types
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 11:55:15 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 11:55:15 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 11:55:15 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 11:55:15 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 11:55:15 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 11:55:15 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 11:55:15 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 11:55:15 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 11:55:15 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 11:55:15 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 11:55:15 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 11:55:15 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 11:55:15 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 11:55:15 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:55:15 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 11:57:38 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:38 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:38 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:38 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:38 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 11:57:38 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:38 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 11:57:38 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:38 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:38 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:38 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 11:57:38 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 11:57:38 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 11:57:38 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/statistics
+[25-Mar-2025 11:57:38 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 11:57:38 Europe/Berlin] Normalized endpoint: statistics
+[25-Mar-2025 11:57:38 Europe/Berlin] Getting request types
+[25-Mar-2025 11:57:38 Europe/Berlin] Getting request statistics
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 11:57:38 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 11:57:38 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 11:57:38 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 11:57:38 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 11:57:38 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 11:57:38 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 11:57:38 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 11:57:38 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 11:57:38 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 11:57:38 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 11:57:38 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 11:57:38 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 11:57:38 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 11:57:38 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 11:57:38 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 11:57:50 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:50 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:50 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 11:57:50 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:50 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:50 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 11:57:50 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/10/notes
+[25-Mar-2025 11:57:50 Europe/Berlin] Normalized endpoint: notes
+[25-Mar-2025 11:57:50 Europe/Berlin] Getting all requests
+[25-Mar-2025 11:57:50 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 11:57:50 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 11:57:50 Europe/Berlin] Decoding token: addc37f7af26454482827c089adccf10a903d557d8fe30e25a1ae6d28d29e5c0
+[25-Mar-2025 11:57:50 Europe/Berlin] Decoding legacy token: addc37f7af26454482827c089adccf10a903d557d8fe30e25a1ae6d28d29e5c0
+[25-Mar-2025 11:57:50 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:50 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:50 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:50 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 11:57:50 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:50 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:50 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 11:57:50 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/10/notes
+[25-Mar-2025 11:57:50 Europe/Berlin] Normalized endpoint: notes
+[25-Mar-2025 11:57:50 Europe/Berlin] Getting all requests
+[25-Mar-2025 11:57:50 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 11:57:50 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 11:57:50 Europe/Berlin] Decoding token: addc37f7af26454482827c089adccf10a903d557d8fe30e25a1ae6d28d29e5c0
+[25-Mar-2025 11:57:50 Europe/Berlin] Decoding legacy token: addc37f7af26454482827c089adccf10a903d557d8fe30e25a1ae6d28d29e5c0
+[25-Mar-2025 11:57:50 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 11:57:50 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:50 Europe/Berlin] Database connection successful
+[25-Mar-2025 11:57:50 Europe/Berlin] Successfully decoded legacy token for user ID: 2
+[25-Mar-2025 11:57:50 Europe/Berlin] Successfully decoded legacy token for user ID: 2
+[25-Mar-2025 11:57:50 Europe/Berlin] Using user ID from token: 2
+[25-Mar-2025 11:57:50 Europe/Berlin] Using user ID from token: 2
+[25-Mar-2025 12:17:47 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:17:47 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:17:47 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:17:47 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:17:47 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:17:47 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:17:47 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/10/notes
+[25-Mar-2025 12:17:47 Europe/Berlin] Normalized endpoint: notes
+[25-Mar-2025 12:17:47 Europe/Berlin] Getting all requests
+[25-Mar-2025 12:17:47 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 12:17:47 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 12:17:47 Europe/Berlin] Decoding token: addc37f7af26454482827c089adccf10a903d557d8fe30e25a1ae6d28d29e5c0
+[25-Mar-2025 12:17:47 Europe/Berlin] Decoding legacy token: addc37f7af26454482827c089adccf10a903d557d8fe30e25a1ae6d28d29e5c0
+[25-Mar-2025 12:17:47 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:17:47 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:17:47 Europe/Berlin] Successfully decoded legacy token for user ID: 2
+[25-Mar-2025 12:17:47 Europe/Berlin] Using user ID from token: 2
+[25-Mar-2025 12:17:49 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:17:49 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:18:02 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:18:02 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:18:02 Europe/Berlin] Starting user creation...
+[25-Mar-2025 12:18:02 Europe/Berlin] Prepared query: INSERT INTO users
+                    (email, password, first_name, last_name, role, email_verification_token, email_token_expiry)
+                    VALUES (:email, :password, :first_name, :last_name, :role, :email_verification_token, :email_token_expiry)
+[25-Mar-2025 12:18:02 Europe/Berlin] Email: estrada.cymon19@gmail.com
+[25-Mar-2025 12:18:02 Europe/Berlin] First Name: Matthew
+[25-Mar-2025 12:18:02 Europe/Berlin] Last Name: Estrada
+[25-Mar-2025 12:18:02 Europe/Berlin] Role: student
+[25-Mar-2025 12:18:02 Europe/Berlin] User created successfully with ID: 3
+[25-Mar-2025 12:18:02 Europe/Berlin] PHPMailer configured successfully with: Host=smtp.gmail.com, Port=587, Username=librariansystem1@gmail.com
+[25-Mar-2025 12:18:02 Europe/Berlin] PHPMailer initialized successfully
+[25-Mar-2025 12:18:02 Europe/Berlin] Attempting to send email to: estrada.cymon19@gmail.com
+[25-Mar-2025 12:18:02 Europe/Berlin] Subject: Verify your UPANG LINK account
+[25-Mar-2025 12:18:02 Europe/Berlin] Sending email via PHPMailer...
+[25-Mar-2025 12:18:02 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-7390611d21dsm9820327b3a.118 - gsmtp
+
+[25-Mar-2025 12:18:02 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: EHLO 192.168.18.47
+
+[25-Mar-2025 12:18:03 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250-smtp.gmail.com at your service, [103.3.83.148]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[25-Mar-2025 12:18:03 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: STARTTLS
+
+[25-Mar-2025 12:18:03 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[25-Mar-2025 12:18:03 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: EHLO 192.168.18.47
+
+[25-Mar-2025 12:18:03 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250-smtp.gmail.com at your service, [103.3.83.148]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[25-Mar-2025 12:18:03 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: AUTH LOGIN
+
+[25-Mar-2025 12:18:03 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[25-Mar-2025 12:18:03 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: [credentials hidden]
+[25-Mar-2025 12:18:04 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[25-Mar-2025 12:18:04 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: [credentials hidden]
+[25-Mar-2025 12:18:04 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 235 2.7.0 Accepted
+
+[25-Mar-2025 12:18:04 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: MAIL FROM:<librariansystem1@gmail.com>
+
+[25-Mar-2025 12:18:04 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250 2.1.0 OK d2e1a72fcca58-7390611d21dsm9820327b3a.118 - gsmtp
+
+[25-Mar-2025 12:18:04 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: RCPT TO:<estrada.cymon19@gmail.com>
+
+[25-Mar-2025 12:18:04 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250 2.1.5 OK d2e1a72fcca58-7390611d21dsm9820327b3a.118 - gsmtp
+
+[25-Mar-2025 12:18:04 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: DATA
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 354 Go ahead d2e1a72fcca58-7390611d21dsm9820327b3a.118 - gsmtp
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Date: Tue, 25 Mar 2025 12:18:02 +0100
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: To: estrada.cymon19@gmail.com
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: From: UPANG LINK <librariansystem1@gmail.com>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Subject: Verify your UPANG LINK account
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Message-ID: <0xEuYuCCkYzYmH1DbfjSmbi2m7V2LinvKoZet7pWmrQ@192.168.18.47>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: X-Mailer: PHPMailer 6.9.3 (https://github.com/PHPMailer/PHPMailer)
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: MIME-Version: 1.0
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Type: multipart/alternative;
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:  boundary="b1=_0xEuYuCCkYzYmH1DbfjSmbi2m7V2LinvKoZet7pWmrQ"
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: --b1=_0xEuYuCCkYzYmH1DbfjSmbi2m7V2LinvKoZet7pWmrQ
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Type: text/plain; charset=us-ascii
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         body { font-family: Arial, sans-serif; line-height: 1.6; }
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         .button { 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             display: inline-block; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             padding: 10px 20px; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             background-color: #007bff; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             color: white; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             text-decoration: none; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             border-radius: 5px; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         }
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         Welcome to UPANG LINK!
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         Thank you for registering. Please verify your email address by clicking the button below:
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         Verify Email
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         Or copy and paste this link in your browser:
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         http://192.168.34.223/UPANG-LINK/UPANG%20LINK%20API/pages/verify-email?token=a69843a64ad8c4fb4f1490e457b25944595ad7931ebcbfa6b0e2455b5f20d101
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         If you did not create an account, please ignore this email.
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: --b1=_0xEuYuCCkYzYmH1DbfjSmbi2m7V2LinvKoZet7pWmrQ
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Type: text/html; charset=us-ascii
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 <!DOCTYPE html>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 <html>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 <head>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     <style>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         body { font-family: Arial, sans-serif; line-height: 1.6; }
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         .button { 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             display: inline-block; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             padding: 10px 20px; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             background-color: #007bff; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             color: white; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             text-decoration: none; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             border-radius: 5px; 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         }
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     </style>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 </head>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 <body>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     <div class="container">
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <h2>Welcome to UPANG LINK!</h2>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p>Thank you for registering. Please verify your email address by clicking the button below:</p>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p><a href="http://192.168.34.223/UPANG-LINK/UPANG%20LINK%20API/pages/verify-email?token=a69843a64ad8c4fb4f1490e457b25944595ad7931ebcbfa6b0e2455b5f20d101" class="button">Verify Email</a></p>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p>Or copy and paste this link in your browser:</p>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p>http://192.168.34.223/UPANG-LINK/UPANG%20LINK%20API/pages/verify-email?token=a69843a64ad8c4fb4f1490e457b25944595ad7931ebcbfa6b0e2455b5f20d101</p>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p>If you did not create an account, please ignore this email.</p>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     </div>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 </body>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 </html>
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: --b1=_0xEuYuCCkYzYmH1DbfjSmbi2m7V2LinvKoZet7pWmrQ--
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:18:05 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: .
+
+[25-Mar-2025 12:18:06 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250 2.0.0 OK  1742901487 d2e1a72fcca58-7390611d21dsm9820327b3a.118 - gsmtp
+
+[25-Mar-2025 12:18:06 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: QUIT
+
+[25-Mar-2025 12:18:06 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-7390611d21dsm9820327b3a.118 - gsmtp
+
+[25-Mar-2025 12:18:06 Europe/Berlin] Email successfully sent via PHPMailer to estrada.cymon19@gmail.com
+[25-Mar-2025 12:18:58 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:18:58 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:18:58 Europe/Berlin] PHPMailer configured successfully with: Host=smtp.gmail.com, Port=587, Username=librariansystem1@gmail.com
+[25-Mar-2025 12:18:58 Europe/Berlin] PHPMailer initialized successfully
+[25-Mar-2025 12:18:58 Europe/Berlin] Attempting to send email to: estrada.cymon19@gmail.com
+[25-Mar-2025 12:18:58 Europe/Berlin] Subject: Verify your UPANG LINK account
+[25-Mar-2025 12:18:58 Europe/Berlin] Sending email via PHPMailer...
+[25-Mar-2025 12:18:59 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 220 smtp.gmail.com ESMTP 41be03b00d2f7-af8a2a4f585sm8788981a12.73 - gsmtp
+
+[25-Mar-2025 12:18:59 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: EHLO 192.168.18.47
+
+[25-Mar-2025 12:18:59 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250-smtp.gmail.com at your service, [103.3.83.148]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[25-Mar-2025 12:18:59 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: STARTTLS
+
+[25-Mar-2025 12:18:59 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+
+[25-Mar-2025 12:18:59 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: EHLO 192.168.18.47
+
+[25-Mar-2025 12:19:00 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250-smtp.gmail.com at your service, [103.3.83.148]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+[25-Mar-2025 12:19:00 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: AUTH LOGIN
+
+[25-Mar-2025 12:19:00 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 334 VXNlcm5hbWU6
+
+[25-Mar-2025 12:19:00 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: [credentials hidden]
+[25-Mar-2025 12:19:00 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+
+[25-Mar-2025 12:19:00 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: [credentials hidden]
+[25-Mar-2025 12:19:00 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 235 2.7.0 Accepted
+
+[25-Mar-2025 12:19:00 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: MAIL FROM:<librariansystem1@gmail.com>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250 2.1.0 OK 41be03b00d2f7-af8a2a4f585sm8788981a12.73 - gsmtp
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: RCPT TO:<estrada.cymon19@gmail.com>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250 2.1.5 OK 41be03b00d2f7-af8a2a4f585sm8788981a12.73 - gsmtp
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: DATA
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 354 Go ahead 41be03b00d2f7-af8a2a4f585sm8788981a12.73 - gsmtp
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Date: Tue, 25 Mar 2025 12:18:58 +0100
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: To: estrada.cymon19@gmail.com
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: From: UPANG LINK <librariansystem1@gmail.com>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Subject: Verify your UPANG LINK account
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Message-ID: <JReetwjIphkwi2nPRihrUuTfFZZc6m4KVnJ0MC5uFU@192.168.18.47>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: X-Mailer: PHPMailer 6.9.3 (https://github.com/PHPMailer/PHPMailer)
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: MIME-Version: 1.0
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Type: multipart/alternative;
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:  boundary="b1=_JReetwjIphkwi2nPRihrUuTfFZZc6m4KVnJ0MC5uFU"
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: --b1=_JReetwjIphkwi2nPRihrUuTfFZZc6m4KVnJ0MC5uFU
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Type: text/plain; charset=us-ascii
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         body { font-family: Arial, sans-serif; line-height: 1.6; }
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         .button { 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             display: inline-block; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             padding: 10px 20px; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             background-color: #007bff; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             color: white; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             text-decoration: none; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             border-radius: 5px; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         }
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         Welcome to UPANG LINK!
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         Thank you for registering. Please verify your email address by clicking the button below:
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         Verify Email
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         Or copy and paste this link in your browser:
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         http://192.168.18.47/UPANG-LINK/UPANG%20LINK%20API/pages/verify-email?token=ed35665b92d976345a3582a4e2e9dd371157ba52eb85ac2f441b5b31d75701e8
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         If you did not create an account, please ignore this email.
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: --b1=_JReetwjIphkwi2nPRihrUuTfFZZc6m4KVnJ0MC5uFU
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: Content-Type: text/html; charset=us-ascii
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 <!DOCTYPE html>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 <html>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 <head>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     <style>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         body { font-family: Arial, sans-serif; line-height: 1.6; }
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         .button { 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             display: inline-block; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             padding: 10px 20px; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             background-color: #007bff; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             color: white; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             text-decoration: none; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                             border-radius: 5px; 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         }
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     </style>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 </head>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 <body>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     <div class="container">
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <h2>Welcome to UPANG LINK!</h2>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p>Thank you for registering. Please verify your email address by clicking the button below:</p>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p><a href="http://192.168.18.47/UPANG-LINK/UPANG%20LINK%20API/pages/verify-email?token=ed35665b92d976345a3582a4e2e9dd371157ba52eb85ac2f441b5b31d75701e8" class="button">Verify Email</a></p>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p>Or copy and paste this link in your browser:</p>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p>http://192.168.18.47/UPANG-LINK/UPANG%20LINK%20API/pages/verify-email?token=ed35665b92d976345a3582a4e2e9dd371157ba52eb85ac2f441b5b31d75701e8</p>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                         <p>If you did not create an account, please ignore this email.</p>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                     </div>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 </body>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER:                 </html>
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: --b1=_JReetwjIphkwi2nPRihrUuTfFZZc6m4KVnJ0MC5uFU--
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: 
+
+[25-Mar-2025 12:19:01 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: .
+
+[25-Mar-2025 12:19:02 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 250 2.0.0 OK  1742901543 41be03b00d2f7-af8a2a4f585sm8788981a12.73 - gsmtp
+
+[25-Mar-2025 12:19:02 Europe/Berlin] PHPMailer Debug (1): CLIENT -> SERVER: QUIT
+
+[25-Mar-2025 12:19:02 Europe/Berlin] PHPMailer Debug (2): SERVER -> CLIENT: 221 2.0.0 closing connection 41be03b00d2f7-af8a2a4f585sm8788981a12.73 - gsmtp
+
+[25-Mar-2025 12:19:02 Europe/Berlin] Email successfully sent via PHPMailer to estrada.cymon19@gmail.com
+[25-Mar-2025 12:19:24 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:24 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:30 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:30 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:32 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:32 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:32 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:32 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:32 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:32 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:32 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:32 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:32 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:32 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:32 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/statistics
+[25-Mar-2025 12:19:32 Europe/Berlin] Normalized endpoint: statistics
+[25-Mar-2025 12:19:32 Europe/Berlin] Getting request statistics
+[25-Mar-2025 12:19:32 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:32 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:32 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 12:19:32 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 12:19:32 Europe/Berlin] Getting request types
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 12:19:32 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 12:19:32 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 12:19:32 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 12:19:32 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 12:19:32 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 12:19:32 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 12:19:32 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 12:19:32 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 12:19:32 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 12:19:32 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 12:19:32 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 12:19:32 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 12:19:32 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 12:19:32 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:32 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 12:19:33 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:33 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:33 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:33 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:33 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:33 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:33 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 12:19:33 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 12:19:33 Europe/Berlin] Getting request types
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 12:19:33 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 12:19:33 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 12:19:33 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 12:19:33 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 12:19:33 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 12:19:33 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 12:19:33 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 12:19:33 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 12:19:33 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 12:19:33 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 12:19:33 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 12:19:33 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 12:19:33 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 12:19:33 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:19:33 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:37 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:37 Europe/Berlin] Normalized endpoint: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/REQ-20250325-0995/notes
+[25-Mar-2025 12:19:37 Europe/Berlin] Endpoint is a tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Normalized endpoint: notes
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting all requests
+[25-Mar-2025 12:19:37 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 12:19:37 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 12:19:37 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding legacy token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding legacy token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Successfully decoded legacy token for user ID: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:37 Europe/Berlin] Using user ID from token: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Successfully decoded legacy token for user ID: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Using user ID from token: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting request details by tracking number: REQ-20250325-0995 for user: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Normalized endpoint: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Endpoint is a tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 12:19:37 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding legacy token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Successfully decoded legacy token for user ID: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Executing query with tracking_number=REQ-20250325-0995 and user_id=3
+[25-Mar-2025 12:19:37 Europe/Berlin] Using user ID from token: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting request details by tracking number: REQ-20250325-0995 for user: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Found request with tracking number: REQ-20250325-0995. Request ID: 11
+[25-Mar-2025 12:19:37 Europe/Berlin] Requirements before parsing: Array
+(
+    [fields] => Array
+        (
+        )
+
+    [instructions] => Please fill out all required fields.
+)
+
+[25-Mar-2025 12:19:37 Europe/Berlin] Fetching files for request_id: 11
+[25-Mar-2025 12:19:37 Europe/Berlin] Found 0 files for this request
+[25-Mar-2025 12:19:37 Europe/Berlin] Setting up course module requirements structure
+[25-Mar-2025 12:19:37 Europe/Berlin] Fetching notes for request_id: 11
+[25-Mar-2025 12:19:37 Europe/Berlin] Found 1 notes for this request
+[25-Mar-2025 12:19:37 Europe/Berlin] Course module request - skipping field validation
+[25-Mar-2025 12:19:37 Europe/Berlin] Fetching request type details for type_id: 7
+[25-Mar-2025 12:19:37 Europe/Berlin] Executing query with tracking_number=REQ-20250325-0995 and user_id=3
+[25-Mar-2025 12:19:37 Europe/Berlin] Found request with tracking number: REQ-20250325-0995. Request ID: 11
+[25-Mar-2025 12:19:37 Europe/Berlin] Requirements before parsing: Array
+(
+    [fields] => Array
+        (
+        )
+
+    [instructions] => Please fill out all required fields.
+)
+
+[25-Mar-2025 12:19:37 Europe/Berlin] Fetching files for request_id: 11
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Found 0 files for this request
+[25-Mar-2025 12:19:37 Europe/Berlin] Setting up course module requirements structure
+[25-Mar-2025 12:19:37 Europe/Berlin] Fetching notes for request_id: 11
+[25-Mar-2025 12:19:37 Europe/Berlin] Found 1 notes for this request
+[25-Mar-2025 12:19:37 Europe/Berlin] Course module request - skipping field validation
+[25-Mar-2025 12:19:37 Europe/Berlin] Fetching request type details for type_id: 7
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:37 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/REQ-20250325-0995/requirement_notes
+[25-Mar-2025 12:19:37 Europe/Berlin] Normalized endpoint: requirement_notes
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting all requests
+[25-Mar-2025 12:19:37 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 12:19:37 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding legacy token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Successfully decoded legacy token for user ID: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Using user ID from token: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:37 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Normalized endpoint: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Endpoint is a tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 12:19:37 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Decoding legacy token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:37 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:37 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:37 Europe/Berlin] Successfully decoded legacy token for user ID: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Using user ID from token: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:37 Europe/Berlin] Getting request details by tracking number: REQ-20250325-0995 for user: 3
+[25-Mar-2025 12:19:37 Europe/Berlin] Executing query with tracking_number=REQ-20250325-0995 and user_id=3
+[25-Mar-2025 12:19:37 Europe/Berlin] Found request with tracking number: REQ-20250325-0995. Request ID: 11
+[25-Mar-2025 12:19:37 Europe/Berlin] Requirements before parsing: Array
+(
+    [fields] => Array
+        (
+        )
+
+    [instructions] => Please fill out all required fields.
+)
+
+[25-Mar-2025 12:19:37 Europe/Berlin] Fetching files for request_id: 11
+[25-Mar-2025 12:19:37 Europe/Berlin] Found 0 files for this request
+[25-Mar-2025 12:19:37 Europe/Berlin] Setting up course module requirements structure
+[25-Mar-2025 12:19:37 Europe/Berlin] Fetching notes for request_id: 11
+[25-Mar-2025 12:19:37 Europe/Berlin] Found 1 notes for this request
+[25-Mar-2025 12:19:37 Europe/Berlin] Course module request - skipping field validation
+[25-Mar-2025 12:19:37 Europe/Berlin] Fetching request type details for type_id: 7
+[25-Mar-2025 12:19:43 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:43 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:43 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:43 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:43 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:43 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:43 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Normalized endpoint: REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Endpoint is a tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 12:19:43 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 12:19:43 Europe/Berlin] Decoding token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:43 Europe/Berlin] Decoding legacy token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:43 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:43 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:43 Europe/Berlin] Successfully decoded legacy token for user ID: 3
+[25-Mar-2025 12:19:43 Europe/Berlin] Using user ID from token: 3
+[25-Mar-2025 12:19:43 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Getting request details by tracking number: REQ-20250325-0995 for user: 3
+[25-Mar-2025 12:19:43 Europe/Berlin] Executing query with tracking_number=REQ-20250325-0995 and user_id=3
+[25-Mar-2025 12:19:43 Europe/Berlin] Found request with tracking number: REQ-20250325-0995. Request ID: 11
+[25-Mar-2025 12:19:43 Europe/Berlin] Requirements before parsing: Array
+(
+    [fields] => Array
+        (
+        )
+
+    [instructions] => Please fill out all required fields.
+)
+
+[25-Mar-2025 12:19:43 Europe/Berlin] Fetching files for request_id: 11
+[25-Mar-2025 12:19:43 Europe/Berlin] Found 0 files for this request
+[25-Mar-2025 12:19:43 Europe/Berlin] Setting up course module requirements structure
+[25-Mar-2025 12:19:43 Europe/Berlin] Fetching notes for request_id: 11
+[25-Mar-2025 12:19:43 Europe/Berlin] Found 1 notes for this request
+[25-Mar-2025 12:19:43 Europe/Berlin] Course module request - skipping field validation
+[25-Mar-2025 12:19:43 Europe/Berlin] Fetching request type details for type_id: 7
+[25-Mar-2025 12:19:43 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:43 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:43 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:19:43 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:43 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:43 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:19:43 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Normalized endpoint: REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Endpoint is a tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Looking for JWT helper at: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\controllers/../helpers/jwt_helper.php
+[25-Mar-2025 12:19:43 Europe/Berlin] JWT config loaded from: C:\xampp\htdocs\UPANG-LINK\UPANG LINK API\helpers/../config/jwt_config.php
+[25-Mar-2025 12:19:43 Europe/Berlin] Decoding token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:43 Europe/Berlin] Decoding legacy token: 2d1122598847154e0349fb0e8ae07e8d5d5b01c8f7d7b5a7ac33a03cfc46d1d8
+[25-Mar-2025 12:19:43 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:19:43 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:19:43 Europe/Berlin] Successfully decoded legacy token for user ID: 3
+[25-Mar-2025 12:19:43 Europe/Berlin] Using user ID from token: 3
+[25-Mar-2025 12:19:43 Europe/Berlin] Getting request by tracking number: REQ-20250325-0995
+[25-Mar-2025 12:19:43 Europe/Berlin] Getting request details by tracking number: REQ-20250325-0995 for user: 3
+[25-Mar-2025 12:19:43 Europe/Berlin] Executing query with tracking_number=REQ-20250325-0995 and user_id=3
+[25-Mar-2025 12:19:43 Europe/Berlin] Found request with tracking number: REQ-20250325-0995. Request ID: 11
+[25-Mar-2025 12:19:43 Europe/Berlin] Requirements before parsing: Array
+(
+    [fields] => Array
+        (
+        )
+
+    [instructions] => Please fill out all required fields.
+)
+
+[25-Mar-2025 12:19:43 Europe/Berlin] Fetching files for request_id: 11
+[25-Mar-2025 12:19:43 Europe/Berlin] Found 0 files for this request
+[25-Mar-2025 12:19:43 Europe/Berlin] Setting up course module requirements structure
+[25-Mar-2025 12:19:43 Europe/Berlin] Fetching notes for request_id: 11
+[25-Mar-2025 12:19:43 Europe/Berlin] Found 1 notes for this request
+[25-Mar-2025 12:19:43 Europe/Berlin] Course module request - skipping field validation
+[25-Mar-2025 12:19:43 Europe/Berlin] Fetching request type details for type_id: 7
+[25-Mar-2025 12:59:52 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:52 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:52 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:52 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:52 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:59:52 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:59:52 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:52 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:52 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:52 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:52 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:59:52 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:59:52 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/statistics
+[25-Mar-2025 12:59:52 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 12:59:52 Europe/Berlin] Normalized endpoint: statistics
+[25-Mar-2025 12:59:52 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 12:59:52 Europe/Berlin] Getting request statistics
+[25-Mar-2025 12:59:52 Europe/Berlin] Getting request types
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 12:59:52 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:52 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:52 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:59:52 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:52 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:52 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:59:52 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 12:59:52 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 12:59:52 Europe/Berlin] Getting request types
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 12:59:52 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:52 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 12:59:55 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:55 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:55 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:59:55 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:55 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:55 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:59:55 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 12:59:55 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 12:59:55 Europe/Berlin] Getting request types
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 12:59:55 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 12:59:55 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 12:59:55 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 12:59:55 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 12:59:55 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 12:59:55 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 12:59:55 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 12:59:55 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 12:59:55 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 12:59:55 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 12:59:55 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 12:59:55 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 12:59:55 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 12:59:55 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:55 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 12:59:58 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:58 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:58 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:58 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:59:58 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:58 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:58 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:59:58 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/statistics
+[25-Mar-2025 12:59:58 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:58 Europe/Berlin] Normalized endpoint: statistics
+[25-Mar-2025 12:59:58 Europe/Berlin] Getting request statistics
+[25-Mar-2025 12:59:58 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:59:58 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:58 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:58 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:59:58 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 12:59:58 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 12:59:58 Europe/Berlin] Getting request types
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 12:59:58 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 12:59:58 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 12:59:58 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 12:59:58 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 12:59:58 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 12:59:58 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 12:59:58 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 12:59:58 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 12:59:58 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 12:59:58 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 12:59:58 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 12:59:58 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 12:59:58 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 12:59:58 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:58 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 12:59:59 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:59 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:59 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 12:59:59 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 12:59:59 Europe/Berlin] Database connection successful
+[25-Mar-2025 12:59:59 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 12:59:59 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 12:59:59 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 12:59:59 Europe/Berlin] Getting request types
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 12:59:59 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 12:59:59 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 12:59:59 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 12:59:59 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 12:59:59 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 12:59:59 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 12:59:59 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 12:59:59 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 12:59:59 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 12:59:59 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 12:59:59 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 12:59:59 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 12:59:59 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 12:59:59 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 12:59:59 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 13:00:02 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 13:00:02 Europe/Berlin] Database connection successful
+[25-Mar-2025 13:00:02 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 13:00:02 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 13:00:02 Europe/Berlin] Database connection successful
+[25-Mar-2025 13:00:02 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 13:00:02 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 13:00:02 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 13:00:02 Europe/Berlin] Getting request types
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 13:00:02 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 13:00:02 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 13:00:02 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 13:00:02 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 13:00:02 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 13:00:02 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 13:00:02 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 13:00:02 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 13:00:02 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 13:00:02 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 13:00:02 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 13:00:02 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 13:00:02 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 13:00:02 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:00:02 Europe/Berlin] Successfully fetched 7 request types
+[25-Mar-2025 13:08:23 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 13:08:23 Europe/Berlin] Database connection successful
+[25-Mar-2025 13:08:28 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 13:08:28 Europe/Berlin] Database connection successful
+[25-Mar-2025 13:08:32 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 13:08:32 Europe/Berlin] Database connection successful
+[25-Mar-2025 13:08:33 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 13:08:33 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 13:08:33 Europe/Berlin] Database connection successful
+[25-Mar-2025 13:08:33 Europe/Berlin] Database connection successful
+[25-Mar-2025 13:08:33 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 13:08:33 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 13:08:33 Europe/Berlin] Initializing RequestController
+[25-Mar-2025 13:08:33 Europe/Berlin] Attempting to connect to database: mysql:host=localhost;dbname=upang_link
+[25-Mar-2025 13:08:33 Europe/Berlin] Database connection successful
+[25-Mar-2025 13:08:33 Europe/Berlin] Database connection successful
+[25-Mar-2025 13:08:33 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 13:08:33 Europe/Berlin] RequestController initialized successfully
+[25-Mar-2025 13:08:33 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/statistics
+[25-Mar-2025 13:08:33 Europe/Berlin] Handling request: Method=GET, Endpoint=requests/types
+[25-Mar-2025 13:08:33 Europe/Berlin] Normalized endpoint: types
+[25-Mar-2025 13:08:33 Europe/Berlin] Normalized endpoint: statistics
+[25-Mar-2025 13:08:33 Europe/Berlin] Getting request types
+[25-Mar-2025 13:08:33 Europe/Berlin] Getting request statistics
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: Course Module Request, Raw requirements: {"fields": ["[{\"name\": \"student_id\", \"label\": \"Student ID Number\", \"type\": \"text\", \"required\": true, \"description\": \"Enter your student ID number\"}, {\"name\": \"course_code\", \"label\": \"Course Code\", \"type\": \"text\", \"required\": true, \"description\": \"Enter the course code for the module you need\"}, {\"name\": \"professor_approval\", \"label\": \"Professor Approval\", \"type\": \"file\", \"required\": true, \"allowed_types\": \"pdf,jpg,png\", \"description\": \"Upload the signed approval from your professor\"}]"], "instructions": "Please provide your student ID, course code, and professor approval for the module request."}
+[25-Mar-2025 13:08:33 Europe/Berlin] Successfully decoded JSON requirements for Course Module Request
+[25-Mar-2025 13:08:33 Europe/Berlin] Final requirements for Course Module Request: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: Enrollment Certificate, Raw requirements: {"fields": [{"name": "student_id", "label": "Student ID", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Valid student ID"}]}
+[25-Mar-2025 13:08:33 Europe/Berlin] Successfully decoded JSON requirements for Enrollment Certificate
+[25-Mar-2025 13:08:33 Europe/Berlin] Final requirements for Enrollment Certificate: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: ID Replacement, Raw requirements: {"fields": [{"name": "affidavit", "label": "Affidavit of Loss", "type": "file", "required": true, "allowed_types": "pdf", "description": "Notarized affidavit of loss"}]}
+[25-Mar-2025 13:08:33 Europe/Berlin] Successfully decoded JSON requirements for ID Replacement
+[25-Mar-2025 13:08:33 Europe/Berlin] Final requirements for ID Replacement: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: New Student ID, Raw requirements: {"fields": [{"name": "id_photo", "label": "1x1 ID Photo", "type": "file", "required": true, "allowed_types": "jpg,png", "description": "1x1 ID Picture with white background"}]}
+[25-Mar-2025 13:08:33 Europe/Berlin] Successfully decoded JSON requirements for New Student ID
+[25-Mar-2025 13:08:33 Europe/Berlin] Final requirements for New Student ID: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: PE Uniform Request, Raw requirements: {"fields": [{"name": "measurement", "label": "Size Measurements", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Size measurements form"}]}
+[25-Mar-2025 13:08:33 Europe/Berlin] Successfully decoded JSON requirements for PE Uniform Request
+[25-Mar-2025 13:08:33 Europe/Berlin] Final requirements for PE Uniform Request: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: School Uniform Request, Raw requirements: {"required_docs": ["Valid student ID"]}
+[25-Mar-2025 13:08:33 Europe/Berlin] Successfully decoded JSON requirements for School Uniform Request
+[25-Mar-2025 13:08:33 Europe/Berlin] Final requirements for School Uniform Request: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: Transcript of Records, Raw requirements: {"fields": [{"name": "clearance_form", "label": "Clearance Form", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Fully accomplished clearance form"}]}
+[25-Mar-2025 13:08:33 Europe/Berlin] Successfully decoded JSON requirements for Transcript of Records
+[25-Mar-2025 13:08:33 Europe/Berlin] Final requirements for Transcript of Records: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: Course Module Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => [{"name": "student_id", "label": "Student ID Number", "type": "text", "required": true, "description": "Enter your student ID number"}, {"name": "course_code", "label": "Course Code", "type": "text", "required": true, "description": "Enter the course code for the module you need"}, {"name": "professor_approval", "label": "Professor Approval", "type": "file", "required": true, "allowed_types": "pdf,jpg,png", "description": "Upload the signed approval from your professor"}]
+        )
+
+    [instructions] => Please provide your student ID, course code, and professor approval for the module request.
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: Enrollment Certificate, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => student_id
+                    [label] => Student ID
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Valid student ID
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: ID Replacement, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => affidavit
+                    [label] => Affidavit of Loss
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf
+                    [description] => Notarized affidavit of loss
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: New Student ID, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => id_photo
+                    [label] => 1x1 ID Photo
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => jpg,png
+                    [description] => 1x1 ID Picture with white background
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: PE Uniform Request, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => measurement
+                    [label] => Size Measurements
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Size measurements form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: School Uniform Request, Requirements: Array
+(
+    [required_docs] => Array
+        (
+            [0] => Valid student ID
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Processing type: Transcript of Records, Requirements: Array
+(
+    [fields] => Array
+        (
+            [0] => Array
+                (
+                    [name] => clearance_form
+                    [label] => Clearance Form
+                    [type] => file
+                    [required] => 1
+                    [allowed_types] => pdf,jpg,png
+                    [description] => Fully accomplished clearance form
+                )
+
+        )
+
+)
+
+[25-Mar-2025 13:08:33 Europe/Berlin] Successfully fetched 7 request types

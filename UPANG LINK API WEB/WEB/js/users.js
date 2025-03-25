@@ -158,20 +158,18 @@ async function loadUsers() {
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
 
-    // Filter users: Show only students, hide admins
-    const studentUsers = users.filter(user => user.role && user.role.toLowerCase() === 'student');
-
-    if (studentUsers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center">No students to display</td></tr>`;
+    if (users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center">No users to display</td></tr>`;
     } else {
-        tbody.innerHTML = studentUsers.map(user => `
+        tbody.innerHTML = users.map(user => `
             <tr>
                 <td>${user.user_id || 'N/A'}</td>
                 <td>${user.first_name || 'N/A'} ${user.last_name || ''}</td>
                 <td>${user.email || 'N/A'}</td>
+                <td>${user.role || 'N/A'}</td>
                 <td>
                     <button class="view-btn" onclick="openUserModal(${user.user_id})">
-                        <i class="fas fa-eye"></i> VIEW
+                        <i class="fas fa-eye"></i> <span>VIEW</span>
                     </button>
                 </td>
             </tr>
@@ -306,3 +304,75 @@ window.closeUserModal = closeUserModal;
     }
   });
 })();
+
+
+
+// Wait for DOM to be fully loaded before accessing elements
+document.addEventListener('DOMContentLoaded', function() {
+  // DOM Elements
+  const adminAddModal = document.getElementById("admin-add-modal");
+  const addAdminBtn = document.getElementById("addAdminBtn");
+  const closeModal = document.querySelector("#admin-add-modal .close-modal");
+  const adminAddForm = document.getElementById("admin-add-form");
+
+  // Modal Functions
+  function openAdminModal() {
+    adminAddModal.style.display = "block";
+    document.getElementById("adminEmail").focus();
+  }
+
+  function closeAdminModal() {
+    adminAddModal.style.display = "none";
+  }
+
+  // Event Listeners
+  addAdminBtn.addEventListener("click", openAdminModal);
+  closeModal.addEventListener("click", closeAdminModal);
+
+  window.addEventListener("click", (event) => {
+    if (event.target === adminAddModal) {
+      closeAdminModal();
+    }
+  });
+
+  // Form submission
+  adminAddForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const adminData = {
+      first_name: document.getElementById("adminFirstName").value,
+      last_name: document.getElementById("adminLastName").value,
+      email: document.getElementById("adminEmail").value,
+      password: document.getElementById("adminPassword").value
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(adminData)
+      });
+
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Admin created successfully!');
+        closeAdminModal();
+        adminAddForm.reset();
+        
+        // Refresh admin list if function exists
+        if (typeof fetchAdmins === 'function') {
+          fetchAdmins();
+        }
+      } else {
+        throw new Error(data.message || 'Failed to create admin');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.message || 'Error creating admin');
+    }
+  });
+});
