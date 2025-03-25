@@ -348,22 +348,22 @@ function viewRequest(requestId) {
 
 // Base URL for file uploads
 const baseUrl = "http://localhost/UPANG-LINK/uploads/";
-let fileLinks = "";
+let fileLinks = '';
 
-// Check if `files` array exists in request
-if (request.files && Array.isArray(request.files)) {
-  console.log(`Processing ${request.files.length} files...`);
-
+if (request.files?.length) {
   request.files.forEach(file => {
-    if (file && file.file_path) {
-      file.file_path = baseUrl + file.file_path; // Ensure full URL
-      const fileLabel = file.field_name.replace(/_/g, ' ').toUpperCase(); // Format label (e.g., "affidavit_of_loss" → "AFFIDAVIT OF LOSS")
+    if (file?.file_path) {
+      // Normalize path - remove trailing slashes and duplicates
+      const normalizedBase = baseUrl.replace(/\/+$/, '') + '/';
+      const normalizedPath = file.file_path.replace(/^https?:\/\/[^/]+\//, '');
+      
+      file.file_path = normalizedBase + normalizedPath;
+      const fileLabel = file.field_name?.replace(/_/g, ' ').toUpperCase() || 'FILE';
       fileLinks += buildFileLink(file, fileLabel);
-    } else {
-      console.warn("Skipping invalid file:", file);
     }
   });
 }
+
 
 // Debugging before updating the DOM
 console.log("Generated File Links:", fileLinks);
