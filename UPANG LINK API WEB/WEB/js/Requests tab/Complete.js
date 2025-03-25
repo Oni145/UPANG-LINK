@@ -311,7 +311,8 @@ function viewRequest(requestId) {
   const modalTitle = `Ticket Details - Request #${request.request_id}`;
   
   // Ticket Details Section 
-  let ticketDetailsHTML = `<div class="ticket-details">
+  let ticketDetailsHTML = `
+  <div class="ticket-details">
     <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}
       <button type="button" class="view-btn" data-user-id="${request.user_id}">
         <i class="fas fa-user"></i> VIEW STUDENT DETAILS
@@ -319,7 +320,19 @@ function viewRequest(requestId) {
     </p>
     <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
     <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
-    <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+    <p class="date-submitted">
+      <strong>DATE SUBMITTED:</strong> 
+      <span class="date-value">
+        ${new Date(request.submitted_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })}
+      </span>
+    </p>
   </div>`;
   
   

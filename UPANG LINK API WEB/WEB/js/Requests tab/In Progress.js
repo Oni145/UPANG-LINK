@@ -283,63 +283,6 @@ function updatePaginationControls(currentPage) {
   }
 }
 
-
-/**
- * Helper function to build a styled attached file element.
- */
-function viewRequest(requestId) {
-  showLoading();
-
-  const request = allRequests.find(r => r.request_id == requestId);
-  if (!request) {
-      console.error("Request not found!");
-      hideLoading();
-      return;
-  }
-
-  const user = allUsersData.find(u => u.user_id == request.user_id);
-  const modalTitle = `Ticket Details - Request #${request.request_id}`;
-
-  // ✅ Debugging: Check if purpose exists
-  console.log("Request Purpose:", request.purpose);
-
-  // Ensure Purpose Exists
-  const purposeText = request.purpose && request.purpose.trim() !== "" ? request.purpose : "No purpose provided";
-
-  let ticketDetailsHTML = `
-      <div class="ticket-details">
-          <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
-          <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-          <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span></p>
-          <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
-      </div>`;
-
-  // Ensure the ticketDetails element exists before updating
-  const detailsContainer = document.getElementById('ticketDetails');
-  if (!detailsContainer) {
-    console.error("ticketDetails element not found!");
-    hideLoading();
-    return;
-  }
-
-  document.getElementById('ticketModalLabel').innerHTML = modalTitle;
-  detailsContainer.innerHTML = ticketDetailsHTML;
-
-  // Build file links if a file is attached
-  let fileLinks = request.file_path ? buildFileLink(request, "Attached File") : "";
-  
-  const fileContainer = document.getElementById('ticketFiles');
-  if (fileContainer) {
-    fileContainer.innerHTML = fileLinks;
-  } else {
-    console.error("ticketFiles element not found!");
-  }
-
-  hideLoading();
-}
-
-
-
 /**
  * Opens the ticket modal with inline comment editing.
  */
@@ -359,23 +302,19 @@ function viewRequest(requestId) {
   // Ticket Details Section
   let ticketDetailsHTML = `
   <div class="ticket-details">
-    <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}
-      <button type="button" class="view-btn" data-user-id="${request.user_id}">
-        <i class="fas fa-user"></i> VIEW STUDENT DETAILS
-      </button>
-    </p>
-    <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
-<p><strong>STATUS:</strong> 
-    <span class="badge ${getStatusClass(request.status.toLowerCase())}">
-        ${request.status.replace(/_/g, ' ')}
-    </span>
-</p>
-    <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+      <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+      <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
+      <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span></p>
+      <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      })}</p>
   </div>`;
   
-  
-
-
   document.getElementById('ticketModalLabel').innerHTML = modalTitle;
   document.getElementById('ticketDetails').innerHTML = ticketDetailsHTML;
 

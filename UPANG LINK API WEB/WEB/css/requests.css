@@ -273,8 +273,6 @@ table td:nth-child(5) div {
   padding: 10px 30px;
   font-size: 1rem;
   display: inline-flex;
-
-  margin: 0 auto;
   /* Removed gap property completely */
 }
 /* Icon Styles */
@@ -615,4 +613,7 @@ table td:nth-child(5) div {
 }
 
 
- 
+.date-submitted {
+  margin-top: 8px;
+}
+

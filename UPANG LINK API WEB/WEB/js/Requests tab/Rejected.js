@@ -326,7 +326,19 @@ function viewRequest(requestId) {
     </p>
     <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
     <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status}</span></p>
-    <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString()}</p>
+    <p class="date-submitted">
+      <strong>DATE SUBMITTED:</strong> 
+      <span class="date-value">
+        ${new Date(request.submitted_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })}
+      </span>
+    </p>
   </div>`;
   
 
