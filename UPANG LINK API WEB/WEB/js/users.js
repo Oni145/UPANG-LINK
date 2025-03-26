@@ -159,7 +159,7 @@ async function loadUsers() {
     if (!tbody) return;
 
     if (users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center">No users to display</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center">NO USERS TO DISPLAY</td></tr>`;
     } else {
         tbody.innerHTML = users.map(user => `
             <tr>
@@ -285,26 +285,33 @@ window.closeUserModal = closeUserModal;
   document.addEventListener('DOMContentLoaded', async () => {
     await displayUserName();
     await loadUsers();
+    
     const searchInput = document.getElementById("searchInput");
     if (searchInput) {
-      searchInput.addEventListener("input", function() {
-        const query = this.value.trim().toLowerCase();
-        // Updated search: only first name, last name, email, year level, and admission year are checked.
-        displayData = query ? allUsersData.filter(user =>
-          (user.first_name && user.first_name.toLowerCase().includes(query)) ||
-          (user.last_name && user.last_name.toLowerCase().includes(query)) ||
-          (user.email && user.email.toLowerCase().includes(query)) ||
-          (user.year_level && user.year_level.toString().toLowerCase().includes(query)) ||
-          (user.admission_year && user.admission_year.toLowerCase().includes(query))
-        ) : allUsersData;
-        currentPage = 1;
-        updatePaginationControls();
-        displayUsersPage(currentPage);
-      });
+        searchInput.addEventListener("input", function() {
+            const query = this.value.trim().toLowerCase();
+            
+            displayData = query ? allUsersData.filter(user => {
+                // Get role as string (since renderUsers uses user.role)
+                const userRole = user.role ? user.role.toLowerCase() : "";
+                
+                return (
+                    (user.first_name && user.first_name.toLowerCase().includes(query)) ||
+                    (user.last_name && user.last_name.toLowerCase().includes(query)) ||
+                    (user.email && user.email.toLowerCase().includes(query)) ||
+                    (user.year_level && user.year_level.toString().toLowerCase().includes(query)) ||
+                    (user.admission_year && user.admission_year.toLowerCase().includes(query)) ||
+                    userRole.includes(query) // Now checks the singular 'role' field
+                );
+            }) : allUsersData;
+            
+            currentPage = 1;
+            updatePaginationControls();
+            displayUsersPage(currentPage);
+        });
     }
-  });
+});
 })();
-
 
 
 // Wait for DOM to be fully loaded before accessing elements
