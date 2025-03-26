@@ -301,8 +301,12 @@ function viewRequest(requestId) {
   
   // Ticket Details Section
   let ticketDetailsHTML = `
-  <div class="ticket-details">
-      <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}</p>
+   <div class="ticket-details">
+    <p><strong>NAME:</strong> ${user ? user.first_name + ' ' + user.last_name : 'Unknown'}
+      <button type="button" class="view-btn" data-user-id="${request.user_id}">
+        <i class="fas fa-user"></i> VIEW STUDENT DETAILS
+      </button>
+    </p>
       <p><strong>REQUEST TYPE:</strong> ${requestTypeNames[request.type_id] || 'Unknown'}</p>
       <p><strong>STATUS:</strong> <span class="badge ${getStatusClass(request.status.toLowerCase())}">${request.status.replace(/_/g, ' ')}</span></p>
       <p><strong>DATE SUBMITTED:</strong> ${new Date(request.submitted_at).toLocaleString('en-US', {
