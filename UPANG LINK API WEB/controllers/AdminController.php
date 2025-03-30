@@ -287,10 +287,13 @@ class AdminController {
             return;
         }
         
-        // Check if a user with this email already exists
-        $existingUser = $this->adminModel->getByEmail($data->email);
+        // Check if email exists in any role (using the new getUserByEmail method)
+        $existingUser = $this->adminModel->getUserByEmail($data->email);
         if ($existingUser) {
-            $this->sendError("User already exists", 400);
+            $this->sendError(
+                "This email is already registered as a " . $existingUser['role'], 
+                409 // Using 409 Conflict for duplicate resources
+            );
             return;
         }
         
@@ -300,14 +303,21 @@ class AdminController {
         $this->adminModel->last_name = $data->last_name;
         $this->adminModel->password = password_hash($data->password, PASSWORD_DEFAULT);
     
-        if ($this->adminModel->create()) {
+        // Call create() and handle its response
+        $creationResult = $this->adminModel->create();
+        
+        if ($creationResult['status'] === 'success') {
             http_response_code(201);
             echo json_encode([
                 'status'  => 'success',
-                'message' => 'User registered successfully'
+                'message' => 'Admin registered successfully'
             ]);
         } else {
-            $this->sendError("Unable to create user", 500);
+            // If create() failed for other reasons (not duplicate email)
+            $this->sendError(
+                $creationResult['message'] ?? "Unable to create admin", 
+                500
+            );
         }
     }
     

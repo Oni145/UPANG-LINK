@@ -346,40 +346,69 @@ document.addEventListener('DOMContentLoaded', function() {
   adminAddForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     
+    // Clear previous errors
+    const emailField = document.getElementById("adminEmail");
+    emailField.classList.remove('error-field');
+    const existingError = document.querySelector('.email-error');
+    if (existingError) existingError.remove();
+
     const adminData = {
-      first_name: document.getElementById("adminFirstName").value,
-      last_name: document.getElementById("adminLastName").value,
-      email: document.getElementById("adminEmail").value,
-      password: document.getElementById("adminPassword").value
+        first_name: document.getElementById("adminFirstName").value,
+        last_name: document.getElementById("adminLastName").value,
+        email: emailField.value,
+        password: document.getElementById("adminPassword").value
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(adminData)
-      });
+        const response = await fetch(`${API_BASE_URL}/admin/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(adminData)
+        });
 
+        const data = await response.json();
 
-      const data = await response.json();
+        // First check if the response contains an error message
+        if (data.message && data.message.toLowerCase().includes('already registered')) {
+            // Handle duplicate email case
+            showEmailError(data.message);
+            return;
+        }
 
-      if (response.ok) {
+        // Then check the response status
+        if (!response.ok) {
+            throw new Error(data.message || 'Registration failed');
+        }
+
+        // Only show success if we get here
         alert('Admin created successfully!');
         closeAdminModal();
         adminAddForm.reset();
         
-        // Refresh admin list if function exists
         if (typeof fetchAdmins === 'function') {
-          fetchAdmins();
+            fetchAdmins();
         }
-      } else {
-        throw new Error(data.message || 'Failed to create admin');
-      }
+
     } catch (error) {
-      console.error('Error:', error);
-      alert(error.message || 'Error creating admin');
+        console.error('Registration Error:', error);
+        showEmailError(error.message || 'Error creating admin');
     }
-  });
+});
+
+// Helper function to display email errors
+function showEmailError(message) {
+    const emailField = document.getElementById("adminEmail");
+    emailField.classList.add('error-field');
+    emailField.focus();
+    
+    let errorDisplay = emailField.nextElementSibling;
+    if (!errorDisplay || !errorDisplay.classList.contains('email-error')) {
+        errorDisplay = document.createElement('div');
+        errorDisplay.className = 'email-error';
+        emailField.parentNode.insertBefore(errorDisplay, emailField.nextSibling);
+    }
+    errorDisplay.textContent = message;
+}
 });
