@@ -688,3 +688,15 @@ th {
     padding: 10px;
   }
 }
+
+.error-field {
+  border: 2px solid #ff4444 !important;
+  background-color: #fff6f6;
+}
+
+.email-error {
+  color: #ff4444;
+  font-size: 0.8em;
+  margin-top: 5px;
+  padding: 3px;
+}
