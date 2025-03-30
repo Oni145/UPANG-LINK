@@ -213,7 +213,10 @@ class CreateRequestFragment : Fragment() {
                     binding.placeholderRequirements.visibility = View.GONE
                     binding.requirementsRecyclerView.visibility = View.GONE
                     
-                    // Toast message removed since the information is already shown in the Requirements section
+                    // Ensure visibility stays consistent when clicking the dropdown again
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        ensureRequirementsVisible()
+                    }, 100)
                 }
             }
         }
@@ -229,6 +232,7 @@ class CreateRequestFragment : Fragment() {
             setAdapter(adapter)
             setOnItemClickListener { _, _, position, _ ->
                 val requestType = types[position]
+                val previousType = selectedRequestType
                 Log.d("CreateRequest", "Selected request type: ${requestType.name}, id=${requestType.type_id}")
                 
                 // Always update the selected request type and reload requirements
@@ -250,20 +254,125 @@ class CreateRequestFragment : Fragment() {
                     View.GONE
                 }
                 
-                // Always show the loading state for requirements
-                binding.requirementsCard.visibility = View.VISIBLE
-                binding.placeholderRequirements.visibility = View.VISIBLE
-                binding.noRequirementsText.visibility = View.GONE
-                binding.requirementsRecyclerView.visibility = View.GONE
+                // Special handling for transitions between no-requirement request types
+                val isNoRequirementsType = requestType.name.contains("Course Module", ignoreCase = true) || 
+                                          requestType.name.contains("Enrollment Certificate", ignoreCase = true)
+                val wasPreviousNoRequirementsType = previousType?.name?.contains("Course Module", ignoreCase = true) == true || 
+                                                   previousType?.name?.contains("Enrollment Certificate", ignoreCase = true) == true
                 
-                // Load requirements for the selected request type
-                viewModel.loadRequirements(requestType)
+                // If we're transitioning between two no-requirements types, handle differently
+                if (isNoRequirementsType && wasPreviousNoRequirementsType) {
+                    Log.d("CreateRequest", "Switching between no-requirements types: ${previousType?.name} -> ${requestType.name}")
+                    // Don't show loading placeholder
+                    binding.requirementsCard.visibility = View.VISIBLE
+                    binding.placeholderRequirements.visibility = View.GONE
+                    binding.noRequirementsText.visibility = View.VISIBLE
+                    binding.noRequirementsText.text = "No requirements needed for ${requestType.name}"
+                    binding.requirementsRecyclerView.visibility = View.GONE
+                    
+                    // Load requirements with loading=false for the selected request type
+                    viewModel.loadRequirements(requestType)
+                    
+                    // Force update UI after a short delay
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        ensureRequirementsVisible()
+                    }, 100)
+                } else {
+                    // Standard case - show loading indicators
+                    binding.requirementsCard.visibility = View.VISIBLE
+                    binding.placeholderRequirements.visibility = View.VISIBLE
+                    binding.noRequirementsText.visibility = View.GONE
+                    binding.requirementsRecyclerView.visibility = View.GONE
+                    
+                    // Load requirements for the selected request type
+                    viewModel.loadRequirements(requestType)
+                }
             }
+            
+            // Fix for the issue with the same item selection:
+            // When the dropdown is shown, save the current text value
+            // and check after dropdown is dismissed if it's the same value
+            var currentSelection = ""
+            
+            setOnDismissListener {
+                // If the text is the same as before but the dropdown was shown, it means 
+                // the user clicked on the same item - we need to ensure requirements are visible
+                if (text.toString() == currentSelection && selectedRequestType != null) {
+                    Log.d("CreateRequest", "Same item selected again: ${selectedRequestType?.name}")
+                    
+                    // Post with a slight delay to ensure the UI is updated after dropdown dismissal
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        ensureRequirementsVisible()
+                    }, 100)
+                }
+            }
+            
+            setOnClickListener {
+                // Save current selection before dropdown is shown
+                currentSelection = text.toString()
+                showDropDown()
+            }
+        }
+        
+        // Add click listener to the TextInputLayout instead of the dropdown itself
+        binding.requestTypeLayout.setEndIconOnClickListener {
+            // This will be called when the dropdown arrow is clicked
+            binding.requestTypeDropdown.performClick()
         }
         
         // Set up size chart button click listener
         binding.sizeChartButton.setOnClickListener {
             showSizeChartDialog()
+        }
+    }
+
+    /**
+     * Helper method to ensure requirements section remains visible
+     */
+    private fun ensureRequirementsVisible() {
+        if (selectedRequestType == null) return
+        
+        Log.d("CreateRequest", "Ensuring requirements visible for: ${selectedRequestType?.name}")
+        
+        // Always make the card visible
+        binding.requirementsCard.visibility = View.VISIBLE
+        
+        // Special handling for no-requirements request types (Course Module & Enrollment Certificate)
+        val isNoRequirementsType = selectedRequestType?.name?.contains("Course Module", ignoreCase = true) == true || 
+                                  selectedRequestType?.name?.contains("Enrollment Certificate", ignoreCase = true) == true
+        
+        if (isNoRequirementsType) {
+            Log.d("CreateRequest", "Special handling for no-requirements type: ${selectedRequestType?.name}")
+            binding.placeholderRequirements.visibility = View.GONE
+            binding.noRequirementsText.visibility = View.VISIBLE
+            binding.noRequirementsText.text = "No requirements needed for ${selectedRequestType?.name}"
+            binding.requirementsRecyclerView.visibility = View.GONE
+            
+            // For this specific case, force re-emit the state
+            viewModel.refreshRequirementsState()
+            return
+        }
+        
+        // For special case of requests with no requirements (other types)
+        if (viewModel.requirementsNeeded.value == false) {
+            binding.placeholderRequirements.visibility = View.GONE
+            binding.noRequirementsText.visibility = View.VISIBLE
+            binding.noRequirementsText.text = "No requirements needed for ${selectedRequestType?.name}"
+            binding.requirementsRecyclerView.visibility = View.GONE
+            Log.d("CreateRequest", "Ensuring no-requirements message visible for ${selectedRequestType?.name}")
+        } else if (requirementsAdapter.itemCount > 0) {
+            // Show the requirements if we have them
+            binding.placeholderRequirements.visibility = View.GONE
+            binding.noRequirementsText.visibility = View.GONE
+            binding.requirementsRecyclerView.visibility = View.VISIBLE
+            Log.d("CreateRequest", "Ensuring requirements list visible with ${requirementsAdapter.itemCount} items")
+        } else {
+            // We're in a loading or undefined state, set appropriate visibility
+            binding.placeholderRequirements.visibility = View.GONE
+            binding.noRequirementsText.visibility = View.VISIBLE 
+            binding.noRequirementsText.text = "No requirements needed for ${selectedRequestType?.name}"
+            binding.requirementsRecyclerView.visibility = View.GONE
+            Log.d("CreateRequest", "Fallback to no-requirements message for ${selectedRequestType?.name}")
         }
     }
 
@@ -320,14 +429,38 @@ class CreateRequestFragment : Fragment() {
             // No requirements to display
             Log.d("CreateRequest", "No requirements to display")
             binding.placeholderRequirements.visibility = View.GONE
-            binding.noRequirementsText.visibility = View.VISIBLE
-            binding.requirementsRecyclerView.visibility = View.GONE
             
             // Check if this is because we haven't selected a request type yet
             if (selectedRequestType == null) {
                 binding.noRequirementsText.text = "Please select a request type to see requirements"
-            } else {
+                binding.noRequirementsText.visibility = View.VISIBLE
+                binding.requirementsRecyclerView.visibility = View.GONE
+            } 
+            // Special case for Course Module and other requests with no requirements
+            else if (selectedRequestType?.name?.contains("Course Module", ignoreCase = true) == true || 
+                    selectedRequestType?.name?.contains("Enrollment Certificate", ignoreCase = true) == true) {
                 binding.noRequirementsText.text = "No requirements needed for ${selectedRequestType?.name}"
+                binding.noRequirementsText.visibility = View.VISIBLE
+                binding.requirementsRecyclerView.visibility = View.GONE
+                
+                // Make sure these states are always visible even if clicked multiple times
+                binding.requirementsCard.visibility = View.VISIBLE
+                
+                // Force this state to be maintained after initial display
+                Handler(Looper.getMainLooper()).postDelayed({
+                    if (isAdded && _binding != null) {
+                        binding.requirementsCard.visibility = View.VISIBLE
+                        binding.placeholderRequirements.visibility = View.GONE
+                        binding.noRequirementsText.visibility = View.VISIBLE
+                        binding.requirementsRecyclerView.visibility = View.GONE
+                        Log.d("CreateRequest", "Reinforced visibility for ${selectedRequestType?.name}")
+                    }
+                }, 300)
+            }
+            else {
+                binding.noRequirementsText.text = "No requirements needed for ${selectedRequestType?.name}"
+                binding.noRequirementsText.visibility = View.VISIBLE
+                binding.requirementsRecyclerView.visibility = View.GONE
             }
         } else {
             // We have requirements, display them

@@ -173,14 +173,45 @@ class CreateRequestViewModel @Inject constructor(
             }
         }
         
+        // Special handling for request types with no requirements
+        val isCourseModule = requestType.name.contains("Course Module", ignoreCase = true)
+        val isEnrollmentCert = requestType.name.contains("Enrollment Certificate", ignoreCase = true)
+        
         // Skip server requirements for Course Module and Enrollment Certificate
-        if (requestType.name.contains("Course Module", ignoreCase = true) || 
-            requestType.name.contains("Enrollment Certificate", ignoreCase = true)) {
+        if (isCourseModule || isEnrollmentCert) {
             // For these requests, don't add any field requirements as student details are already in the system
             _requirements.value = emptyList()
             _requirementsNeeded.value = false
             requestTypesWithRequiredFields[requestType.type_id] = false
             Log.d("CreateRequestVM", "No requirements needed for ${requestType.name}")
+            
+            // Special handling: Force immediate state update for UI consistency
+            // This helps when switching between Course Module and Enrollment Certificate
+            viewModelScope.launch {
+                // First immediate update
+                _loading.value = false
+                _requirements.value = emptyList()
+                _requirementsNeeded.value = false
+                
+                // Delay slightly to ensure UI can process this properly
+                kotlinx.coroutines.delay(50)
+                _requirements.value = emptyList()
+                _requirementsNeeded.value = false
+                
+                // Delay and emit again to handle potential UI glitches
+                kotlinx.coroutines.delay(150)
+                _loading.value = false  // Ensure loading is off
+                _requirements.value = emptyList()
+                _requirementsNeeded.value = false
+                
+                // Final update to ensure consistency
+                kotlinx.coroutines.delay(200)
+                _requirements.value = emptyList()
+                _requirementsNeeded.value = false
+                
+                Log.d("CreateRequestVM", "Re-emitted empty requirements for ${requestType.name}")
+            }
+            
             _loading.value = false
             return
         }
@@ -682,5 +713,39 @@ class CreateRequestViewModel @Inject constructor(
     // Add function to clear warning
     fun clearWarning() {
         _warningMessage.value = null
+    }
+    
+    /**
+     * Force re-emit the requirements state for Course Module and other special cases
+     * to ensure the UI correctly shows "No requirements needed"
+     */
+    fun refreshRequirementsState() {
+        val currentRequirements = _requirements.value
+        val currentNeeded = _requirementsNeeded.value
+        
+        // Always force refresh for cases where we want to ensure visibility
+        Log.d("CreateRequestVM", "Force re-emitting empty requirements state")
+        
+        // Re-emit current state to force UI update - force empty requirements
+        viewModelScope.launch {
+            // First, ensure we have the correct state
+            _requirements.value = emptyList()
+            _requirementsNeeded.value = false
+            
+            // Delay slightly to ensure UI can process this properly
+            kotlinx.coroutines.delay(50)
+            _requirements.value = emptyList()
+            _requirementsNeeded.value = false
+            
+            // Emit again with a delay to handle UI glitches
+            kotlinx.coroutines.delay(150)
+            _requirements.value = emptyList()
+            _requirementsNeeded.value = false
+            
+            // Final confirmation after all UI updates should be complete
+            kotlinx.coroutines.delay(300)
+            _requirements.value = emptyList()
+            _requirementsNeeded.value = false
+        }
     }
 } 
